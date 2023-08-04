@@ -11,6 +11,15 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 
 ## Journal
 
+### PFGuess-PII(8.4)
+1. There is two choices in terms of password vector format, on the one hand, vectors only consist of type-based PII tag and character vector,
+the other option is compose type-based tag and length-based tag with no specific character participating the training phase. As for the latter, 
+the password "john@0728" would be parsed to "N4S1B4", at generating phase, "S1" will be addressed by selecting the top-10 most frequent fractions 
+in the dataset, this way is certainly more conclusive about the rule of people constructing passwords but the generated result may be redundant.
+The former method could need larger dataset on training a universal enough model but would perform more accuracy.
+2. When generating guesses, deploy a transition layer to extend the selected rule, such as birthday date can be either parsed into "0607" and "67".
+
+
 ### RFGuess-PII(8.3)
 1. Resolve password string into 26-dim vector composed of both CharacterVector and **PIIVector**
     - PIIVector: <PII Type(U,B,N...), PII Value(U1,B1...), 0, 0>
@@ -18,6 +27,7 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 2. Notice both feature and label would have PII vectors, so does the generated guesses
 3. Commonly train RF model, get the subsequent character(or PII tag) of the given prefix
 4. Convert PII tag into PII string based on the real user information, get the final guess
+
 
 ### Dependency Injection(8.2)
 - Core.Decorators.py: @Bean, @Autowire defination

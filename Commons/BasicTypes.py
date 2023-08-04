@@ -10,6 +10,11 @@ class PIIType(Enum):
     Birthday = 2
 
 
+class NameType(Enum):
+    FullName = 0
+    AbbrName = 1
+
+
 class CharacterType(Enum):
     Digit = 0
     UpperCaseLetter = 1

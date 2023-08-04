@@ -1,6 +1,4 @@
-import inspect
 import json
-import sys
 
 from sklearn.ensemble import RandomForestClassifier
 
@@ -11,9 +9,11 @@ from Classifiers import DTTrainner, RFTrainner
 from Classifiers.DTTrainner import *
 from Classifiers._RFTest import RFTest
 from Classifiers._TrainnersTest import DTTrainnerTest
+from Commons import BasicTypes
 from Core.Application import ApplicationWrapper
 from Generators.DatasetGenerator import DatasetGenerator
 from Generators.DictionaryGenerator import DictionaryGenerator
+from Parser.PIIParsers import *
 from Parser.PasswordParsers import *
 
 
@@ -208,6 +208,25 @@ def generatorTest():
     dicGen.init()
     dicGen.run()
 
+
+def piiParserTest():
+    name = "abcdefg12345"
+    a1 = "beg4"
+    a2 = "ac4"
+    a3 = "bg5"
+    a4 = name
+    a5 = "aeg5"
+    a6 = "at5"
+    a7 = "ag5t"
+
+    assert BasicTypes.NameType.AbbrName == parseNameType(name, a1)
+    assert BasicTypes.NameType.AbbrName == parseNameType(name, a2)
+    assert BasicTypes.NameType.AbbrName == parseNameType(name, a3)
+    assert BasicTypes.NameType.FullName == parseNameType(name, a4)
+    assert BasicTypes.NameType.AbbrName == parseNameType(name, a5)
+    assert None is parseNameType(name, a6)
+    assert None is parseNameType(name, a7)
+
     # app.registerComponent(RFTrainner, features, labels)
 
 
@@ -221,4 +240,5 @@ def generatorTest():
 # decoratorTest()
 # print(beanList)
 # applicationTest()
-generatorTest()
+# generatorTest()
+piiParserTest()
