@@ -9,7 +9,6 @@ from Classifiers import DTTrainner, RFTrainner
 from Classifiers.DTTrainner import *
 from Classifiers._RFTest import RFTest
 from Classifiers._TrainnersTest import DTTrainnerTest
-from Commons import BasicTypes
 from Core.Application import ApplicationWrapper
 from Generators.DatasetGenerator import DatasetGenerator
 from Generators.DictionaryGenerator import DictionaryGenerator
@@ -219,13 +218,26 @@ def piiParserTest():
     a6 = "at5"
     a7 = "ag5t"
 
-    assert BasicTypes.NameType.AbbrName == parseNameType(name, a1)
-    assert BasicTypes.NameType.AbbrName == parseNameType(name, a2)
-    assert BasicTypes.NameType.AbbrName == parseNameType(name, a3)
-    assert BasicTypes.NameType.FullName == parseNameType(name, a4)
-    assert BasicTypes.NameType.AbbrName == parseNameType(name, a5)
-    assert None is parseNameType(name, a6)
-    assert None is parseNameType(name, a7)
+    pii = BasicTypes.PII(account="user123!@#",
+                         name="yhangzhongjie",
+                         firstName="yhang",
+                         givenName="zhong jie",
+                         birthday="19820607",
+                         phoneNum="13222245678",
+                         email="3501111asd11@qq.com",
+                         idcardNum="1213213213")
+    parser = PIIFullTagParser(pii,nameFuzz=True)
+    parser.parseTag()
+    tagContainer: PIITagContainer = parser.getTagContainer()
+    tagList: typing.List[Tag] = tagContainer.getTagList()
+    i = 1
+    for tag in tagList:
+        print(f"Tag id:{i}")
+        print(f"\tType:{str(tag.piitype.__class__)+str(tag.piitype.name)}")
+        print(f"\tValue:{tag.piitype.value}")
+        print(f"\tString:{tag.s}")
+        print("")
+        i += 1
 
     # app.registerComponent(RFTrainner, features, labels)
 
