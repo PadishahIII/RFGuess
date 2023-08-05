@@ -4,15 +4,64 @@ from enum import Enum
 from Commons.Exceptions import ParseException
 
 
-class PIIType(Enum):
-    Name = 0
-    Username = 1
-    Birthday = 2
+class LDSSegment:
+    def __init__(self, t, length: int, s: str):
+        self.type = t
+        self.length = length
+        self.s = s
 
 
-class NameType(Enum):
-    FullName = 0
-    AbbrName = 1
+class PIIType:
+    Name = 1000
+    Birthday = 2000
+    Account = 3000
+    Email = 4000
+    PhoneNumber = 5000
+    IdCardNumber = 6000
+    L = 7000
+    D = 8000
+    S = 9000
+
+    class NameType(Enum):
+        FullName = 1
+        AbbrName = 2
+        FamilyName = 3
+        GivenName = 4
+        GivenName1stPlusFamilyName = 5
+        FamilyName1stPlusGivenName = 6
+        FamilyNameCapitalized = 7  # Wang
+
+    class BirthdayType(Enum):
+        FullYMD = 1  # 19820607
+        FullMDY = 2
+        FullDMY = 3  # 07061982
+        Date = 4  # 0607
+        Year = 5
+        YM = 6  # Year + Month 198206
+        MY = 7  # Month + Year
+        Year2lastdigitsPlusDateMD = 8  # the last two digits of year + date in MD 820607
+        DateMDPlusYear2lastdigits = 9  # 060782 date in MD format + the last two digits of year
+        DateDMPlusYear2lastdigits = 10
+
+    class AccountType(Enum):
+        Full = 1  # icemoon12
+        LetterSegment = 2  # icemoon
+        DigitSegment = 3  # 12
+
+    class EmailPrefixType(Enum):
+        FullPreix = 1  # loveu1314 from loveu1314@aa.com
+        LetterSegment = 2  # loveu
+        DigitSegment = 3  # 1314
+
+    class PhoneNumberType(Enum):
+        FullNumber = 1
+        FirstThreeDigits = 2  # first three digits
+        LastFourDigits = 3
+
+    class IdCardNumberType(Enum):
+        Last4Digits = 1
+        First3Digits = 2
+        First6Digits = 3
 
 
 class CharacterType(Enum):
@@ -64,11 +113,22 @@ class KeyboardPosition:
 
 
 class PII:
-    def __init__(self, username: str = None, name: str = None, birthday: str = None, phoneNum: str = None):
-        self.username = username
-        self.name = name
-        self.birthday = birthday
+    def __init__(self, account: str = None,
+                 name: str = None,
+                 firstName: str = None,
+                 givenName: str = None,
+                 birthday: str = None,
+                 phoneNum: str = None,
+                 email: str = None,
+                 idcardNum=None):
+        self.name = name  # full name in any format
+        self.firstName = firstName  #
+        self.givenName = givenName  # split by space "zhong jie"
+        self.birthday = birthday  # YYYYMMDD format
+        self.account = account
+        self.email = email
         self.phoneNum = phoneNum
+        self.idcardNum = idcardNum # only digits
 
 
 class Segment:

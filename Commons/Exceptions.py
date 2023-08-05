@@ -17,3 +17,7 @@ class ApplicationException(Exception):
 class GeneratorException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class PIIParserException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

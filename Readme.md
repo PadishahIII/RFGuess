@@ -11,7 +11,12 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 
 ## Journal
 
-### PFGuess-PII(8.4)
+### RFGuess-PII PIIParsers(8.5)
+1. PIIFullTagParser: extract pii-tags with the given PII info
+2. parseStrToPIIVector: extract all PII structure representations of password s, output PIIVector list which can directly feed RF model
+3. *(TODO)*: LDS test and recursive algorithm test
+
+### RFGuess-PII(8.4)
 1. There is two choices in terms of password vector format, on the one hand, vectors only consist of type-based PII tag and character vector,
 the other option is compose type-based tag and length-based tag with no specific character participating the training phase. As for the latter, 
 the password "john@0728" would be parsed to "N4S1B4", at generating phase, "S1" will be addressed by selecting the top-10 most frequent fractions 
