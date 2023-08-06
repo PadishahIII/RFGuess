@@ -16,9 +16,6 @@ class Section(metaclass=ABCMeta):
         self.value = value
         self.keyboardPos = keyboardPos
 
-    @abstractmethod
-    def check(self):
-        pass
 
     def _tovector(self) -> list[int, int, int, int]:
         return [
@@ -42,7 +39,6 @@ class Datagram(metaclass=ABCMeta):
                  pwStr: str):
         super().__init__()
         self.pwStr = pwStr  # whole password string
-        self.validFeatureLen = -1  # number of characters not begin or end symbol
 
         self.offsetInPassword = offsetInPassword  # index of the last character of subPwStr in pwStr
         self.offsetInSegment = offsetInSegment
