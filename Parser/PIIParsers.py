@@ -6,16 +6,62 @@ import  Parser
 from Commons import BasicTypes
 from Commons import Exceptions
 from Context.Context import BasicContext
+from Parser.BasicParsers import BasicParser,BasicParserException
+from Parser import  PIIDataTypes
+
 
 CONTEXT = None
 
 '''
-Data Structures
+pii => parse pii tags from every pii field into respective PII types, get pii tag list 
+    for every pwStr => parse all representations of pwStr, get a list of representations
+                    => choose one representation of pwStr, convert it into Password
+                    => walk through and convert the Password into Datagrams
+        
+
 '''
 
-# class PIIExtended(BasicTypes.PII):
-#     def __init__(self, account: str = None, name: str = None, birthday: str = None, phoneNum: str = None):
-#         super().__init__(account=account, name=name, birthday=birthday, phoneNum=phoneNum)
+'''
+PII Parser
+'''
+class PIIParserException(BasicParserException):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
+class PIIParser(BasicParser):
+
+    def beforeParse(self):
+        if self.pii is None:
+            raise PIIParserException(f"pii field cannot be None")
+        super().beforeParse()
+
+    def afterParse(self):
+        super().afterParse()
+
+    @property
+    def pii(self):
+        return self._pii
+    @pii.setter
+    def pii(self, pii:BasicTypes.PII):
+        self._pii = pii
+
+    def buildDatagramList(self):
+        piiStructureParser = PIIStructureParser(self.pii)
+        piiStructure: PIIStructure = piiStructureParser.getPwPIIStructure(self.pwStr)
+        self.datagramList = list()
+        for representation in piiStructure.piiRepresentationList:
+            piiSectionList = list()
+            for vector in representation.piiVectorList:
+                piiSection = PIIDataTypes.PIISection(vector.piitype,vector.piivalue)
+                piiSectionList.append(piiSection)
+            PIIDataTypes.PIIDatagram()
+
+
+'''
+Data Structures
+'''
 
 # 4-dimension vector data used in model input and output
 class PIIVector:
@@ -483,27 +529,4 @@ def convertTagListToPIIVectorList(tagList: typing.List[Tag]) -> typing.List[PIIV
         l.append(vector)
     return l
 
-
-'''
-Feature vector builders
-'''
-
-class Datagram(BasicContext):
-    order = 6
-
-    def __init__(self, index:int, pwStr:str):
-        super().__init__()
-        self.context = Parser.PIIParsers.CONTEXT
-
-        self._plen = -1
-        self._password = pwStr
-        self.index = index
-        self._validFeatureLen = -1
-
-
-class PIITrainVectorBuilder:
-    def __init__(self, pii:BasicTypes.PII):
-        self._pii  = pii
-    def parseStandardVectorByPIIPw(self,pwStr:str):
-        pass
 
