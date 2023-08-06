@@ -2,18 +2,22 @@ import datetime
 import re
 import typing
 
+import  Parser
 from Commons import BasicTypes
 from Commons import Exceptions
 from Context.Context import BasicContext
 
 CONTEXT = None
 
+'''
+Data Structures
+'''
 
 # class PIIExtended(BasicTypes.PII):
 #     def __init__(self, account: str = None, name: str = None, birthday: str = None, phoneNum: str = None):
 #         super().__init__(account=account, name=name, birthday=birthday, phoneNum=phoneNum)
 
-
+# 4-dimension vector data used in model input and output
 class PIIVector:
     def __init__(self, s: str, piitype: BasicTypes.PIIType, piivalue: int):
         self.str: str = s
@@ -22,7 +26,53 @@ class PIIVector:
         self.row = 0
         self.col = 0
 
+    def _tojson(self):
+        obj = {
+            "PIIType": str(self.piitype) + f" {self.piitype.name}",
+            "s": self.str
+        }
+        return obj
 
+
+# A representation of password string, compose of several PIIVectors(containing LDS)
+class PIIRepresentation:
+    def __init__(self, l: typing.List[PIIVector]):
+        self.piiVectorList: typing.List[PIIVector] = l
+        self.len = len(self.piiVectorList)
+
+    def __len__(self):
+        return self.len
+
+    def _tojson(self):
+        l = list()
+        for vector in self.piiVectorList:
+            if vector != None:
+                l.append(vector._tojson())
+        return {
+            "vector number": self.len,
+            "vectors": l
+        }
+
+
+# All representations of password string, compose of PIIRepresentations in different length
+class PIIStructure:
+    def __init__(self, s: str, l: typing.List[PIIRepresentation]):
+        self.piiRepresentationList: typing.List[PIIRepresentation] = l
+        self.num = len(self.piiRepresentationList)
+        self.s = s
+
+    def __len__(self):
+        return self.num
+
+    def _tojson(self):
+        l = [x._tojson() for x in self.piiRepresentationList if x != None and len(x) > 0]
+        return {
+            "password string": self.s,
+            "representation number": self.num,
+            "representations": l
+        }
+
+# an intermediate within the process of parsing pii data into pii vector
 class Tag:
     def __init__(self, t: BasicTypes.PIIType, s: str):
         self.piitype = t
@@ -91,14 +141,11 @@ class PIITagContainer:
                 self._tagList.append(t)
 
 
-class Datagram(BasicContext):
-    pass
+'''
+Parsers
+'''
 
-
-class Password(BasicContext):
-    pass
-
-
+# generate extra data in common format
 class Fuzzers:
     @classmethod
     def swapFirstCase(cls, s: str):
@@ -132,17 +179,19 @@ class Fuzzers:
         return l
 
 
+# a functional static class to parse LDS segments
 class LDSStepper:
     @classmethod
     def checkLDSType(cls, s: str) -> BasicTypes.PIIType:
         c = s[0]
-        if s.isdigit():
-            return BasicTypes.PIIType.D
-        elif s.isalpha():
-            return BasicTypes.PIIType.L
+        if c.isdigit():
+            return BasicTypes.PIIType.BaseTypes.D
+        elif c.isalpha():
+            return BasicTypes.PIIType.BaseTypes.L
         else:
-            return BasicTypes.PIIType.S
+            return BasicTypes.PIIType.BaseTypes.S
 
+    # input a string, output all LDS segments in order
     @classmethod
     def getAllSegment(cls, s: str) -> typing.List[BasicTypes.LDSSegment]:
         l = list()
@@ -165,7 +214,7 @@ class LDSStepper:
 
         return l
 
-
+# static email parser
 class EmailParser:
 
     # return prefix, None means not in email format
@@ -177,6 +226,10 @@ class EmailParser:
         return m.group(1)
 
 
+# (second layer)parse a pii data into pii tags
+# nameFuzz: employ fuzz on certain pii types like birthday
+# pii: input pii data
+# employed by PIIStructure parser
 class PIIFullTagParser:
     def __init__(self, pii: BasicTypes.PII, nameFuzz=False):
         self._pii = pii
@@ -191,6 +244,8 @@ class PIIFullTagParser:
         return self._tagContainer
 
 
+# parse pii string into pii tag
+# e.g. 19820607 => dict[BirthdayType: list of all fuzz strings
 class PIIToTagParser:
     # parse pii into tags
     # pii with birthday = 19820607 => BirthdayType:value
@@ -255,10 +310,10 @@ class PIIToTagParser:
         letterSegment = None
         digitSegment = None
         for seg in segList:
-            if seg.type == BasicTypes.PIIType.L:
+            if seg.type == BasicTypes.PIIType.BaseTypes.L:
                 if letterSegment is None:
                     letterSegment = seg
-            elif seg.type == BasicTypes.PIIType.D:
+            elif seg.type == BasicTypes.PIIType.BaseTypes.D:
                 if digitSegment is None:
                     digitSegment = seg
         if letterSegment is None and digitSegment is None:
@@ -282,10 +337,10 @@ class PIIToTagParser:
         letterSeg = None
         digitSeg = None
         for seg in segList:
-            if seg.type == BasicTypes.PIIType.L:
+            if seg.type == BasicTypes.PIIType.BaseTypes.L:
                 if letterSeg is None:
                     letterSeg = seg
-            elif seg.type == BasicTypes.PIIType.D:
+            elif seg.type == BasicTypes.PIIType.BaseTypes.D:
                 if digitSeg is None:
                     digitSeg = seg
         if letterSeg is None and digitSeg is None:
@@ -298,7 +353,7 @@ class PIIToTagParser:
         return d
 
     @classmethod
-    def parsePhoneNumToTagDict(cls, phoneNum: str) -> typing.Dict[BasicTypes.PIIType.PhoneNumber, list]:
+    def parsePhoneNumToTagDict(cls, phoneNum: str) -> typing.Dict[BasicTypes.PIIType.BaseTypes.PhoneNumber, list]:
         if not phoneNum.isdigit():
             raise Exceptions.PIIParserException(f"Invaild phone nubmer: {phoneNum}")
         d = dict()
@@ -319,6 +374,14 @@ class PIIToTagParser:
 
         return d
 
+# (top layer) bound a pii data, parse password string into PIIStructure which can directly feed RF model
+# constructor: given a pii data bounded to the parser
+# getPwPIIStructure: given a password string, output the PIIStructure which contains all vectors about this password
+class PIIStructureParser:
+    def __init__(self, pii:BasicTypes.PII):
+        self._pii = pii
+    def getPwPIIStructure(self, pwStr:str)-> PIIStructure:
+        return parseStrToPIIStructure(pwStr,self._pii)
 
 # Fullname, Abbr, or None(abbr has nothing with name)
 def checkPIINameType(name: str, abbr: str) -> BasicTypes.PIIType.NameType:
@@ -344,37 +407,103 @@ def checkPIINameType(name: str, abbr: str) -> BasicTypes.PIIType.NameType:
         return None
 
 
+
 # All PII structure representations of password s
-#
-def parseStrToPIIVector(pwStr: str, pii: BasicTypes.PII) -> typing.List[PIIVector]:
+# PII type contains LDS
+def parseStrToPIIStructure(pwStr: str, pii: BasicTypes.PII) -> PIIStructure:
     parser = PIIFullTagParser(pii)
     parser.parseTag()
     tagList = parser._tagContainer.getTagList()
-    representationList = list()
-    gen = parseAllPIITagRecursive(tagList, pwStr, list())
-    for l in gen:
-        representationList.append(l)
-    piiVectorlist = convertTagListToPIIVectorList(representationList)
-    return piiVectorlist
+    tagRepresentationList: typing.List[typing.List[Tag]] = list()
+    # gen = parseAllPIITagRecursive(tagList, pwStr, list())
+    # for l in gen:
+    #     tagRepresentationList.append(l)
+    parseAllPIITagRecursive(tagList, pwStr, list(), tagRepresentationList)
+    piiRepresentationList = list()
+    for l in tagRepresentationList:
+        piiVectorList = convertTagListToPIIVectorList(l)
+        representation = PIIRepresentation(piiVectorList)
+        piiRepresentationList.append(representation)
+    piiStructure = PIIStructure(pwStr, piiRepresentationList)
+    return piiStructure
 
 
-def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typing.List[Tag]):
+# ldsStepNum: current LDS number
+# ldsType: current LDS type
+def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typing.List[Tag],
+                            outputList: typing.List[typing.List[Tag]],
+                            # ldsStepNum:int = 0,
+                            ldsType: BasicTypes.PIIType = None,
+                            ldsStr: str = ""):
     if len(pwStr) <= 0:
-        yield curTags
+        # flush the last LDS segment
+        if ldsType is not None:
+            tag = Tag(ldsType, ldsStr)
+            curTags.append(tag)
+        outputList.append(curTags)
+        return
     candidates: typing.List[Tag] = list()
     for tag in tagList:
         if pwStr.startswith(tag.s):
             candidates.append(tag)
-    for tag in candidates:
-        s = len(tag.s)
-        newPwStr = pwStr[s:]  # remove tag prefix
-        curTags.append(tag)
-        parseAllPIITagRecursive(tagList, pwStr=newPwStr, curTags=curTags)
+    if len(candidates) <= 0:
+        # LDS stepper
+        newLdsType = LDSStepper.checkLDSType(pwStr[0])
+        if ldsType is not None and newLdsType != ldsType:
+            # LDS type changed, push old segment into curTags
+            tag = Tag(ldsType, ldsStr)
+            curTags.append(tag)
+            ldsStr = ""
+        ldsStr += pwStr[0]
+        newPwStr = pwStr[1:]
+        parseAllPIITagRecursive(tagList, pwStr=newPwStr, curTags=curTags, outputList=outputList,
+                                # ldsStepNum=ldsStepNum,
+                                ldsType=newLdsType,
+                                ldsStr=ldsStr)
+    else:
+        # flush LDS stepper when meet pii segment
+        if ldsType is not None:
+            tag = Tag(ldsType, ldsStr)
+            curTags.append(tag)
+            ldsType = None
+            ldsStr = ""
+        for tag in candidates:
+            s = len(tag.s)
+            newPwStr = pwStr[s:]  # remove tag prefix
+            curTags.append(tag)
+            parseAllPIITagRecursive(tagList, pwStr=newPwStr, curTags=curTags, outputList=outputList,
+                                    ldsType=ldsType,
+                                    ldsStr=ldsStr)
 
-
+# convert tag list into vector list
 def convertTagListToPIIVectorList(tagList: typing.List[Tag]) -> typing.List[PIIVector]:
     l = list()
     for tag in tagList:
         vector = PIIVector(tag.s, piitype=tag.piitype, piivalue=tag.piitype.value)
         l.append(vector)
     return l
+
+
+'''
+Feature vector builders
+'''
+
+class Datagram(BasicContext):
+    order = 6
+
+    def __init__(self, index:int, pwStr:str):
+        super().__init__()
+        self.context = Parser.PIIParsers.CONTEXT
+
+        self._plen = -1
+        self._password = pwStr
+        self.index = index
+        self._validFeatureLen = -1
+
+
+class PIITrainVectorBuilder:
+    def __init__(self, pii:BasicTypes.PII):
+        self._pii  = pii
+    def parseStandardVectorByPIIPw(self,pwStr:str):
+        pass
+

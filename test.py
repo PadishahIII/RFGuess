@@ -226,18 +226,23 @@ def piiParserTest():
                          phoneNum="13222245678",
                          email="3501111asd11@qq.com",
                          idcardNum="1213213213")
-    parser = PIIFullTagParser(pii,nameFuzz=True)
+    pw1 = "qwe123ryhang0607yuiyzj123wqer!@#"
+    parser = PIIFullTagParser(pii, nameFuzz=True)
     parser.parseTag()
     tagContainer: PIITagContainer = parser.getTagContainer()
     tagList: typing.List[Tag] = tagContainer.getTagList()
     i = 1
     for tag in tagList:
         print(f"Tag id:{i}")
-        print(f"\tType:{str(tag.piitype.__class__)+str(tag.piitype.name)}")
+        print(f"\tType:{str(tag.piitype.__class__) + str(tag.piitype.name)}")
         print(f"\tValue:{tag.piitype.value}")
         print(f"\tString:{tag.s}")
         print("")
         i += 1
+    piiStructureParser = PIIStructureParser(pii)
+    piiStructure: PIIStructure = piiStructureParser.getPwPIIStructure(pw1)
+    json_str = json.dumps(piiStructure._tojson(), indent=2)
+    print(f"pii structure:\n{json_str}")
 
     # app.registerComponent(RFTrainner, features, labels)
 
