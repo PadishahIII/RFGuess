@@ -4,7 +4,7 @@ from Context.Context import BasicContext
 from Parser import BasicDataTypes
 
 
-# Parser: convert single data unit in dataset into feature vector and label
+# Parser: convert single data unit of dataset into feature vector and label
 
 # Given a password string, output a feature vector list which contains 26-dim vectors
 # and a label list, simply input (featureList,labelList) to model

@@ -4,6 +4,9 @@ from abc import abstractmethod, ABCMeta
 from Commons import BasicTypes
 
 
+# Dataset: a bunch of Dataunit
+#   Dataunit: a single item in dataset, e.g. (pwStr) in trawling mode and (pwStr,pii) in PII mode
+
 # Password: a set of 26-dim vectors expressed by several Datagrams
 #   Datagram: a 26-dim vector expressed by several Sections
 #       Section: a 4-dim vector expressed by (type,value,row,col)
@@ -75,3 +78,12 @@ class Password(metaclass=ABCMeta):
             "datagramNum": len(self.datagramList),
             "datagrams": [x._tojson() for x in self.datagramList if x is not None]
         }
+
+class DataUnit(metaclass=ABCMeta):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+class DataSet(metaclass=ABCMeta):
+    def __init__(self) -> None:
+        super().__init__()

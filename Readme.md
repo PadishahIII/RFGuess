@@ -14,7 +14,7 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 ### RFGuess-PII foreground dataset handler(8.6)
 1. PIIStructureParser: given pii and password string, output all vectors (LDS mode)
 2. PIIParsers.py: *(TODO)* select a representation of pwStr, convert into Password, walk through and get Datagram list
-3. Refactor PasswordParser to fit the new disign structure
+3. *(TODO)* Refactor PasswordParser to fit the new design structure
 
 ### RFGuess-PII PIIParsers(8.5)
 1. PIIFullTagParser: extract pii-tags with the given PII info
