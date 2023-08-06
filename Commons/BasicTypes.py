@@ -12,15 +12,16 @@ class LDSSegment:
 
 
 class PIIType:
-    Name = 1000
-    Birthday = 2000
-    Account = 3000
-    Email = 4000
-    PhoneNumber = 5000
-    IdCardNumber = 6000
-    L = 7000
-    D = 8000
-    S = 9000
+    class BaseTypes(Enum):
+        Name = 1000
+        Birthday = 2000
+        Account = 3000
+        Email = 4000
+        PhoneNumber = 5000
+        IdCardNumber = 6000
+        L = 7000
+        D = 8000
+        S = 9000
 
     class NameType(Enum):
         FullName = 1
@@ -128,7 +129,7 @@ class PII:
         self.account = account
         self.email = email
         self.phoneNum = phoneNum
-        self.idcardNum = idcardNum # only digits
+        self.idcardNum = idcardNum  # only digits
 
 
 class Segment:

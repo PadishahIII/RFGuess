@@ -79,7 +79,7 @@ class Datagram(BasicContext):
         self._plen = -1  # password len
         self._password = passwordStr
         self._sub = ""
-        self.index = index
+        self.index = index # equal to offsetInPassword
         self._validFeatureLen = -1  # number of characters not begin or end symbol
 
         self.featureList: typing.List[
