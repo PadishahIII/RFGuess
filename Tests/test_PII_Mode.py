@@ -18,7 +18,7 @@ class TestPIIParsers(TestCase):
         a6 = "at5"
         a7 = "ag5t"
 
-        pii = BasicTypes.PII(account="user123!@#",
+        pii = BasicTypes.PII(account="yhang0607",
                              name="yhangzhongjie",
                              firstName="yhang",
                              givenName="zhong jie",
@@ -32,17 +32,21 @@ class TestPIIParsers(TestCase):
         tagContainer: PIITagContainer = parser.getTagContainer()
         tagList: typing.List[Tag] = tagContainer.getTagList()
         i = 1
-        for tag in tagList:
-            print(f"Tag id:{i}")
-            print(f"\tType:{str(tag.piitype.__class__) + str(tag.piitype.name)}")
-            print(f"\tValue:{tag.piitype.value}")
-            print(f"\tString:{tag.s}")
-            print("")
-            i += 1
+        # for tag in tagList:
+        #     print(f"Tag id:{i}")
+        #     print(f"\tType:{str(tag.piitype.__class__) + str(tag.piitype.name)}")
+        #     print(f"\tValue:{tag.piitype.value}")
+        #     print(f"\tString:{tag.s}")
+        #     print("")
+        #     i += 1
         piiStructureParser = PIIStructureParser(pii)
         piiStructure: PIIStructure = piiStructureParser.getPwPIIStructure(pw1)
         json_str = json.dumps(piiStructure._tojson(), indent=2)
-        print(f"pii structure:\n{json_str}")
+        # print(f"pii structure:\n{json_str}")
+        tagParser = PIITagRepresentationStrParser()
+        print(f"Representations:")
+        for rep in piiStructure.piiRepresentationList:
+            print(tagParser.representationToStr(rep))
 
     def test_check_piiname_type(self):
         self.fail()

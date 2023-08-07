@@ -1,14 +1,13 @@
 import datetime
 import re
 import typing
+from copy import copy
 
-import  Parser
-from Commons import BasicTypes
+from Commons import BasicTypes, Utils
 from Commons import Exceptions
-from Context.Context import BasicContext
-from Parser.BasicParsers import BasicParser,BasicParserException
-from Parser import  PIIDataTypes
-
+from Commons.BasicTypes import PIIType
+from Parser import PIIDataTypes
+from Parser.BasicParsers import BasicParser, BasicParserException
 
 CONTEXT = None
 
@@ -24,6 +23,8 @@ pii => parse pii tags from every pii field into respective PII types, get pii ta
 '''
 PII Parser
 '''
+
+
 class PIIParserException(BasicParserException):
 
     def __init__(self, *args: object) -> None:
@@ -43,8 +44,9 @@ class PIIParser(BasicParser):
     @property
     def pii(self):
         return self._pii
+
     @pii.setter
-    def pii(self, pii:BasicTypes.PII):
+    def pii(self, pii: BasicTypes.PII):
         self._pii = pii
 
     def buildDatagramList(self):
@@ -54,7 +56,7 @@ class PIIParser(BasicParser):
         for representation in piiStructure.piiRepresentationList:
             piiSectionList = list()
             for vector in representation.piiVectorList:
-                piiSection = PIIDataTypes.PIISection(vector.piitype,vector.piivalue)
+                piiSection = PIIDataTypes.PIISection(vector.piitype, vector.piivalue)
                 piiSectionList.append(piiSection)
             PIIDataTypes.PIIDatagram()
 
@@ -62,6 +64,7 @@ class PIIParser(BasicParser):
 '''
 Data Structures
 '''
+
 
 # 4-dimension vector data used in model input and Output
 class PIIVector:
@@ -99,6 +102,9 @@ class PIIRepresentation:
             "vectors": l
         }
 
+    def __str__(self) -> str:
+        pass
+
 
 # All representations of password string, compose of PIIRepresentations in different length
 class PIIStructure:
@@ -117,6 +123,7 @@ class PIIStructure:
             "representation number": self.num,
             "representations": l
         }
+
 
 # an intermediate within the process of parsing pii data into pii vector
 class Tag:
@@ -191,6 +198,7 @@ class PIITagContainer:
 Parsers
 '''
 
+
 # generate extra data in common format
 class Fuzzers:
     @classmethod
@@ -259,6 +267,7 @@ class LDSStepper:
         l.append(seg)
 
         return l
+
 
 # static email parser
 class EmailParser:
@@ -420,14 +429,49 @@ class PIIToTagParser:
 
         return d
 
+
+# parse Tag to readable string like A1B2N3
+class PIITagRepresentationStrParser:
+    def __init__(self):
+        fromList = [PIIType.NameType, PIIType.BirthdayType, PIIType.AccountType, PIIType.IdCardNumberType,
+                    PIIType.EmailPrefixType, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S]
+        toList = ["N", "B", "A", "I", "E", "L", "D", "S"]
+        trans = Utils.translation.makeTrans(fromList, toList)
+        self.translation = trans
+
+    def representationToStr(self, rep: PIIRepresentation) -> str:
+        l = []
+        vectorList: list[PIIVector] = rep.piiVectorList
+        for vector in vectorList:
+            s = self.tagToStr(vector)
+            l.append(s)
+        ss = ",".join(l)
+        prefix = f"({len(l)})"
+        first = prefix + ss
+        second = "|".join(map(lambda x: x.str, vectorList))
+        res = f"{first}\n{second}\n"
+        return res
+
+    def tagToStr(self, vector: PIIVector) -> str:
+        typeCls = vector.piitype.__class__
+        if isinstance(vector.piitype, BasicTypes.PIIType.BaseTypes):
+            typeCls = vector.piitype
+        _len = len(vector.str)
+        s = self.translation.translate(typeCls)
+        ss = s + str(_len)
+        return ss
+
+
 # (top layer) bound a pii data, parse password string into PIIStructure which can directly feed RF model
 # constructor: given a pii data bounded to the parser
 # getPwPIIStructure: given a password string, Output the PIIStructure which contains all vectors about this password
 class PIIStructureParser:
-    def __init__(self, pii:BasicTypes.PII):
+    def __init__(self, pii: BasicTypes.PII):
         self._pii = pii
-    def getPwPIIStructure(self, pwStr:str)-> PIIStructure:
-        return parseStrToPIIStructure(pwStr,self._pii)
+
+    def getPwPIIStructure(self, pwStr: str) -> PIIStructure:
+        return parseStrToPIIStructure(pwStr, self._pii)
+
 
 # Fullname, Abbr, or None(abbr has nothing with name)
 def checkPIINameType(name: str, abbr: str) -> BasicTypes.PIIType.NameType:
@@ -451,7 +495,6 @@ def checkPIINameType(name: str, abbr: str) -> BasicTypes.PIIType.NameType:
         return BasicTypes.NameType.AbbrName
     if ni >= ln:
         return None
-
 
 
 # All PII structure representations of password s
@@ -502,7 +545,8 @@ def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typi
             ldsStr = ""
         ldsStr += pwStr[0]
         newPwStr = pwStr[1:]
-        parseAllPIITagRecursive(tagList, pwStr=newPwStr, curTags=curTags, outputList=outputList,
+        newCurTag = copy(curTags)
+        parseAllPIITagRecursive(tagList, pwStr=newPwStr, curTags=newCurTag, outputList=outputList,
                                 # ldsStepNum=ldsStepNum,
                                 ldsType=newLdsType,
                                 ldsStr=ldsStr)
@@ -517,9 +561,11 @@ def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typi
             s = len(tag.s)
             newPwStr = pwStr[s:]  # remove tag prefix
             curTags.append(tag)
-            parseAllPIITagRecursive(tagList, pwStr=newPwStr, curTags=curTags, outputList=outputList,
+            newCurTag = copy(curTags)
+            parseAllPIITagRecursive(tagList, pwStr=newPwStr, curTags=newCurTag, outputList=outputList,
                                     ldsType=ldsType,
                                     ldsStr=ldsStr)
+
 
 # convert tag list into vector list
 def convertTagListToPIIVectorList(tagList: typing.List[Tag]) -> typing.List[PIIVector]:
@@ -528,5 +574,3 @@ def convertTagListToPIIVectorList(tagList: typing.List[Tag]) -> typing.List[PIIV
         vector = PIIVector(tag.s, piitype=tag.piitype, piivalue=tag.piitype.value)
         l.append(vector)
     return l
-
-
