@@ -6,7 +6,7 @@ from Parser import BasicDataTypes
 
 # Parser: convert single data unit of dataset into feature vector and label
 
-# Given a password string, output a feature vector list which contains 26-dim vectors
+# Given a password string, Output a feature vector list which contains 26-dim vectors
 # and a label list, simply input (featureList,labelList) to model
 class BasicParser(BasicContext, metaclass=ABCMeta):
     def __init__(self, ctx, pwStr: str):

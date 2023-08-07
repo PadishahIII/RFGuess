@@ -3,7 +3,7 @@ from Parser import  BasicDataTypes
 from Parser import BasicParsers
 
 '''
-Factory: given a dataset, output feature list and label list, toppest layer
+Factory: given a dataset, Output feature list and label list, toppest layer
 Require:
     1. a Preprocessor to read file and preprocess dataset 
     2. a Parser to tackle every single data unit of the dataset  

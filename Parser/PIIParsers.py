@@ -63,7 +63,7 @@ class PIIParser(BasicParser):
 Data Structures
 '''
 
-# 4-dimension vector data used in model input and output
+# 4-dimension vector data used in model input and Output
 class PIIVector:
     def __init__(self, s: str, piitype: BasicTypes.PIIType, piivalue: int):
         self.str: str = s
@@ -237,7 +237,7 @@ class LDSStepper:
         else:
             return BasicTypes.PIIType.BaseTypes.S
 
-    # input a string, output all LDS segments in order
+    # input a string, Output all LDS segments in order
     @classmethod
     def getAllSegment(cls, s: str) -> typing.List[BasicTypes.LDSSegment]:
         l = list()
@@ -422,7 +422,7 @@ class PIIToTagParser:
 
 # (top layer) bound a pii data, parse password string into PIIStructure which can directly feed RF model
 # constructor: given a pii data bounded to the parser
-# getPwPIIStructure: given a password string, output the PIIStructure which contains all vectors about this password
+# getPwPIIStructure: given a password string, Output the PIIStructure which contains all vectors about this password
 class PIIStructureParser:
     def __init__(self, pii:BasicTypes.PII):
         self._pii = pii
