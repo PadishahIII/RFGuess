@@ -19,7 +19,6 @@ class Section(metaclass=ABCMeta):
         self.value = value
         self.keyboardPos = keyboardPos
 
-
     def _tovector(self) -> list[int, int, int, int]:
         return [
             int(self.type.value),
@@ -79,11 +78,95 @@ class Password(metaclass=ABCMeta):
             "datagrams": [x._tojson() for x in self.datagramList if x is not None]
         }
 
+
+# store a dict
+# comparable, hashable, printable
 class DataUnit(metaclass=ABCMeta):
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__()
+        self.properties = kwargs
 
+    def __eq__(self, o: object) -> bool:
+        return self.__hash__() == hash(o)
+
+    def get(self, key: str):
+        return self.properties.get(key)
+
+    def set(self, key: str, value):
+        self.properties[key] = value
+
+    def keys(self):
+        return self.properties.keys()
+
+    def items(self):
+        return self.properties.items()
+
+    def values(self):
+        return self.properties.values()
+
+    def __str__(self) -> str:
+        return str(self.properties)
+
+    def __hash__(self):
+        h = hash(tuple(self.values()))
+        return h
+
+
+# setKeyList: set name of properties
+# createUnit: input a value list, combine keyList, return a unit which contains a dict
+# push: push a unit into dataset
+# checkUnit: check before push a unit
+# resetUnitList: clear current dataset and re-push every unit in param
 class DataSet(metaclass=ABCMeta):
     def __init__(self) -> None:
         super().__init__()
+        self.keyList = list()
+        self.unitList: list[DataUnit] = []
+        self.row = 0
+        self._col = len(self.keyList)
+
+    def setKeyList(self, keylist: list):
+        self.keyList = keylist
+
+    def __len__(self):
+        return self.row
+
+    @property
+    def col(self):
+        return self._col
+
+    @col.setter
+    def col(self, c):
+        self._col = c
+
+    def push(self, unit: DataUnit):
+        if not self.checkUnit(unit):
+            raise DatasetException(f"Invaild Unit: {unit}")
+        self.unitList.append(unit)
+        self.row += 1
+
+    def getUnitList(self):
+        return self.unitList
+
+    def resetUnitList(self, unitlist: list[DataUnit]):
+        self.unitList.clear()
+        self.row = 0
+        for unit in unitlist:
+            self.push(unit)
+
+    @abstractmethod
+    def createUnit(self, valueList: list) -> DataUnit:
+        pass
+
+    @abstractmethod
+    def checkUnit(self, unit: DataUnit) -> bool:
+        pass
+
+    def __iter__(self):
+        return iter(self.unitList)
+
+
+class DatasetException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

@@ -30,7 +30,7 @@ class DTTrainner:
 
     def exportTree(self):
         print(tree.export_text(self._clf))
-        # data = tree.export_graphviz(self._clf, out_file="output/tree.png")
+        # data = tree.export_graphviz(self._clf, out_file="Output/tree.png")
         # graph = graphviz.Source(data)
         # graph.render("test")
 
