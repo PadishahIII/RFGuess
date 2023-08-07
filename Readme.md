@@ -10,6 +10,10 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 3. criterion='gini': CART decision tree
 
 ## Journal
+### RFGuess-PII foreground dataset handler and middle representation selector(8.7)
+1. Commons.Utils.py: add class translation
+2. *(TODO)* PIIParsers.py: recursive get all representation algorithm gets a wrong output
+
 
 ### RFGuess-PII foreground dataset handler(8.6)
 1. PIIStructureParser: given pii and password string, output all vectors (LDS mode)

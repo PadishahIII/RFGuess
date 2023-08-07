@@ -108,9 +108,46 @@ def getLabelByPassword(password: PasswordParsers.Password) -> typing.List[int]:
         resList.append(getLabel(datagram))
     return resList
 
-def parseStrToDatagram(s:str)->PasswordParsers.Datagram:
+
+def parseStrToDatagram(s: str) -> PasswordParsers.Datagram:
     p = PasswordParsers.Password(s)
     d = p.datagramList[-1]
     return d
 
 
+class translation:
+    def __init__(self, fromDict: dict, toDict: dict):
+        self.fromDict: dict = fromDict
+        self.toDict: dict = toDict
+
+    @classmethod
+    def makeTrans(cls, fromList: list, toList: list):
+        if len(fromList) != len(toList):
+            raise TranslationException(f"Error: fromList's length({len(fromList)}) not equal to toList({len(toList)})")
+        fromDict = {}
+        toDict = {}
+        for f in fromList:
+            h = hash(f)
+            fromDict[h] = f
+        for t in toList:
+            h = hash(t)
+            toDict[h] = t
+        return translation(fromDict, toDict)
+
+    def translate(self, fromObj):
+        h = hash(fromObj)
+        try:
+            fromIndex = list(self.fromDict.keys()).index(h)
+            if fromIndex >= 0:
+                toObj = list(self.toDict.values())[fromIndex]
+                return toObj
+            else:
+                raise TranslationException(f"Error: {fromObj} with hash {h} not in the translation dictionary")
+        except:
+            raise TranslationException(f"Error: {fromObj} with hash {h} not in the translation dictionary")
+
+
+class TranslationException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
