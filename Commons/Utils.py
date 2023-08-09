@@ -116,12 +116,27 @@ def parseStrToDatagram(s: str) -> PasswordParsers.Datagram:
 
 
 class translation:
-    def __init__(self, fromDict: dict, toDict: dict):
+    def __init__(self, fromDict: dict, toDict: dict) -> object:
+        """
+
+        Args:
+            fromDict: A hash map of the character list to be translated
+            toDict:
+        """
         self.fromDict: dict = fromDict
         self.toDict: dict = toDict
 
     @classmethod
     def makeTrans(cls, fromList: list, toList: list):
+        """*translation* class factory
+
+        Args:
+            fromList:
+            toList:
+
+        Returns:
+
+        """
         if len(fromList) != len(toList):
             raise TranslationException(f"Error: fromList's length({len(fromList)}) not equal to toList({len(toList)})")
         fromDict = {}

@@ -1,0 +1,11 @@
+site_name: My Docs
+
+theme:
+  name: "mkdocs"
+
+nav:
+  - index.md
+  - Test: test.md
+
+plugins:
+  - mkdocstrings
