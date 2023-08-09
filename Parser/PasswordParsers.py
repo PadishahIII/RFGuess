@@ -24,7 +24,7 @@ from Parser.CommonParsers import *
 CONTEXT = None
 
 
-# 4-dimensional vector for a single character
+# 4-dimensional vector for a single character.
 class CharacterVector(BasicContext):
     def __init__(self, ch, ctx=None) -> None:
         super().__init__()
