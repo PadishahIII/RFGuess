@@ -454,18 +454,28 @@ class PIITagRepresentationStrParser:
 
     def tagToStr(self, vector: PIIVector) -> str:
         typeCls = vector.piitype.__class__
+        _len = len(vector.str)
+        if vector.piitype in (BasicTypes.PIIType.BaseTypes.L,BasicTypes.PIIType.BaseTypes.D,BasicTypes.PIIType.BaseTypes.S):
+            _value = _len
+
         if isinstance(vector.piitype, BasicTypes.PIIType.BaseTypes):
             typeCls = vector.piitype
-        _len = len(vector.str)
+            _value = _len
+        else:
+            _value = vector.piivalue
+
         s = self.translation.translate(typeCls)
-        ss = s + str(_len)
+        ss = s + str(_value)
         return ss
 
 
-# (top layer) bound a pii data, parse password string into PIIStructure which can directly feed RF model
-# constructor: given a pii data bounded to the parser
-# getPwPIIStructure: given a password string, Output the PIIStructure which contains all vectors about this password
+
 class PIIStructureParser:
+    """
+    (top layer) bound a pii data, parse password string into PIIStructure which can directly feed RF model
+    constructor: given a pii data bounded to the parser
+    getPwPIIStructure: given a password string, Output the PIIStructure which contains all vectors about this password
+    """
     def __init__(self, pii: BasicTypes.PII):
         self._pii = pii
 
@@ -473,8 +483,19 @@ class PIIStructureParser:
         return parseStrToPIIStructure(pwStr, self._pii)
 
 
-# Fullname, Abbr, or None(abbr has nothing with name)
+
 def checkPIINameType(name: str, abbr: str) -> BasicTypes.PIIType.NameType:
+    """
+
+    Check the type of `abbr` in terms of `name`. Including fullname, Abbr, or None(abbr has nothing with name)
+
+    Args:
+        name: full name base
+        abbr: the abbr of `name` to detect
+
+    Returns:
+        `NameType`
+    """
     ln = len(name)
     la = len(abbr)
     if ln < la:
@@ -497,9 +518,17 @@ def checkPIINameType(name: str, abbr: str) -> BasicTypes.PIIType.NameType:
         return None
 
 
-# All PII structure representations of password s
-# PII type contains LDS
 def parseStrToPIIStructure(pwStr: str, pii: BasicTypes.PII) -> PIIStructure:
+    """
+    Get all PII structure representations of password s(PII type contains LDS)
+
+    Args:
+        pwStr: password string for input
+        pii: pii data
+
+    Returns:
+        PIIStructure
+    """
     parser = PIIFullTagParser(pii)
     parser.parseTag()
     tagList = parser._tagContainer.getTagList()
@@ -517,13 +546,24 @@ def parseStrToPIIStructure(pwStr: str, pii: BasicTypes.PII) -> PIIStructure:
     return piiStructure
 
 
-# ldsStepNum: current LDS number
-# ldsType: current LDS type
 def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typing.List[Tag],
                             outputList: typing.List[typing.List[Tag]],
                             # ldsStepNum:int = 0,
                             ldsType: BasicTypes.PIIType = None,
                             ldsStr: str = ""):
+    """Get all representations of a password string
+
+    Args:
+        tagList: list of tags to match
+        pwStr: password string
+        curTags: current tag list, denote a building representation
+        outputList: *(output)*list of representations
+        ldsType: current LDS type
+        ldsStr: current LDS string
+
+    Returns:
+        a list of representations(denoting by `list[list[tag]]`)
+    """
     if len(pwStr) <= 0:
         # flush the last LDS segment
         if ldsType is not None:
@@ -560,15 +600,23 @@ def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typi
         for tag in candidates:
             s = len(tag.s)
             newPwStr = pwStr[s:]  # remove tag prefix
-            curTags.append(tag)
             newCurTag = copy(curTags)
+            newCurTag.append(tag)
             parseAllPIITagRecursive(tagList, pwStr=newPwStr, curTags=newCurTag, outputList=outputList,
                                     ldsType=ldsType,
                                     ldsStr=ldsStr)
 
 
-# convert tag list into vector list
 def convertTagListToPIIVectorList(tagList: typing.List[Tag]) -> typing.List[PIIVector]:
+    """
+    Convert tag list into vector list
+
+    Args:
+        tagList: list of `Tag`
+
+    Returns:
+        list of `PIIVector`
+    """
     l = list()
     for tag in tagList:
         vector = PIIVector(tag.s, piitype=tag.piitype, piivalue=tag.piitype.value)
