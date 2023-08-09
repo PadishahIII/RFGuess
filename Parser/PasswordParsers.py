@@ -1,4 +1,6 @@
-"""
+"""Password Parsers
+
+```plaintext
 Parse password string into a set of 26-dimension vectors
 class Password: [{Bs,Bs,Bs,Bs,Bs,Bs|a},{Bs,Bs,Bs,Bs,Bs,a|b}...{a,b,c,1,2,3|Es}]
                    |                |
@@ -7,7 +9,9 @@ class Password: [{Bs,Bs,Bs,Bs,Bs,Bs|a},{Bs,Bs,Bs,Bs,Bs,a|b}...{a,b,c,1,2,3|Es}]
            (4-dimension vector)
                 |______________________|
                        Datagram
+```
 """
+
 import Parser.PasswordParsers
 from Context.Context import BasicContext
 # UTILS = False
@@ -72,6 +76,14 @@ class Datagram(BasicContext):
     order = 6  # n-gram model
 
     def __init__(self, index: int, passwordStr: str, ctx=None) -> None:
+        """
+        Datagram
+
+        Args:
+            index:
+            passwordStr:
+            ctx:
+        """
         super().__init__()
         self.context = Parser.PasswordParsers.CONTEXT
         self._cp = self.context.getBean(CharacterParser)
