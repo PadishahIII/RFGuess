@@ -10,6 +10,11 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 3. criterion='gini': CART decision tree
 
 ## Journal
+### Dataset processor(8.11)
+1. Load 12306 dataset with 13w PII data and password into mysql database "dataset12306"
+2. *(TODO)* Parse fullName of PIIUnits and build the whole database
+3. *(TODO)* Convert PIIUnit into standard PII model 
+
 ### RFGuess-PII foreground dataset handler and middle representation selector(8.7)
 1. Commons.Utils.py: add class translation
 2. *(TODO)* PIIParsers.py: recursive get all representation algorithm gets a wrong output

@@ -1,0 +1,164 @@
+INFO:sqlalchemy.engine:key: email
+INFO:sqlalchemy.engine.Engine:SELECT DATABASE()
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:SELECT @@sql_mode
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:SELECT @@lower_case_table_names
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[generated in 0.00013s] (None, None, None, None, None, None, '')
+INFO:sqlalchemy.engine.Engine:ROLLBACK
+INFO:sqlalchemy.engine:key: email
+INFO:sqlalchemy.engine:key: email
+INFO:sqlalchemy.engine:key: email
+INFO:sqlalchemy.engine:key: email
+INFO:sqlalchemy.engine:key: email
+INFO:sqlalchemy.engine:key: email
+INFO:sqlalchemy.engine.Engine:SELECT DATABASE()
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:SELECT @@sql_mode
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:SELECT @@lower_case_table_names
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[generated in 0.00018s] ('274667266@qq.com', '6837605', '\u05a3\u04bb\ufffd\ufffd', '332522198705040011', '15068860664', 'z6837605', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.009674s ago] ('zaistar@163.com', 'tianxia512', '\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd', '35042619790906301X', '18105013289', 'chitang520', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.01369s ago] ('weizhongjie55@163.com', 'wzj27713', '\ufffd\ufffd\ufffd\u04bd\ufffd', '210602198711260513', '18707734000', 'wzj871126', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.01774s ago] ('xujsh2004@yahoo.com.cn', '19830307', '\ufffd\ufffd\ufffd\ufffd\u02a5', '340103198303072554', '18225513108', 'xujsh2012', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.02217s ago] ('793925564@qq.com', '793925564', '\ufffd\uefb8\ufffd\ufffd', '410183199307210015', '18024105681', 'lijingnan741', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.026s ago] ('chenkan588@163.com', 'chengkang', '\ufffd\ufffd\u0669', '362326198306270039', '18258288023', 'chenkan588', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.02979s ago] ('kangjie109@163.com', '159648sl', '\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd', '430503198706130038', '13716008430', 'kangjie109', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.03376s ago] ('a2135336@163.com', 'a2135336', '\ufffd\ufffd\ufffd\ufffd', '331081198601210014', '18888731462', 'cp165147', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.03735s ago] ('daqi1003@163.com', 'liudaqi', '\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd', '230103198509121352', '15810596619', 'daqi1003', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.04109s ago] ('779860552@qq.com', 'a26549828', '\ufffd\ufffd\ufffd\u04fa\ufffd', '120106199501191514', '13132110868', 'xiaoxubisheng', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:SELECT DATABASE()
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:SELECT @@sql_mode
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:SELECT @@lower_case_table_names
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[generated in 0.00021s] ('274667266@qq.com', '6837605', '÷£“ª∑Â', '332522198705040011', '15068860664', 'z6837605', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.007286s ago] ('zaistar@163.com', 'tianxia512', '≥ÿ…∆«‰', '35042619790906301X', '18105013289', 'chitang520', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.01271s ago] ('weizhongjie55@163.com', 'wzj27713', 'Œ¿÷“Ω‹', '210602198711260513', '18707734000', 'wzj871126', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.01678s ago] ('xujsh2004@yahoo.com.cn', '19830307', '–Ìº“ •', '340103198303072554', '18225513108', 'xujsh2012', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.02128s ago] ('793925564@qq.com', '793925564', '¿Óæ∏ƒ–', '410183199307210015', '18024105681', 'lijingnan741', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.02525s ago] ('chenkan588@163.com', 'chengkang', '≥¬Ÿ©', '362326198306270039', '18258288023', 'chenkan588', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.02887s ago] ('kangjie109@163.com', '159648sl', 'øµª¿ª‹', '430503198706130038', '13716008430', 'kangjie109', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.03296s ago] ('a2135336@163.com', 'a2135336', '≥ÿ≈Ù', '331081198601210014', '18888731462', 'cp165147', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.0375s ago] ('daqi1003@163.com', 'liudaqi', '¡ı¥Û∆Ê', '230103198509121352', '15810596619', 'daqi1003', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.04143s ago] ('779860552@qq.com', 'a26549828', '–Ì◊”∫¿', '120106199501191514', '13132110868', 'xiaoxubisheng', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:SELECT DATABASE()
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:SELECT @@sql_mode
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:SELECT @@lower_case_table_names
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:SELECT `PII`.id AS `PII_id`, `PII`.email AS `PII_email`, `PII`.account AS `PII_account`, `PII`.name AS `PII_name`, `PII`.`idCard` AS `PII_idCard`, `PII`.`phoneNum` AS `PII_phoneNum`, `PII`.password AS `PII_password`, `PII`.`fullName` AS `PII_fullName` 
+FROM `PII`
+INFO:sqlalchemy.engine.Engine:[generated in 0.00012s] ()
+INFO:sqlalchemy.engine.Engine:ROLLBACK
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:DELETE FROM `PII` WHERE `PII`.id = %s
+INFO:sqlalchemy.engine.Engine:[generated in 0.00014s] [(1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)  ... displaying 10 of 20 total bound parameter sets ...  (19,), (20,)]
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[generated in 0.00015s] ('274667266@qq.com', '6837605', '÷£“ª∑Â', '332522198705040011', '15068860664', 'z6837605', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.004302s ago] ('zaistar@163.com', 'tianxia512', '≥ÿ…∆«‰', '35042619790906301X', '18105013289', 'chitang520', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.008006s ago] ('weizhongjie55@163.com', 'wzj27713', 'Œ¿÷“Ω‹', '210602198711260513', '18707734000', 'wzj871126', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.01202s ago] ('xujsh2004@yahoo.com.cn', '19830307', '–Ìº“ •', '340103198303072554', '18225513108', 'xujsh2012', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.016s ago] ('793925564@qq.com', '793925564', '¿Óæ∏ƒ–', '410183199307210015', '18024105681', 'lijingnan741', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.01946s ago] ('chenkan588@163.com', 'chengkang', '≥¬Ÿ©', '362326198306270039', '18258288023', 'chenkan588', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.02299s ago] ('kangjie109@163.com', '159648sl', 'øµª¿ª‹', '430503198706130038', '13716008430', 'kangjie109', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.02645s ago] ('a2135336@163.com', 'a2135336', '≥ÿ≈Ù', '331081198601210014', '18888731462', 'cp165147', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.02984s ago] ('daqi1003@163.com', 'liudaqi', '¡ı¥Û∆Ê', '230103198509121352', '15810596619', 'daqi1003', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:INSERT INTO `PII` (email, account, name, `idCard`, `phoneNum`, password, `fullName`) VALUES (%s, %s, %s, %s, %s, %s, %s)
+INFO:sqlalchemy.engine.Engine:[cached since 0.03345s ago] ('779860552@qq.com', 'a26549828', '–Ì◊”∫¿', '120106199501191514', '13132110868', 'xiaoxubisheng', '')
+INFO:sqlalchemy.engine.Engine:COMMIT
