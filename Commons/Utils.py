@@ -166,3 +166,49 @@ class TranslationException(Exception):
 
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+from Scripts.databaseInit import PIIUnit
+from Commons.BasicTypes import PII
+
+
+def parsePIIUnitToPIIAndPwStr(unit: PIIUnit) -> (PII, str):
+    """
+    Convert PIIUnit into PII and password string
+
+    Args:
+        unit: input PIIUnit
+
+    Returns:
+        PII: PII object
+        str: password string
+    """
+
+    def getFirstName(name: str):
+        l = name.split()
+        n = l[0]
+        return n.strip()
+
+    def getGivenName(name: str):
+        l = name.partition(" ")
+        n = l[2]
+        if len(n) <= 0:
+            n = l[1]
+        return n.strip()
+
+    def getBirthday(idCard: str):
+        return idCard[-12:-4]
+
+    d = dict()
+
+    d['email'] = unit.email
+    d['account'] = unit.account
+    d['name'] = unit.name
+    d['firstName'] = getFirstName(unit.fullName)
+    d['givenName'] = getGivenName(unit.fullName)
+    d['birthday'] = getBirthday(unit.idCard)
+    d['phoneNum'] = unit.phoneNum
+    d['idcardNum'] = unit.idCard
+    pii = PII(**d)
+
+    return pii, unit.password
