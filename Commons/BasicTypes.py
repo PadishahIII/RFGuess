@@ -131,6 +131,9 @@ class PII:
         self.phoneNum = phoneNum
         self.idcardNum = idcardNum  # only digits
 
+    def __str__(self):
+        return str(self.__dict__)
+
 
 class Segment:
     def __init__(self, _type: CharacterType, start: int, end: int) -> None:
