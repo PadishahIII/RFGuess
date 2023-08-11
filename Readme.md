@@ -10,14 +10,19 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 3. criterion='gini': CART decision tree
 
 ## Journal
+### Dataset preprocessor refactor(8.12)
+1. Parser/BasicPreprocessor.py: refactor class `BasicPreprocessor`, add `FilePreprocessor` and `DatabasePreprocessor`
+2. Parser/PIIPreprocessor.py: refactor class `PIIPreprocessor`
+3. *(TODO)* test_PIIPreprocessor.py
+
 ### Dataset processor(8.11)
 1. Load 12306 dataset with 13w PII data and password into mysql database "dataset12306"
-2. *(TODO)* Parse fullName of PIIUnits and build the whole database
-3. *(TODO)* Convert PIIUnit into standard PII model 
+2. Parse fullName of PIIUnits and build the whole database
+3. *(Solved)* Commons/Utils.py: Convert PIIUnit into standard PII model 
 
 ### RFGuess-PII foreground dataset handler and middle representation selector(8.7)
 1. Commons.Utils.py: add class translation
-2. *(TODO)* PIIParsers.py: recursive get all representation algorithm gets a wrong output
+2. *(Solved)* PIIParsers.py: recursive get all representation algorithm gets a wrong output
 
 
 ### RFGuess-PII foreground dataset handler(8.6)
@@ -28,7 +33,7 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 ### RFGuess-PII PIIParsers(8.5)
 1. PIIFullTagParser: extract pii-tags with the given PII info
 2. parseStrToPIIVector: extract all PII structure representations of password s, output PIIVector list which can directly feed RF model
-3. *(TODO)*: LDS test and recursive algorithm test
+3. LDS test and recursive algorithm test
 
 ### RFGuess-PII(8.4)
 1. There is two choices in terms of password vector format, on the one hand, vectors only consist of type-based PII tag and character vector,

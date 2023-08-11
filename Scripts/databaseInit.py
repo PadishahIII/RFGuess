@@ -5,23 +5,23 @@ import re
 import sqlalchemy
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, validates
+from sqlalchemy.orm import sessionmaker, validates, scoped_session
 
-from Commons import jinjiaUtils
+from Commons import pinyinUtils
 
 Base = declarative_base()
-emailRst = re.compile(r"\w+@.+?")
+emailRst = re.compile(r".+?@.+?")
 lineRst = re.compile(
-    r"(?P<email>\w+@[^\-]+)----(?P<account>[^\-]+)----(?P<name>[^\-]+)----(?P<idCard>[^\-]+)----(?P<password>[^\-]+)----(?P<phoneNum>[^\-]+)----.*")
+    r"(?P<email>.+?@[^\-]+)----(?P<account>[^\-]+)----(?P<name>[^\-]+)----(?P<idCard>[^\-]+)----(?P<password>[^\-]+)----(?P<phoneNum>[^\-]+)----.*")
 
 logging.basicConfig(filename="database.log")
 logger = logging.getLogger("sqlalchemy.engine")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.CRITICAL)
 
 engine = sqlalchemy.create_engine(url="mysql://root:914075@localhost/dataset12306")
 
-
-# Session = sessionmaker(bind=engine)
+sessionFactory = sessionmaker(bind=engine)
+Session = scoped_session(sessionFactory)
 
 
 class PIIUnit(Base):
@@ -56,6 +56,26 @@ class PIIUnit(Base):
         self.phoneNum = phoneNum
         self.password = password
         self.fullName = fullName
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    @classmethod
+    def update(cls, a, b):
+        """
+        Update PIIUnit a with b
+
+        Args:
+            a: target unit to update
+            b:
+        """
+        a.email = b.email
+        a.account = b.account
+        a.name = b.name
+        a.idCard = b.idCard
+        a.phoneNum = b.phoneNum
+        a.password = b.password
+        a.fullName = b.fullName
 
     @validates('email')
     def validateEmail(self, key, email):
@@ -104,31 +124,76 @@ Basic database approach
 
 
 def Insert(pii: PIIUnit):
-    with Session(engine) as session:
+    with Session() as session:
         session.add(pii)
         session.commit()
 
 
 def QueryAll() -> list[PIIUnit]:
-    with Session(engine) as session:
+    with Session() as session:
         units = session.query(PIIUnit).all()
         return units
 
 
+def QueryWithLimit(offset: int = 0, limit: int = 1e6) -> list[PIIUnit]:
+    with Session() as session:
+        units = session.query(PIIUnit).offset(offset).limit(limit).all()
+        return units
+
+
 def UpdateFullName(name, fullname):
-    with Session(engine) as session:
+    with Session() as session:
         units = session.query(PIIUnit).filter_by(name=name).all()
         for unit in units:
             unit.fullName = fullname
         session.commit()
 
 
+def Update(unit: PIIUnit):
+    """
+    Update all units with the same `name` as unit given
+
+    Args:
+        unit:
+        session_:
+    """
+    with Session() as session:
+        if CheckExist(unit):
+            units = session.query(PIIUnit).filter_by(name=unit.name).all()
+            for u in units:
+                PIIUnit.update(u, unit)
+
+
 def DeleteAll():
-    with Session(engine) as session:
+    with Session() as session:
         units = QueryAll()
         for unit in units:
             session.delete(unit)
         session.commit()
+
+
+def CheckExist(unit: PIIUnit) -> bool:
+    with Session() as session:
+        units = session.query(PIIUnit).filter_by(name=unit.name).all()
+        if not units or len(units) <= 0:
+            return False
+        else:
+            return True
+
+
+def SmartInsert(unit: PIIUnit, update: bool = False):
+    """
+    Insert unit to table if not exists, else update units with the same `name`
+
+    Args:
+        unit:
+        update: if set to True, update the unit when existing, else ignore.
+    """
+    if CheckExist(unit):
+        if update:
+            Update(unit)
+    else:
+        Insert(unit)
 
 
 '''
@@ -157,7 +222,7 @@ def parseLineToPIIUnit(line: str) -> PIIUnit:
         d[k] = md[k]
     name = d['name']
     # get full name
-    fullname = jinjiaUtils.getFullName(name)
+    fullname = pinyinUtils.getFullName(name)
     d['fullName'] = fullname
     pii = PIIUnit(**d)
     return pii
@@ -174,7 +239,7 @@ Main logics
 '''
 
 
-def LoadDataset(file, start=0, limit=-1, clear=False):
+def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
     """
     Load dataset file into database
 
@@ -183,10 +248,26 @@ def LoadDataset(file, start=0, limit=-1, clear=False):
         start: line number to start
         limit: limitation of lines to load, -1 for no limit
         clear: whether clear the table before insert
+        update: update unit when already existing
     """
+    count = 0
+
+    def insertline(line, count):
+        try:
+            pii = parseLineToPIIUnit(line)
+            SmartInsert(pii, update)
+        except:
+            logger.critical(f"Exception occured. Restart at {count} to continue the process.")
+        if count % 100 == 0:
+            logger.critical(f"Completed: {count}")
+
     if not os.path.exists(file):
         raise LoadDatasetException(f"Error: invalid dataset path: {file}")
-    lines = []
+
+    # clear table
+    if clear:
+        DeleteAll()
+
     with open(file, encoding='gbk', errors="replace") as f:
         for i in range(start):
             f.readline()
@@ -194,21 +275,18 @@ def LoadDataset(file, start=0, limit=-1, clear=False):
             for i in range(limit):
                 line = f.readline()
                 if len(line) > 5:
-                    lines.append(line)
+                    count += 1
+                    insertline(line, count)
         else:
             # no limit
             line = f.readline()
-            while not line:
+            while line:
                 if len(line) > 5:
-                    lines.append(line)
+                    count += 1
+                    insertline(line, count)
                 line = f.readline()
-    # clear table
-    if clear:
-        DeleteAll()
-    # Insert into database
-    for line in lines:
-        pii = parseLineToPIIUnit(line)
-        Insert(pii)
+    logger.critical(f"number of data unit: {count}")
+    logger.critical(f"Have insert {count} PII data")
 
 
 class LoadDatasetException(Exception):
@@ -223,6 +301,12 @@ def BuildFullName():
     units = QueryAll()
     nameList = [unit.name for unit in units if unit]
     for name in nameList:
-        fullName = jinjiaUtils.getFullName(name)
+        fullName = pinyinUtils.getFullName(name)
         if fullName and len(fullName) > 0:
             UpdateFullName(name, fullName)
+
+
+def UnitGenerator(offset: int = 0, limit: int = 1e6):
+    units = QueryWithLimit(offset, limit)
+    for unit in units:
+        yield unit

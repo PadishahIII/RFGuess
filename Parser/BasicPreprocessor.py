@@ -2,9 +2,10 @@ import os
 from abc import ABCMeta, abstractmethod
 
 from Parser import BasicDataTypes
+from Scripts.databaseInit import Base
 
 '''
-Preprocessor: read from file, Output a dataset with uniform data unit
+Preprocessor: read from file or database, Output a dataset with uniform data unit
 Functions:
     1. filter: eliminate unsupported characters for every unit
     2. formatting: format every unit, like doing strip, or length cutting
@@ -13,7 +14,49 @@ Functions:
 
 
 class BasicPreProcessor(metaclass=ABCMeta):
+    """Ancestor of preprocessors
+
+    Attributes:
+        charset (set): set of supported characters
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.charset = set(
+            "1234567890-=!@#$%^&*()_+qwertyuiop[]\\QWERTYUIOP{}|asdfghjkl;'ASDFGHJKL:\"zxcvbnm,./ZXCVBNM<>?")
+
+    @abstractmethod
+    def preprocess(self):
+        pass
+
+    @abstractmethod
+    def getDataSet(self) -> BasicDataTypes.DataSet:
+        pass
+
+
+class FilePreProcessor(BasicPreProcessor, metaclass=ABCMeta):
+    """File preprocessor
+
+    Read data from file and save the preprocessed data into another file.
+    Dataset file format:
+        First line for title list, quote separated, example:
+        ```csv
+        name,birthday,email
+        JasonHarris, 1982-03-04, 350@qq.com
+        JasonHarris, 1982-03-04, 350@qq.com~
+        ```
+    """
+
     def __init__(self, initDataset, datasetFile: str, savePath: str, start: int = 0, limit: int = -1) -> None:
+        """
+
+        Args:
+            initDataset: input an initial DataSet object
+            datasetFile: file to read
+            savePath: path to save
+            start: line number to start with
+            limit: number of line limitation
+        """
         super().__init__()
         self.dataset: BasicDataTypes.DataSet = initDataset
         self.titleList = list()
@@ -97,7 +140,7 @@ class BasicPreProcessor(metaclass=ABCMeta):
         def unit2line(u: BasicDataTypes.DataUnit) -> str:
             return ",".join(u.values()) + "\n"
 
-        with open(self.savePath,"w", encoding="utf-8", errors="ignore") as f:
+        with open(self.savePath, "w", encoding="utf-8", errors="ignore") as f:
             datasetIter = iter(self.dataset)
             f.write(",".join(self.titleList) + "\n")
             i = 0
@@ -111,6 +154,77 @@ class BasicPreProcessor(metaclass=ABCMeta):
         s = set(l)
         newList = list(s)
         self.dataset.resetUnitList(newList)
+
+    def getDataSet(self) -> BasicDataTypes.DataSet:
+        return self.dataset
+
+
+class DatabasePreProcessor(BasicPreProcessor, metaclass=ABCMeta):
+
+    def __init__(self, initDataset: BasicDataTypes.DataSet, start: int = 0, limit: int = -1) -> None:
+        super().__init__()
+        self.dataset: BasicDataTypes.DataSet = initDataset
+        self.start = start
+        self.limit = limit
+
+        self.baseUnitList: list[Base] = list()  # raw unit from database
+
+    @abstractmethod
+    def baseUnit2DataUnit(self, baseUnit: Base) -> BasicDataTypes.DataUnit:
+        """
+        Convert database unit into DataUnit
+
+        Args:
+            baseUnit: the unit from database query result
+
+        Returns:
+            DataUnit: unit type in DataSet
+
+        """
+        pass
+
+    @abstractmethod
+    def formatUnit(self, unit: BasicDataTypes.DataUnit) -> BasicDataTypes.DataUnit:
+        pass
+
+    @abstractmethod
+    def loadFromDatabase(self):
+        """
+        Build baseUnitList
+        """
+        pass
+
+    @abstractmethod
+    def setKeyList(self):
+        """
+        Build keyList of dataset
+        """
+        pass
+
+    def preprocess(self):
+        self.loadFromDatabase()  # build self.baseUnitList
+        if len(self.baseUnitList) <= 0:
+            raise PreprocessorException(f"Error: get none data from database")
+        # set keyList
+        self.setKeyList()
+        # walk through
+        for baseUnit in self.baseUnitList:
+            # build data unit
+            dataUnit: BasicDataTypes.DataUnit = self.baseUnit2DataUnit(baseUnit)
+            newUnit = self.formatUnit(dataUnit)  # format unit here
+            self.dataset.push(newUnit)
+        # eliminate duplicate
+        self.eliminateDuplicate()
+
+    @abstractmethod
+    def eliminateDuplicate(self):
+        """
+        Eliminate duplicate in dataset
+        """
+        pass
+
+    def getDataSet(self) -> BasicDataTypes.DataSet:
+        return self.dataset
 
 
 class PreprocessorException(Exception):

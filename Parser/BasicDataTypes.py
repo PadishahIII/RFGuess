@@ -3,13 +3,14 @@ from abc import abstractmethod, ABCMeta
 
 from Commons import BasicTypes
 
+"""
+Dataset: a bunch of Dataunit
+   Dataunit: a single item in dataset, e.g. (pwStr) in trawling mode and (pwStr,pii) in PII mode
 
-# Dataset: a bunch of Dataunit
-#   Dataunit: a single item in dataset, e.g. (pwStr) in trawling mode and (pwStr,pii) in PII mode
-
-# Password: a set of 26-dim vectors expressed by several Datagrams
-#   Datagram: a 26-dim vector expressed by several Sections
-#       Section: a 4-dim vector expressed by (type,value,row,col)
+Password: a set of 26-dim vectors expressed by several Datagrams
+   Datagram: a 26-dim vector expressed by several Sections
+       Section: a 4-dim vector expressed by (type,value,row,col)
+"""
 
 
 class Section(metaclass=ABCMeta):
@@ -79,9 +80,11 @@ class Password(metaclass=ABCMeta):
         }
 
 
-# store a dict
-# comparable, hashable, printable
 class DataUnit(metaclass=ABCMeta):
+    """
+    DataUnit stores a property dict.
+    DataUnit is comparable, hashable, printable.
+    """
 
     def __init__(self, **kwargs) -> None:
         super().__init__()
@@ -113,12 +116,32 @@ class DataUnit(metaclass=ABCMeta):
         return h
 
 
-# setKeyList: set name of properties
-# createUnit: input a value list, combine keyList, return a unit which contains a dict
-# push: push a unit into dataset
-# checkUnit: check before push a unit
-# resetUnitList: clear current dataset and re-push every unit in param
 class DataSet(metaclass=ABCMeta):
+    """
+
+    DataSet is a set of unit, provides methods to build the dataset and is iterable.
+
+
+    Notes:
+        - Build a DataSet use `push` method
+        - Get units in DataSet use `iter(dataset)`
+
+    Attributes:
+        keyList (list): name of attributes in the unit
+        unitList (list): list of units
+        row (int): number of units
+        col (int): dimension of unit
+
+    Methods:
+        - `setKeyList(key-list)`: set name of properties
+        - `createUnit(value-list)`: input a value list, combine keyList, return a unit which contains a dict
+        - `push(DataUnit)`: push a unit into dataset
+        - `checkUnit(DataUnit)`: check before push a unit
+        - `resetUnitList(list)`: clear current dataset and re-push every unit in param
+    Raises:
+        DatasetException
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self.keyList = list()
@@ -141,6 +164,12 @@ class DataSet(metaclass=ABCMeta):
         self._col = c
 
     def push(self, unit: DataUnit):
+        """
+        Push a unit into dataset
+
+        Args:
+            unit (DataUnit): input unit
+        """
         if not self.checkUnit(unit):
             raise DatasetException(f"Invaild Unit: {unit}")
         self.unitList.append(unit)
@@ -150,6 +179,12 @@ class DataSet(metaclass=ABCMeta):
         return self.unitList
 
     def resetUnitList(self, unitlist: list[DataUnit]):
+        """
+        Clear current dataset and re-push every unit in param
+
+        Args:
+            unitlist (list[DataUnit]): units to re-push
+        """
         self.unitList.clear()
         self.row = 0
         for unit in unitlist:
@@ -157,10 +192,22 @@ class DataSet(metaclass=ABCMeta):
 
     @abstractmethod
     def createUnit(self, valueList: list) -> DataUnit:
+        """
+        Input a value list, combine keyList, return a unit which contains a dict
+
+        Args:
+            valueList (list): list of values in order of keyList
+        """
         pass
 
     @abstractmethod
     def checkUnit(self, unit: DataUnit) -> bool:
+        """
+        Check before push a unit
+
+        Args:
+            unit (DataUnit): input
+        """
         pass
 
     def __iter__(self):

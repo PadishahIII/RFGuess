@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from Commons import Utils
 from Commons.BasicTypes import PIIType
-
+from Scripts.databaseInit import PIIUnit
 
 class Testtranslation(TestCase):
     def test_make_trans(self):
@@ -20,3 +20,15 @@ class Testtranslation(TestCase):
 
     def test_translate(self):
         self.fail()
+
+    def test_parsePIIUnitToPII(self):
+        unit = PIIUnit(email="274667266@qq.com",
+                       account="6837605",
+                       idCard="332522198705040011",
+                       phoneNum="15068860664",
+                       name="郑一峰",
+                       password="z6837605",
+                       fullName="zheng yi feng")
+        pii, pwStr = Utils.parsePIIUnitToPIIAndPwStr(unit)
+        print(pii.__dict__)
+        print(f"pw:{pwStr}")
