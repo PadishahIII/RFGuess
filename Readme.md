@@ -13,7 +13,8 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 ### Dataset preprocessor refactor(8.12)
 1. Parser/BasicPreprocessor.py: refactor class `BasicPreprocessor`, add `FilePreprocessor` and `DatabasePreprocessor`
 2. Parser/PIIPreprocessor.py: refactor class `PIIPreprocessor`
-3. *(TODO)* test_PIIPreprocessor.py
+3. *(Solved)* test_PIIPreprocessor.py
+4. *(TODO)* Implement full PII algorithms and join up the `PIIParser` to `PIIPreprocessor`
 
 ### Dataset processor(8.11)
 1. Load 12306 dataset with 13w PII data and password into mysql database "dataset12306"

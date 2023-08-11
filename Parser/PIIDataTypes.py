@@ -22,6 +22,7 @@ class PIIDataUnit(BasicDataTypes.DataUnit):
         super().__init__(**(pii.__dict__))
         self.password = pwStr
         self.pii = pii
+        self.properties['password'] = self.password
 
     def getPII(self) -> BasicTypes.PII:
         """
