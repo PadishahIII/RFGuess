@@ -1,4 +1,7 @@
 # from Parser.PasswordParsers import PasswordParsers.Segment,PasswordParsers.Datagram,Password
+import base64
+import pickle
+
 import Commons.BasicTypes
 
 PARSERS = False
@@ -212,3 +215,19 @@ def parsePIIUnitToPIIAndPwStr(unit: PIIUnit) -> (PII, str):
     pii = PII(**d)
 
     return pii, unit.password
+
+
+class Serializer:
+    """
+    Serializer. Base64 encode the serialized bytes
+    """
+
+    @classmethod
+    def serialize(obj) -> str:
+        objSe = pickle.dumps(obj)
+        s = base64.b64encode(objSe).decode("utf-8")
+        return s
+
+    def deserialize(s: str) -> object:
+        obj = pickle.loads(base64.b64decode(s.encode("utf-8")))
+        return obj

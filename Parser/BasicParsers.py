@@ -47,11 +47,6 @@ class BasicParser(BasicContext, metaclass=ABCMeta):
     def buildFeatureList(self):
         pass
 
-    # fill feature list
-    @abstractmethod
-    def buildDatagramList(self):
-        pass
-
     # fill label list
     @abstractmethod
     def buildLabelList(self):

@@ -1,6 +1,8 @@
+import base64
 import json
+import pickle
 from unittest import TestCase
-
+import  clipboard
 # from PasswordParser import *
 from Parser.PIIParsers import *
 from Parser.PasswordParsers import *
@@ -47,6 +49,39 @@ class TestPIIParsers(TestCase):
         print(f"Representations:")
         for rep in piiStructure.piiRepresentationList:
             print(tagParser.representationToStr(rep))
+
+        rep = piiStructure.piiRepresentationList[1]
+        vector = rep.piiVectorList[0]
+        vectorSerialized = pickle.dumps(vector, )
+        print(f"vector se: {vectorSerialized}")
+        vectorSerializedB = base64.b64encode(vectorSerialized).decode("utf-8")
+        print(f"vector seB: {vectorSerializedB}")
+        vectorDe: PIIVector = pickle.loads(base64.b64decode(vectorSerializedB.encode("utf-8")))
+        print(f"vector re: {json.dumps(vectorDe._tojson(), indent=2)}")
+
+        def serialize(obj) -> str:
+            objSe = pickle.dumps(obj)
+            s = base64.b64encode(objSe).decode("utf-8")
+            return s
+
+        def deserialize(s: str) -> object:
+            obj = pickle.loads(base64.b64decode(s.encode("utf-8")))
+            return obj
+
+        repS = serialize(rep)
+        print(f"rep se: {repS}")
+        clipboard.copy(repS)
+        repRe = deserialize(repS)
+        print(f"rep re: {json.dumps(repRe._tojson(), indent=2)}")
+
+    def test_representationParse(self):
+        s = "N1B2L3S4D4"
+        pwStr = "zhangzhongjie06071982aaa!@#$1234"
+        parser = PIITagRepresentationStrParser()
+        rep: PIIRepresentation = parser.strToRepresentation(s)
+        print(json.dumps(rep._tojson(), indent=2))
+        repStr = parser.representationToStr(rep)
+        print(f"rep str: {repStr}")
 
     def test_check_piiname_type(self):
         self.fail()
