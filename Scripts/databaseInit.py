@@ -1,6 +1,9 @@
+import binascii
+import hashlib
 import logging
 import os
 import re
+from abc import ABCMeta, abstractmethod
 
 import sqlalchemy
 from sqlalchemy import Column, Integer, String
@@ -123,77 +126,101 @@ Basic database approach
 '''
 
 
-def Insert(pii: PIIUnit):
-    with Session() as session:
-        session.add(pii)
-        session.commit()
+class BasicManipulateMethods(metaclass=ABCMeta):
+    """Basic query methods
 
-
-def QueryAll() -> list[PIIUnit]:
-    with Session() as session:
-        units = session.query(PIIUnit).all()
-        return units
-
-
-def QueryWithLimit(offset: int = 0, limit: int = 1e6) -> list[PIIUnit]:
-    with Session() as session:
-        units = session.query(PIIUnit).offset(offset).limit(limit).all()
-        return units
-
-
-def UpdateFullName(name, fullname):
-    with Session() as session:
-        units = session.query(PIIUnit).filter_by(name=name).all()
-        for unit in units:
-            unit.fullName = fullname
-        session.commit()
-
-
-def Update(unit: PIIUnit):
     """
-    Update all units with the same `name` as unit given
 
-    Args:
-        unit:
-        session_:
-    """
-    with Session() as session:
-        if CheckExist(unit):
-            units = session.query(PIIUnit).filter_by(name=unit.name).all()
-            for u in units:
-                PIIUnit.update(u, unit)
+    def __init__(self, entityCls):
+        """
 
+        Args:
+            entityCls: class of entity
+        """
+        self.entityCls = entityCls
 
-def DeleteAll():
-    with Session() as session:
-        units = QueryAll()
-        for unit in units:
-            session.delete(unit)
-        session.commit()
+    @abstractmethod
+    def CheckExist(self, unit: Base) -> bool:
+        pass
 
+    @abstractmethod
+    def Update(self, unit: Base):
+        pass
 
-def CheckExist(unit: PIIUnit) -> bool:
-    with Session() as session:
-        units = session.query(PIIUnit).filter_by(name=unit.name).all()
-        if not units or len(units) <= 0:
-            return False
+    def Insert(self, obj: Base):
+        with Session() as session:
+            session.add(obj)
+            session.commit()
+
+    def QueryAll(self) -> list[Base]:
+        with Session() as session:
+            units = session.query(self.entityCls).all()
+            return units
+
+    def QueryWithLimit(self, offset: int = 0, limit: int = 1e6) -> list[Base]:
+        with Session() as session:
+            units = session.query(self.entityCls).offset(offset).limit(limit).all()
+            return units
+
+    def DeleteAll(self, ):
+        with Session() as session:
+            units = self.QueryAll()
+            for unit in units:
+                session.delete(unit)
+            session.commit()
+
+    def SmartInsert(self, unit: Base, update: bool = False):
+        """
+        Insert unit to table if not exists, else update units with the same `name`
+
+        Args:
+            unit:
+            update: if set to True, update the unit when existing, else ignore.
+        """
+        if self.CheckExist(unit):
+            if update:
+                self.Update(unit)
         else:
-            return True
+            self.Insert(unit)
 
 
-def SmartInsert(unit: PIIUnit, update: bool = False):
-    """
-    Insert unit to table if not exists, else update units with the same `name`
+'''
+PIIUnit query methods
+'''
 
-    Args:
-        unit:
-        update: if set to True, update the unit when existing, else ignore.
-    """
-    if CheckExist(unit):
-        if update:
-            Update(unit)
-    else:
-        Insert(unit)
+
+class PIIUnitQueryMethods(BasicManipulateMethods):
+    def __init__(self):
+        super().__init__(PIIUnit)
+
+    def UpdateFullName(self, name, fullname):
+        with Session() as session:
+            units = session.query(PIIUnit).filter_by(name=name).all()
+            for unit in units:
+                unit.fullName = fullname
+            session.commit()
+
+    def Update(self, unit: PIIUnit):
+        """
+          Update all units with the same `name` as unit given
+
+          Args:
+              unit:
+              session_:
+          """
+        with Session() as session:
+            if self.CheckExist(unit):
+                units = session.query(PIIUnit).filter_by(name=unit.name).all()
+                for u in units:
+                    PIIUnit.update(u, unit)
+
+    def CheckExist(self, unit: PIIUnit) -> bool:
+        with Session() as session:
+            units = session.query(PIIUnit).filter_by(name=unit.name).all()
+            if not units or len(units) <= 0:
+                return False
+            else:
+                return True
 
 
 '''
@@ -251,11 +278,12 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
         update: update unit when already existing
     """
     count = 0
+    queryMethods = BasicManipulateMethods()
 
     def insertline(line, count):
         try:
             pii = parseLineToPIIUnit(line)
-            SmartInsert(pii, update)
+            queryMethods.SmartInsert(pii, update)
         except:
             logger.critical(f"Exception occured. Restart at {count} to continue the process.")
         if count % 100 == 0:
@@ -266,7 +294,7 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
 
     # clear table
     if clear:
-        DeleteAll()
+        queryMethods.DeleteAll()
 
     with open(file, encoding='gbk', errors="replace") as f:
         for i in range(start):
@@ -298,15 +326,249 @@ def BuildFullName():
     """
     Update the fullName field of all table items.
     """
-    units = QueryAll()
+    queryMethods = PIIUnitQueryMethods()
+    units = queryMethods.QueryAll()
     nameList = [unit.name for unit in units if unit]
     for name in nameList:
         fullName = pinyinUtils.getFullName(name)
         if fullName and len(fullName) > 0:
-            UpdateFullName(name, fullName)
+            queryMethods.UpdateFullName(name, fullName)
 
 
 def UnitGenerator(offset: int = 0, limit: int = 1e6):
-    units = QueryWithLimit(offset, limit)
+    queryMethods = PIIUnitQueryMethods()
+    units = queryMethods.QueryWithLimit(offset, limit)
     for unit in units:
         yield unit
+
+
+'''
+Password representation unit
+'''
+
+
+class PwRepresentation(Base):
+    __tablename__ = "PwRepresentation"
+
+    id = Column(Integer, primary_key=True)
+    pwStr = Column(String)
+    representation = Column(String)
+    representationHash = Column(String)
+    hash = Column(String)
+
+    def __init__(self, pwStr: str, repStr: str):
+        super().__init__()
+        self.pwStr = pwStr
+        self.representation = repStr
+        self.representationHash = PwRepresentation.getHash(self.representation)
+        self.hash = PwRepresentation.getHash(self.pwStr + self.representation)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    @classmethod
+    def getHash(cls, s: str) -> str:
+        """
+        Get hash of representation
+
+        Args:
+            s:
+
+        Returns:
+
+        """
+        hashB = hashlib.md5(s.encode("utf8")).digest()
+        hashS = binascii.hexlify(hashB).decode("utf8")
+        return hashS
+
+    @classmethod
+    def update(cls, a, b):
+        """
+        Update a with b
+
+        Args:
+            a:
+            b:
+
+        Returns:
+
+        """
+        a.pwStr = b.pwStr
+        a.representation = b.representation
+        a.representationHash = b.representationHash
+        a.hash = b.hash
+
+    @validates('pwStr')
+    def validatePwStr(self, key, pwStr):
+        if len(pwStr) <= 0:
+            raise ValueError(f"Invalid pwStr: cannot be empty")
+        return pwStr
+
+    @validates('representation')
+    def validateRep(self, key, repStr):
+        if len(repStr) <= 0:
+            raise ValueError(f"Invalid representation string: cannot be empty")
+        return repStr
+
+    @validates('representationHash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return hashStr
+
+    @validates('hash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid whole hash: cannot be empty")
+        return hashStr
+
+
+class RepresentationMethods(BasicManipulateMethods):
+
+    def __init__(self):
+        super().__init__(PwRepresentation)
+
+    def QueryWithPwStr(self, pwStr: str) -> list[PwRepresentation]:
+        with Session() as session:
+            units = session.query(PwRepresentation).filter_by(pwStr=pwStr).all()
+            return units
+
+    def QueryWithRepresentationHash(self, repHash: str) -> list[PwRepresentation]:
+        """
+        Query with representation's hash
+        Args:
+            repHash:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(PwRepresentation).filter_by(representationHash=repHash).all()
+            return units
+
+    def QueryWithWholeHash(self, hashStr: str) -> list[PwRepresentation]:
+        """
+        Query with the hash of pwStr+representation
+
+        Args:
+            hashStr:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(PwRepresentation).filter_by(hash=hashStr).all()
+            return units
+
+    def Update(self, unit: PwRepresentation):
+        """
+        Update all units with the same `pwStr` as unit given
+
+        Args:
+            unit:
+
+        Returns:
+
+        """
+        with Session() as session:
+            if self.CheckExist(unit):
+                units = session.query(PwRepresentation).filter_by(pwStr=unit.pwStr).all()
+                for u in units:
+                    PwRepresentation.update(u, unit)
+
+    def CheckExist(self, unit: PwRepresentation) -> bool:
+        """
+        Check unit if exists in terms of hash of pwStr+representation namely `hash` field.
+
+        Args:
+            unit:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(PwRepresentation).filter_by(hash=unit.hash).all()
+            if not units or len(units) <= 0:
+                return False
+            else:
+                return True
+
+
+'''
+Representation Frequency Unit and QueryMethod 
+'''
+
+
+class RepresentationFrequency(Base):
+    __tablename__ = "representation_frequency_view"
+
+    frequency = Column(Integer,primary_key=True)
+    representationHash = Column(String)
+
+    def __init__(self, frequency: int, repHash: str):
+        super().__init__()
+        self.frequency = frequency
+        self.representationHash = repHash
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    @classmethod
+    def update(cls, a, b):
+        """
+        Update a with b
+
+        """
+        a.frequency = b.frequency
+        a.representationHash = b.representationHash
+
+    @validates('frequency')
+    def validateFrequency(self, key, fre: int):
+        if fre <= 0:
+            raise ValueError(f"Invalid frequency: must larger than 0")
+        return fre
+
+    @validates("representationHash")
+    def validateRepHash(self, key, h: str):
+        if len(h) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return h
+
+
+class RepresentationFrequencyMethods(BasicManipulateMethods):
+    def __init__(self):
+        super().__init__(RepresentationFrequency)
+
+    def QueryWithRepHash(self, hashStr: str) -> list[RepresentationFrequency]:
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(representationHash=hashStr).all()
+            return units
+
+    def QueryAllWithFrequencyDesc(self) -> list[RepresentationFrequency]:
+        """
+        Get all units with frequency in desc order
+
+        """
+        with Session() as session:
+            units = session.query(self.entityCls).order_by(RepresentationFrequency.frequency.desc())
+            return units
+
+    def Update(self, unit):
+        pass
+
+    def CheckExist(self, unit: RepresentationFrequency) -> bool:
+        """
+        Check unit if exists in terms of `representationHash`
+
+        Args:
+            unit:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(representationHash=unit.representationHash).all()
+            if not units or len(units) <= 0:
+                return False
+            else:
+                return True

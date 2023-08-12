@@ -14,6 +14,9 @@ Password: a set of 26-dim vectors expressed by several Datagrams
 
 
 class Section(metaclass=ABCMeta):
+    """
+    a 4-dim vector expressed by (type,value,row,col)
+    """
     def __init__(self, type, value, keyboardPos: BasicTypes.KeyboardPosition):
         super().__init__()
         self.type = type
@@ -38,6 +41,9 @@ class Section(metaclass=ABCMeta):
 
 
 class Datagram(metaclass=ABCMeta):
+    """
+    a 26-dim vector expressed by several Sections
+    """
     def __init__(self, sectionList: list[Section], label: typing.Any, offsetInPassword: int, offsetInSegment: int,
                  pwStr: str):
         super().__init__()
@@ -67,6 +73,9 @@ class Datagram(metaclass=ABCMeta):
 
 
 class Password(metaclass=ABCMeta):
+    """
+    a set of 26-dim vectors expressed by several Datagrams
+    """
     def __init__(self, pwStr: str, datagramList: list[Datagram]):
         super().__init__()
         self.datagramList: list[Datagram] = datagramList

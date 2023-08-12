@@ -10,6 +10,16 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 3. criterion='gini': CART decision tree
 
 ## Journal
+### PII algorithms(8.13)
+1. *(TODO)* Representation => DatagramList
+2. *(TODO)* Build a table to store the final representation of password
+3. Create `pwrepresentation` table to store passwords and corresponding representations
+4. Create `representation_frequency_view` view to store frequency of representations
+5. *(TODO)* Build `pwrepresentation` and `representation_frequency_view` tables with data
+6. Scripts/databaseInit.py: refactor the query code with an ancestor class `BasicManipulateMethods`, have added Entity
+type and QueryMethods for each table/view.
+
+
 ### Dataset preprocessor refactor(8.12)
 1. Parser/BasicPreprocessor.py: refactor class `BasicPreprocessor`, add `FilePreprocessor` and `DatabasePreprocessor`
 2. Parser/PIIPreprocessor.py: refactor class `PIIPreprocessor`

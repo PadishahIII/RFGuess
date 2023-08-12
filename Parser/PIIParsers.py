@@ -1,13 +1,14 @@
 import datetime
-import re
 import typing
 from copy import copy
+from enum import Enum
 
 from Commons import BasicTypes, Utils
 from Commons import Exceptions
 from Commons.BasicTypes import PIIType
 from Parser import PIIDataTypes
 from Parser.BasicParsers import BasicParser, BasicParserException
+from Scripts.databaseInit import *
 
 CONTEXT = None
 
@@ -21,52 +22,11 @@ pii => parse pii tags from every pii field into respective PII types, get pii ta
 '''
 
 '''
-PII Parser
-'''
-
-
-class PIIParserException(BasicParserException):
-
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-
-
-class PIIParser(BasicParser):
-
-    def beforeParse(self):
-        if self.pii is None:
-            raise PIIParserException(f"pii field cannot be None")
-        super().beforeParse()
-
-    def afterParse(self):
-        super().afterParse()
-
-    @property
-    def pii(self):
-        return self._pii
-
-    @pii.setter
-    def pii(self, pii: BasicTypes.PII):
-        self._pii = pii
-
-    def buildDatagramList(self):
-        piiStructureParser = PIIStructureParser(self.pii)
-        piiStructure: PIIStructure = piiStructureParser.getPwPIIStructure(self.pwStr)
-        self.datagramList = list()
-        for representation in piiStructure.piiRepresentationList:
-            piiSectionList = list()
-            for vector in representation.piiVectorList:
-                piiSection = PIIDataTypes.PIISection(vector.piitype, vector.piivalue)
-                piiSectionList.append(piiSection)
-            PIIDataTypes.PIIDatagram()
-
-
-'''
 Data Structures
 '''
 
 
-# 4-dimension vector data used in model input and Output
+# 4-dimension vector data used in model input and Output which is more representative than PIISection
 class PIIVector:
     def __init__(self, s: str, piitype: BasicTypes.PIIType, piivalue: int):
         self.str: str = s
@@ -192,6 +152,53 @@ class PIITagContainer:
             for i in v:
                 t = Tag(k, i)
                 self._tagList.append(t)
+
+
+'''
+PII Parser
+'''
+
+
+class PIIParserException(BasicParserException):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
+class PIIParser(BasicParser):
+    @classmethod
+    def parsePIIVectorToPIISection(cls, vector: PIIVector) -> PIIDataTypes.PIISection:
+        type = vector.piitype
+        value = vector.piivalue
+        section = PIIDataTypes.PIISection(type, value)
+        return section
+
+    def beforeParse(self):
+        if self.pii is None:
+            raise PIIParserException(f"pii field cannot be None")
+        super().beforeParse()
+
+    def afterParse(self):
+        super().afterParse()
+
+    @property
+    def pii(self):
+        return self._pii
+
+    @pii.setter
+    def pii(self, pii: BasicTypes.PII):
+        self._pii = pii
+
+    def buildDatagramList(self):
+        piiStructureParser = PIIStructureParser(self.pii)
+        piiStructure: PIIStructure = piiStructureParser.getPwPIIStructure(self.pwStr)
+        self.datagramList = list()
+        for representation in piiStructure.piiRepresentationList:
+            piiSectionList = list()
+            for vector in representation.piiVectorList:
+                piiSection = PIIDataTypes.PIISection(vector.piitype, vector.piivalue)
+                piiSectionList.append(piiSection)
+            PIIDataTypes.PIIDatagram()
 
 
 '''
@@ -433,13 +440,24 @@ class PIIToTagParser:
 # parse Tag to readable string like A1B2N3
 class PIITagRepresentationStrParser:
     def __init__(self):
-        fromList = [PIIType.NameType, PIIType.BirthdayType, PIIType.AccountType, PIIType.IdCardNumberType,
-                    PIIType.EmailPrefixType, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S]
-        toList = ["N", "B", "A", "I", "E", "L", "D", "S"]
-        trans = Utils.translation.makeTrans(fromList, toList)
-        self.translation = trans
+        piiTypeList = [PIIType.NameType, PIIType.BirthdayType, PIIType.AccountType, PIIType.IdCardNumberType,
+                       PIIType.EmailPrefixType, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S]
+        piiCharList = ["N", "B", "A", "I", "E", "L", "D", "S"]
+        trans = Utils.translation.makeTrans(piiTypeList, piiCharList)
+        self.translation = trans  # representation => str
+        reTrans = Utils.translation.makeTrans(piiCharList, piiTypeList)
+        self.reTranslation = reTrans  # str => representation
 
     def representationToStr(self, rep: PIIRepresentation) -> str:
+        """
+        Parse PIIRepresentation object into string like "N1B2L3S4D4'
+
+        Args:
+            rep:
+
+        Returns:
+
+        """
         l = []
         vectorList: list[PIIVector] = rep.piiVectorList
         for vector in vectorList:
@@ -453,9 +471,19 @@ class PIITagRepresentationStrParser:
         return res
 
     def tagToStr(self, vector: PIIVector) -> str:
+        """
+        Convert a PIIVector into string
+
+        Args:
+            vector:
+
+        Returns:
+
+        """
         typeCls = vector.piitype.__class__
         _len = len(vector.str)
-        if vector.piitype in (BasicTypes.PIIType.BaseTypes.L,BasicTypes.PIIType.BaseTypes.D,BasicTypes.PIIType.BaseTypes.S):
+        if vector.piitype in (
+                BasicTypes.PIIType.BaseTypes.L, BasicTypes.PIIType.BaseTypes.D, BasicTypes.PIIType.BaseTypes.S):
             _value = _len
 
         if isinstance(vector.piitype, BasicTypes.PIIType.BaseTypes):
@@ -468,6 +496,53 @@ class PIITagRepresentationStrParser:
         ss = s + str(_value)
         return ss
 
+    def strToRepresentation(self, s: str) -> PIIRepresentation:
+        """
+        (Deprecated)
+        Args:
+            s:
+
+        Returns:
+
+        """
+        if len(s) % 2 != 0:
+            raise PIITagRepresentationStrParserException(f"Error: representation string must have even length, {s}")
+        vectorList = list()
+        for i in range(0, len(s), 2):
+            vector = self.strToTag(s[i:i + 2])
+            vectorList.append(vector)
+        repr = PIIRepresentation(vectorList)
+        return repr
+
+    def strToTag(self, s: str) -> PIIVector:
+        """
+        (Deprecated)
+
+        Args:
+            s:
+
+        Returns:
+
+        """
+        if len(s) != 2 or not s[0].isalpha() or not s[1].isdigit():
+            raise PIITagRepresentationStrParserException(f"Error: invaild tag str: {s}")
+        ch = s[0]
+        di = s[1]
+        typeCls: Enum = self.reTranslation.translate(ch)
+        if typeCls in (BasicTypes.PIIType.BaseTypes.L, BasicTypes.PIIType.BaseTypes.D, BasicTypes.PIIType.BaseTypes.S):
+            piiTypeCls = typeCls
+        else:
+            piiTypeCls = typeCls._value2member_map_.get(int(di))
+
+        piiValue = int(di)
+        vector = PIIVector("", piiTypeCls, piiValue)
+        return vector
+
+
+class PIITagRepresentationStrParserException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 
 class PIIStructureParser:
@@ -476,12 +551,12 @@ class PIIStructureParser:
     constructor: given a pii data bounded to the parser
     getPwPIIStructure: given a password string, Output the PIIStructure which contains all vectors about this password
     """
+
     def __init__(self, pii: BasicTypes.PII):
         self._pii = pii
 
     def getPwPIIStructure(self, pwStr: str) -> PIIStructure:
         return parseStrToPIIStructure(pwStr, self._pii)
-
 
 
 def checkPIINameType(name: str, abbr: str) -> BasicTypes.PIIType.NameType:
@@ -622,3 +697,51 @@ def convertTagListToPIIVectorList(tagList: typing.List[Tag]) -> typing.List[PIIV
         vector = PIIVector(tag.s, piitype=tag.piitype, piivalue=tag.piitype.value)
         l.append(vector)
     return l
+
+
+'''
+Select a representation of password string
+'''
+
+
+class RepUnit:
+    """
+    A unit of representation, rep Hash and frequency
+    """
+
+    def __init__(self, repStr: str, repHash: str, frequency: int):
+        self.repStr = repStr
+        self.repHash = repHash
+        self.frequency = frequency
+
+
+class PIIRepresentationResolver:
+    """
+    select a representation of password
+    """
+
+    def __init__(self) -> None:
+        self.pwList = list()  # list of password string
+        self.repPriorityList: list[RepUnit] = list()  # list of repUnit in frequency-descending order
+        self.pwRepDict: dict[str, PIIRepresentation] = dict()  # (output) password with its unique representation
+
+    def checkPwRepMatch(self, pwStr: str, repUnit: RepUnit) -> bool:
+        """
+        Check whether `repUnit` is one of the representations of `pwStr`
+        Args:
+            pwStr:
+            repUnit:
+
+        Returns:
+
+        """
+        pass
+
+    def resolve(self):
+        """
+        Resolve the representations of all passwords
+
+        Returns:
+
+        """
+        pass
