@@ -10,7 +10,7 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, validates, scoped_session
 
-from Commons import pinyinUtils
+from Commons import pinyinUtils, Utils
 
 Base = declarative_base()
 emailRst = re.compile(r".+?@.+?")
@@ -251,8 +251,8 @@ def parseLineToPIIUnit(line: str) -> PIIUnit:
     # get full name
     fullname = pinyinUtils.getFullName(name)
     d['fullName'] = fullname
-    pii = PIIUnit(**d)
-    return pii
+    unit = PIIUnit(**d)
+    return unit
 
 
 class ParseLineException(Exception):
@@ -278,14 +278,26 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
         update: update unit when already existing
     """
     count = 0
-    queryMethods = BasicManipulateMethods()
+    queryMethods = BasicManipulateMethods(PIIUnit)
+
+    invalidLines = list()
+    exceptionList = list()
+    from Parser.PIIParsers import PIIStructureParser
 
     def insertline(line, count):
         try:
-            pii = parseLineToPIIUnit(line)
-            queryMethods.SmartInsert(pii, update)
-        except:
+            unit = parseLineToPIIUnit(line)
+
+            # check format
+            pii, pwStr = Utils.parsePIIUnitToPIIAndPwStr(unit)
+            piiParser = PIIStructureParser(pii)
+            piiStructure = piiParser.getPwPIIStructure(pwStr=pwStr)
+
+            queryMethods.SmartInsert(unit, update)
+        except Exception as e:
             logger.critical(f"Exception occured. Restart at {count} to continue the process.")
+            invalidLines.append(line)
+            exceptionList.append(e)
         if count % 100 == 0:
             logger.critical(f"Completed: {count}")
 
@@ -315,6 +327,12 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
                 line = f.readline()
     logger.critical(f"number of data unit: {count}")
     logger.critical(f"Have insert {count} PII data")
+    logger.critical(f"Invalid Lines ({len(invalidLines)}):")
+
+    for i in range(len(invalidLines)):
+        line = invalidLines[i]
+        exception = exceptionList[i]
+        print(f"{exception}:{line}")
 
 
 class LoadDatasetException(Exception):
@@ -503,10 +521,10 @@ class RepresentationFrequency(Base):
     __tablename__ = "representation_frequency_view"
 
     frequency = Column(Integer)
-    representationHash = Column(String,primary_key=True)
+    representationHash = Column(String, primary_key=True)
     representation = Column(String)
 
-    def __init__(self, frequency: int, repHash: str,repStr:str):
+    def __init__(self, frequency: int, repHash: str, repStr: str):
         """
 
         Args:
@@ -517,7 +535,7 @@ class RepresentationFrequency(Base):
         super().__init__()
         self.frequency = frequency
         self.representationHash = repHash
-        self.representation  = repStr
+        self.representation = repStr
 
     def __str__(self):
         return str(self.__dict__)
