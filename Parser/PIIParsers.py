@@ -35,6 +35,9 @@ class PIIVector:
         self.row = 0
         self.col = 0
 
+    def __copy__(self):
+        return PIIVector(s=self.str, piitype=self.piitype, piivalue=self.piivalue)
+
     def _tojson(self):
         obj = {
             "PIIType": str(self.piitype) + f" {self.piitype.name}",
@@ -51,6 +54,13 @@ class PIIRepresentation:
 
     def __len__(self):
         return self.len
+
+    def __copy__(self):
+        newVectorList = list()
+        for vector in self.piiVectorList:
+            newVector = copy(vector)
+            newVectorList.append(newVector)
+        return PIIRepresentation(newVectorList)
 
     def _tojson(self):
         l = list()
@@ -727,16 +737,16 @@ class RepUnit:
         self.repHash = repHash
         self.frequency = frequency
 
+
 class PwStructure:
     """
     Password string and list of its all representations.
 
     """
 
-    def __init__(self,pwStr:str, repList:list[PIIRepresentation]) -> None:
+    def __init__(self, pwStr: str, repList: list[PIIRepresentation]) -> None:
         self.pwStr = pwStr
-        self.repList:list[PIIRepresentation] = repList
-
+        self.repList: list[PIIRepresentation] = repList
 
 
 class PIIRepresentationResolver:

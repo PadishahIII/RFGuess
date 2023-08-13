@@ -24,7 +24,7 @@ class Test(TestCase):
         transformer = RepFrequencyTransformer.getInstance()
         repStrTransformer: RepStrPropertyTransformer = RepStrPropertyTransformer()
         repParser = PIITagRepresentationStrParser()
-        units: list[RepFrequencyUnit] = transformer.read(offset=0,limit=10)
+        units: list[RepFrequencyUnit] = transformer.read(offset=0, limit=10)
         priority = 0
         for unit in units:
             rep: PIIRepresentation = repStrTransformer.transform(unit)
@@ -39,3 +39,54 @@ class TestRepStrPropertyTransformer(TestCase):
 
     def test_de_transform(self):
         self.fail()
+
+
+class TestPwRepresentationTransformer(TestCase):
+    def test_get_pw_representation(self):
+        """
+        Two different password have identical representation, representation hash should also be identical
+
+        """
+        pii1 = BasicTypes.PII(account="account1",
+                              name="yhangzhongjie",
+                              firstName="yhang",
+                              givenName="zhong jie",
+                              birthday="19820607",
+                              phoneNum="13222245678",
+                              email="3501111asd11@qq.com",
+                              idcardNum="1213213213")
+        pw1 = "yhang888!@#account1"
+        pii2 = BasicTypes.PII(account="account2",
+                              name="zhangzhongjie",
+                              firstName="zhang",
+                              givenName="zhong jie",
+                              birthday="19820607",
+                              phoneNum="13222245678",
+                              email="3501111asd11@qq.com",
+                              idcardNum="1213213213")
+        pw2 = "zhang777%^&account2"
+
+        piiStructureParser1 = PIIStructureParser(pii1)
+        piiStructureParser2 = PIIStructureParser(pii2)
+
+        piiStructure1 = piiStructureParser1.getPwPIIStructure(pw1)
+        piiStructure2 = piiStructureParser2.getPwPIIStructure(pw2)
+
+        rep1 = piiStructure1.piiRepresentationList[0]
+        rep2 = piiStructure2.piiRepresentationList[0]
+
+        pr1: PwRepresentation = PwRepresentationTransformer.getPwRepresentation(pwStr=pw1, rep=rep1)
+        pr2: PwRepresentation = PwRepresentationTransformer.getPwRepresentation(pwStr=pw2, rep=rep2)
+
+        parser = PIITagRepresentationStrParser()
+
+        repStr1 = parser.representationToStr(rep1)
+        repStr2 = parser.representationToStr(rep2)
+
+        print(f"rep1:{repStr1}")
+        print(f"rep2:{repStr2}")
+
+        print(f"hash1:{pr1.representationHash}")
+        print(f"hash2:{pr2.representationHash}")
+
+        assert pr1.representationHash == pr2.representationHash
