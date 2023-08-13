@@ -502,13 +502,22 @@ Representation Frequency Unit and QueryMethod
 class RepresentationFrequency(Base):
     __tablename__ = "representation_frequency_view"
 
-    frequency = Column(Integer,primary_key=True)
-    representationHash = Column(String)
+    frequency = Column(Integer)
+    representationHash = Column(String,primary_key=True)
+    representation = Column(String)
 
-    def __init__(self, frequency: int, repHash: str):
+    def __init__(self, frequency: int, repHash: str,repStr:str):
+        """
+
+        Args:
+            frequency:
+            repHash:
+            repStr: serialized representation
+        """
         super().__init__()
         self.frequency = frequency
         self.representationHash = repHash
+        self.representation  = repStr
 
     def __str__(self):
         return str(self.__dict__)
@@ -521,6 +530,7 @@ class RepresentationFrequency(Base):
         """
         a.frequency = b.frequency
         a.representationHash = b.representationHash
+        a.representation = b.representation
 
     @validates('frequency')
     def validateFrequency(self, key, fre: int):
@@ -532,6 +542,12 @@ class RepresentationFrequency(Base):
     def validateRepHash(self, key, h: str):
         if len(h) <= 0:
             raise ValueError(f"Invalid representation hash: cannot be empty")
+        return h
+
+    @validates("representation")
+    def validateRepStr(self, key, h: str):
+        if len(h) <= 0:
+            raise ValueError(f"Invalid representation serialized data: cannot be empty")
         return h
 
 

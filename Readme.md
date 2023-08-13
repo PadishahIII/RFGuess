@@ -9,6 +9,41 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 2. n_estimators=30: 30 decision trees
 3. criterion='gini': CART decision tree
 
+## Tutorial for development
+### Database manipulation and preprocess
+There are two circumstances as for database-manipulation, one of which is about reading from the **primitive** database
+(e.g. PII datatable) and the other is for intermediate databases(namely, datatables employed by algorithms, e.g. datatable
+for representation frequency). Different classes are employed in each of circumstances.
+1. `Preprocessor`: preprocessors are dedicated in **reading** from **primitive** databases and do some preprocessing like eliminate duplicate or check fields. You can reach such classes
+in `Parsers` package. `BasicPreProcessor` is the ancestor class for all preprocessors deriving `FilePreProcessor` to read
+dataset from file and `DatabasePreProcessor` to load data from certain database. One can write self-defined preprocessors
+by extending one of the two basic preprocessors. There are some preprocessors ready to use in the password-guessing subject
+such as `PIIPreprocessor` which reads PII data from primitive PII dataset and employ certain preprocess functions.
+2. `DatabaseTranformer`: *transformer* usually serves as a proxy to the database-manipulation and also provide some transform
+methods between raw database unit(which is poorly representative) and more dedicated unit type used in facade algorithms.
+A transformer is bound to a certain *queryMethods*(derived from `BasicManipulateMethods` class) and usually includes an 
+intermediate unit class to describe database unit in a more expressive way, some transform methods (*classmethod* most of the time)
+and some proxy methods for its *queryMethods*. You can access all transformers in `Commons.DatabaseLayer` module.
+
+### Database access
+This section will introduce the database access wrappers at the lowest layer.
+Database manipulation in the project is based on `SQLAlchemy` repository, and provides a more powerful pattern to manipulate
+databases (source in `Scripts/databaseInit.py`). In general, the accession to a certain datatable requires a dataunit class derived from `Base` and a wrapper 
+to data-manipulate methods provided by `SQLAlchemy`. A basic class `BasicManipulateMethods` is defined as the ancestor of
+all data-manipulate wrappers which provides some interfaces with high usability (e.g. `SmartInsert`, `CheckExist`, etc).
+As for every datatable, there should be a *XXXQueryMethods* class extending `BasicManipulateMethods`, in which one should
+implement all the abstract methods demanded by the basic methods. For example, `RepresentationMethods` class is dedicated 
+for accessing data in *pwrepresentation* datatable using `PwRepresentation` type as dataunit.
+In addition, there may be some separate methods in `Scripts/databaseInit.py` providing certain single function like `parseLineToPIIUnit`
+method. It's not recommended to use those methods because they would be deprecated in the future. Always consider using 
+`BasicManipulateMethods` for high-level manipulations.  
+
+
+### Database build
+All database-building code is included in `Scripts/databaseInit.py`, which is the highest level methods for building databases.
+Raw PII dataset should be accessed and processed by `PreProcessor`. Intermediate datatables used in algorithms should manipulated
+by `DatabaseTransformer`.
+
 ## Journal
 ### PII algorithms(8.13)
 1. *(TODO)* Representation => DatagramList
