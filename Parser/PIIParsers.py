@@ -373,8 +373,7 @@ class PIIToTagParser:
 
             return d
         except Exception as e:
-            print(e)
-            raise Exceptions.PIIParserException(f"Invaild birthday format {birthday}")
+            raise Exceptions.PIIParserException(f"Invalid birthday format {birthday}. Parent exception:{str(e)}")
 
     @classmethod
     def parseAccountToTagDict(cls, account: str) -> typing.Dict[BasicTypes.PIIType.AccountType, list]:

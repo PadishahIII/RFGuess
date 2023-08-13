@@ -135,6 +135,16 @@ class PII:
         return str(self.__dict__)
 
 
+DefaultPII = PII(account="account",
+                 name="zhang san",
+                 firstName="zhang",
+                 givenName="san",
+                 birthday="20000607",
+                 email="defaultemail@email.com",
+                 idcardNum="130528200006076060",
+                 phoneNum="13222222222")
+
+
 class Segment:
     def __init__(self, _type: CharacterType, start: int, end: int) -> None:
         self.type = _type

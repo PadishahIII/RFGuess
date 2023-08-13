@@ -10,14 +10,14 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, validates, scoped_session
 
-from Commons import pinyinUtils, Utils
+from Commons import pinyinUtils
 
 Base = declarative_base()
 emailRst = re.compile(r".+?@.+?")
 lineRst = re.compile(
-    r"(?P<email>.+?@[^\-]+)----(?P<account>[^\-]+)----(?P<name>[^\-]+)----(?P<idCard>[^\-]+)----(?P<password>[^\-]+)----(?P<phoneNum>[^\-]+)----.*")
+    r"(?P<email>.+?@.+?)-{3,10}(?P<account>.+?)-{3,10}(?P<name>.+?)-{3,10}(?P<idCard>.+?)-{3,10}(?P<password>.+?)-{3,10}(?P<phoneNum>.+?)-{3,10}.*")
 
-logging.basicConfig(filename="database.log")
+logging.basicConfig()  # filename="database.log"
 logger = logging.getLogger("sqlalchemy.engine")
 logger.setLevel(logging.CRITICAL)
 
@@ -169,19 +169,24 @@ class BasicManipulateMethods(metaclass=ABCMeta):
                 session.delete(unit)
             session.commit()
 
-    def SmartInsert(self, unit: Base, update: bool = False):
+    def SmartInsert(self, unit: Base, update: bool = False) -> bool:
         """
         Insert unit to table if not exists, else update units with the same `name`
 
         Args:
             unit:
             update: if set to True, update the unit when existing, else ignore.
+        Returns:
+            bool: if really updated
         """
         if self.CheckExist(unit):
             if update:
                 self.Update(unit)
+                return True
         else:
             self.Insert(unit)
+            return True
+        return False
 
 
 '''
@@ -216,7 +221,7 @@ class PIIUnitQueryMethods(BasicManipulateMethods):
 
     def CheckExist(self, unit: PIIUnit) -> bool:
         with Session() as session:
-            units = session.query(PIIUnit).filter_by(name=unit.name).all()
+            units = session.query(PIIUnit).filter_by(account=unit.account).all()
             if not units or len(units) <= 0:
                 return False
             else:
@@ -240,7 +245,7 @@ def parseLineToPIIUnit(line: str) -> PIIUnit:
     newLine = line.strip().lstrip()
     m = lineRst.search(newLine)
     if not m:
-        raise ParseLineException(f"regex match failed: {line}")
+        raise ParseLineException(f"line regex match failed: {line}")
     d = dict()
     md = m.groupdict()
     for k in md.keys():
@@ -252,6 +257,7 @@ def parseLineToPIIUnit(line: str) -> PIIUnit:
     fullname = pinyinUtils.getFullName(name)
     d['fullName'] = fullname
     unit = PIIUnit(**d)
+
     return unit
 
 
@@ -278,13 +284,15 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
         update: update unit when already existing
     """
     count = 0
-    queryMethods = BasicManipulateMethods(PIIUnit)
+    updateCount = 0
+    queryMethods = PIIUnitQueryMethods()
 
     invalidLines = list()
     exceptionList = list()
     from Parser.PIIParsers import PIIStructureParser
-
-    def insertline(line, count):
+    from Commons import Utils
+    def insertline(line, count, directInsert: bool = False) -> bool:
+        updated = False
         try:
             unit = parseLineToPIIUnit(line)
 
@@ -292,14 +300,20 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
             pii, pwStr = Utils.parsePIIUnitToPIIAndPwStr(unit)
             piiParser = PIIStructureParser(pii)
             piiStructure = piiParser.getPwPIIStructure(pwStr=pwStr)
-
-            queryMethods.SmartInsert(unit, update)
+            if directInsert:
+                queryMethods.Insert(unit)
+                updated = True
+            else:
+                u = queryMethods.SmartInsert(unit, update)
+                updated = u
         except Exception as e:
             logger.critical(f"Exception occured. Restart at {count} to continue the process.")
             invalidLines.append(line)
             exceptionList.append(e)
+            return updated
         if count % 100 == 0:
             logger.critical(f"Completed: {count}")
+        return updated
 
     if not os.path.exists(file):
         raise LoadDatasetException(f"Error: invalid dataset path: {file}")
@@ -307,6 +321,7 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
     # clear table
     if clear:
         queryMethods.DeleteAll()
+    directInsert = clear
 
     with open(file, encoding='gbk', errors="replace") as f:
         for i in range(start):
@@ -316,17 +331,21 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
                 line = f.readline()
                 if len(line) > 5:
                     count += 1
-                    insertline(line, count)
+                    u = insertline(line, count, directInsert)
+                    if u:
+                        updateCount += 1
         else:
             # no limit
             line = f.readline()
             while line:
                 if len(line) > 5:
                     count += 1
-                    insertline(line, count)
+                    u = insertline(line, count, directInsert)
+                    if u:
+                        updateCount += 1
                 line = f.readline()
     logger.critical(f"number of data unit: {count}")
-    logger.critical(f"Have insert {count} PII data")
+    logger.critical(f"Have insert {count} PII data, updated: {updateCount}")
     logger.critical(f"Invalid Lines ({len(invalidLines)}):")
 
     for i in range(len(invalidLines)):
