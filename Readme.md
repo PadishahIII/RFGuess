@@ -63,7 +63,10 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 5. Scripts/buildDatabase.py: Build *pwrepresentation* datatable using `buildPwRepresentationTable` method: (**no duplicate**) **222937 items**
 6. *(TODO)* Commons/DatabaseLayer.py.`getPwRepresentation`: Representation hash should exclude vector str(part of pwStr). 
 Refactor the hash calculation process of database unit, and rebuild table `pwrepresentation` in *buildDatabase.py*
-7. *(TODO)* Illustrate the role and relationship of all data-structures, especially that of PII. 
+7. Access to test in *Tests/test_DatabaseLayer* in method `test_get_pw_representation`
+8. *(TODO)* Illustrate the role and relationship of all data-structures, especially that of PII. 
+9. *(Solved)* Overwrite the __copy__ method of `PIIRepresentation` to avoid mutate origin representation object when calculate
+hash
 
 ### PII algorithms(8.13)
 1. *(TODO)* Representation => DatagramList
