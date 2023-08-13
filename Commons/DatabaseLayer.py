@@ -1,5 +1,64 @@
+from Commons.Modes import Singleton
 from Commons.Utils import Serializer
 from Parser.PIIParsers import *
+
+'''
+Abstract properties
+'''
+
+
+class AbstractProperty(metaclass=ABCMeta):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+
+class RepStrProperty(AbstractProperty):
+    """
+    A abstract class which only contains 'repStr' property, namely representation serialized string
+    """
+
+    def __init__(self, repStr: str) -> None:
+        super().__init__()
+        self.repStr = repStr
+
+
+'''
+Property Transformers
+'''
+
+
+class BasicPropertyTransformer(Singleton, metaclass=ABCMeta):
+    """
+    Transform an abstract property into certain type, vice verse.
+    Singleton.
+    """
+
+    @abstractmethod
+    def transform(self, property: AbstractProperty) -> object:
+        pass
+
+    @abstractmethod
+    def deTransform(self, obj: object) -> AbstractProperty:
+        pass
+
+
+class RepStrPropertyTransformer(BasicPropertyTransformer):
+
+    def transform(self, property: RepStrProperty) -> PIIRepresentation:
+        repStr = property.repStr
+        rep: PIIRepresentation = Serializer.deserialize(repStr)
+        return rep
+
+    def deTransform(self, rep: PIIRepresentation) -> RepStrProperty:
+        repStr = Serializer.serialize(rep)
+        property = RepStrProperty(repStr)
+        return property
+
+
+'''
+Database transformers
+'''
 
 
 class DatabaseTransformer(metaclass=ABCMeta):
@@ -47,7 +106,7 @@ Transformer for `pwrepresentation` datatable and `representation_frequency_view`
 '''
 
 
-class PwRepUnit:
+class PwRepUnit(RepStrProperty):
     """Unit transformed corresponding to `pwrepresentation` dataunit
 
     Attributes:
@@ -58,13 +117,13 @@ class PwRepUnit:
     """
 
     def __init__(self, pwStr: str, rep: PIIRepresentation, repStr: str, repHash: str) -> None:
+        super().__init__(repStr)
         self.pwStr = pwStr
         self.rep = rep
-        self.repStr = repStr
         self.repHash = repHash
 
 
-class RepFrequencyUnit:
+class RepFrequencyUnit(RepStrProperty):
     """Unit transformed corresponding to `representation_frequency_view` dataview
 
     Attributes:
@@ -74,7 +133,7 @@ class RepFrequencyUnit:
     """
 
     def __init__(self, repStr: str, repHash: str, frequency: int) -> None:
-        self.repStr = repStr
+        super().__init__(repStr)
         self.repHash = repHash
         self.frequency = frequency
 
@@ -118,7 +177,11 @@ class PwRepresentationTransformer(DatabaseTransformer):
         Returns:
             PwRepresentation
         """
-        repStr = Serializer.serialize(rep)
+        newRep:PIIRepresentation = copy(rep)
+        # vector str(part of pwStr) will be excluded in hash calculation
+        for vector in newRep.piiVectorList:
+            vector.str = ""
+        repStr = Serializer.serialize(newRep)
         pr = PwRepresentation(pwStr=pwStr, repStr=repStr)
         return pr
 
@@ -142,7 +205,7 @@ class PwRepresentationTransformer(DatabaseTransformer):
     def Insert(self, pr: PwRepresentation):
         self.queryMethods.Insert(pr)
 
-    def SmartInsert(self,pr:PwRepresentation):
+    def SmartInsert(self, pr: PwRepresentation):
         self.queryMethods.SmartInsert(pr)
 
 
@@ -157,6 +220,7 @@ class RepFrequencyTransformer(DatabaseTransformer):
 
     def __init__(self, queryMethods: BasicManipulateMethods) -> None:
         super().__init__(queryMethods)
+        self.queryMethods: RepresentationFrequencyMethods = queryMethods
 
     @classmethod
     def getInstance(cls):
@@ -168,4 +232,12 @@ class RepFrequencyTransformer(DatabaseTransformer):
         return unit
 
     def read(self, offset: int = 0, limit: int = 1e7) -> list[RepFrequencyUnit]:
-        return super().read(offset, limit)
+        """
+        Get frequency priority queue
+
+        """
+        units: list[RepresentationFrequency] = self.queryMethods.QueryAllWithFrequencyDesc(offset=offset, limit=limit)
+        l = list()
+        for unit in units:
+            l.append(self.transform(unit))
+        return l

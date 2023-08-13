@@ -50,6 +50,9 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 ### Process dataset
 `Preprocessor`
 
+## Data Structures Explanation
+**TODO**
+
 
 ## Journal
 ### Database build(8.14)
@@ -58,6 +61,9 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 3. Commons/Utils.py: `parsePIIUnitToPIIAndPwStr` add PII fields check and default value
 4. Scripts/call_databaseInit.py: Build *pii* datatable using `test_load_dataset` method: there are duplicates in *pii* table, but it would not lead to any impact. **131653 items**
 5. Scripts/buildDatabase.py: Build *pwrepresentation* datatable using `buildPwRepresentationTable` method: (**no duplicate**) **222937 items**
+6. *(TODO)* Commons/DatabaseLayer.py.`getPwRepresentation`: Representation hash should exclude vector str(part of pwStr). 
+Refactor the hash calculation process of database unit, and rebuild table `pwrepresentation` in *buildDatabase.py*
+7. *(TODO)* Illustrate the role and relationship of all data-structures, especially that of PII. 
 
 ### PII algorithms(8.13)
 1. *(TODO)* Representation => DatagramList
