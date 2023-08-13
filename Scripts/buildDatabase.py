@@ -29,17 +29,23 @@ class BuildDatabase(TestCase):
 
         datasetIter: typing.Iterable[PIIDataUnit] = iter(dataset)
         i = 0
+        repCount = 0
+        updateCount = 0
         for unit in datasetIter:
             pii = unit.pii
             piiParser = PIIStructureParser(pii)
             piiStructure = piiParser.getPwPIIStructure(pwStr=unit.password)
             for rep in piiStructure.piiRepresentationList:
                 pr = PwRepresentationTransformer.getPwRepresentation(pwStr=unit.password, rep=rep)
-                transformer.SmartInsert(pr)
+                try:
+                    transformer.Insert(pr)
+                    repCount += 1
+                except Exception as e:
+                    print(f"Exception occur: {str(e)}, pr: {str(pr)}")
             i += 1
             if i % 100 == 0:
                 print(f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%)")
-        print(f"Completed! Total password:{i}")
+        print(f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}")
 
     def test_build(self):
         self.buildPwRepresentationTable()

@@ -44,8 +44,8 @@ method. It's not recommended to use those methods because they would be deprecat
 
 ### Build database
 All database-building code is included in `Scripts/databaseInit.py`, which is the highest level methods for building databases.
-Raw PII dataset should be accessed and processed by `PreProcessor`. Intermediate datatables used in algorithms should manipulated
-by `DatabaseTransformer`.
+Raw PII dataset should be accessed and processed by `PreProcessor`, the high-level script is in *Scripts/call_databaseInit.py*. Intermediate datatables used in algorithms should manipulate
+by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase.py*.
 
 ### Process dataset
 `Preprocessor`
@@ -54,8 +54,10 @@ by `DatabaseTransformer`.
 ## Journal
 ### Database build(8.14)
 1. Scripts/databaseInit.py: in `LoadDataset` method, add pii field format check before insert into datatable
-
-
+2. Commons/BasicTypes.py: add `DefaultPII` 
+3. Commons/Utils.py: `parsePIIUnitToPIIAndPwStr` add PII fields check and default value
+4. Scripts/call_databaseInit.py: Build *pii* datatable using `test_load_dataset` method: there are duplicates in *pii* table, but it would not lead to any impact. **131653 items**
+5. Scripts/buildDatabase.py: Build *pwrepresentation* datatable using `buildPwRepresentationTable` method: (**no duplicate**) **222937 items**
 
 ### PII algorithms(8.13)
 1. *(TODO)* Representation => DatagramList

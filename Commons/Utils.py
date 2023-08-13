@@ -1,8 +1,9 @@
 # from Parser.PasswordParsers import PasswordParsers.Segment,PasswordParsers.Datagram,Password
 import base64
 import pickle
-
+import datetime
 import Commons.BasicTypes
+from Commons.BasicTypes import DefaultPII
 
 PARSERS = False
 if PARSERS is False:
@@ -200,18 +201,29 @@ def parsePIIUnitToPIIAndPwStr(unit: PIIUnit) -> (PII, str):
         return n.strip()
 
     def getBirthday(idCard: str):
+        if len(idCard) < 12:
+            return ""
+        try:
+            date_obj = datetime.datetime.strptime(birthday, "%Y%m%d")
+        except:
+            return ""
         return idCard[-12:-4]
 
     d = dict()
 
-    d['email'] = unit.email
-    d['account'] = unit.account
-    d['name'] = unit.name
-    d['firstName'] = getFirstName(unit.fullName)
-    d['givenName'] = getGivenName(unit.fullName)
-    d['birthday'] = getBirthday(unit.idCard)
-    d['phoneNum'] = unit.phoneNum
-    d['idcardNum'] = unit.idCard
+    from Scripts.databaseInit import emailRst
+
+    d['email'] = unit.email if emailRst.match(unit.email) else DefaultPII.email
+    d['account'] = unit.account if len(unit.account) > 0 else DefaultPII.account
+    d['name'] = unit.name if len(unit.name) > 0 else DefaultPII.name
+    firstname = getFirstName(unit.fullName)
+    d['firstName'] = firstname if len(firstname) > 0 else DefaultPII.firstName
+    givenname = getGivenName(unit.fullName)
+    d['givenName'] = givenname if len(givenname) > 0 else DefaultPII.givenName
+    birthday = getBirthday(unit.idCard)
+    d['birthday'] = birthday if len(birthday) > 0 else DefaultPII.birthday
+    d['phoneNum'] = unit.phoneNum if len(unit.phoneNum) > 0 else DefaultPII.phoneNum
+    d['idcardNum'] = unit.idCard if len(unit.idCard) > 0 else DefaultPII.idcardNum
     pii = PII(**d)
 
     return pii, unit.password
