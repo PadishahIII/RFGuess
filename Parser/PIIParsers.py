@@ -306,23 +306,35 @@ class PIIFullTagParser:
         return self._tagContainer
 
 
-# parse pii string into pii tag
-# e.g. 19820607 => dict[BirthdayType: list of all fuzz strings
 class PIIToTagParser:
-    # parse pii into tags
-    # pii with birthday = 19820607 => BirthdayType:value
-    # dict key: PIIType, value: list of candidates
-    # such as BirthdayType.Date can be expressed by 67 or 0607
+    """
+    Parse pii string into pii tag
+    e.g. 19820607 => dict[BirthdayType: list of all fuzz strings
+        pii with birthday = 19820607 => BirthdayType:value
+    dict key: PIIType, value: list of candidates
+    such as BirthdayType.Date can be expressed by 67 or 0607
+    """
+
     @classmethod
     def parsePIIToTagDict(cls, pii: BasicTypes.PII) -> typing.Dict[typing.Any, list]:
         pass
 
-    # given a name, get all tags
-    # givenName must in format that can split by space, like "zhong jie"
-    # dict key: NameType, value: list of candidates
     @classmethod
     def parseNameToTagDict(cls, name: str, firstName: str, givenName: str) -> typing.Dict[
         BasicTypes.PIIType.NameType, list]:
+        """
+        Given a name, get all tags
+        `givenName` must in format that can split by space, like "zhong jie"
+
+        Args:
+            name: Full name
+            firstName:
+            givenName:
+
+        Returns:
+            Dict: dict key: NameType, value: list of candidates
+
+        """
         d = dict()
         d[BasicTypes.PIIType.NameType.FullName] = name
         _l = givenName.split()
@@ -427,8 +439,6 @@ class PIIToTagParser:
 
     @classmethod
     def parseIdCardNumToTagDict(cls, idCardNum: str) -> typing.Dict[BasicTypes.PIIType.IdCardNumberType, list]:
-        if not idCardNum.isdigit():
-            raise Exceptions.PIIParserException(f"Invail id card number: {idCardNum}")
         d = dict()
         d[BasicTypes.PIIType.IdCardNumberType.Last4Digits] = [idCardNum[-4:], ]
         d[BasicTypes.PIIType.IdCardNumberType.First3Digits] = [idCardNum[:3], ]
@@ -437,8 +447,11 @@ class PIIToTagParser:
         return d
 
 
-# parse Tag to readable string like A1B2N3
 class PIITagRepresentationStrParser:
+    """
+    Parse Tag to readable string like A1B2N3
+    """
+
     def __init__(self):
         piiTypeList = [PIIType.NameType, PIIType.BirthdayType, PIIType.AccountType, PIIType.IdCardNumberType,
                        PIIType.EmailPrefixType, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S]
@@ -707,12 +720,24 @@ Select a representation of password string
 class RepUnit:
     """
     A unit of representation, rep Hash and frequency
+
     """
 
     def __init__(self, repStr: str, repHash: str, frequency: int):
         self.repStr = repStr
         self.repHash = repHash
         self.frequency = frequency
+
+class PwStructure:
+    """
+    Password string and list of its all representations.
+
+    """
+
+    def __init__(self,pwStr:str, repList:list[PIIRepresentation]) -> None:
+        self.pwStr = pwStr
+        self.repList:list[PIIRepresentation] = repList
+
 
 
 class PIIRepresentationResolver:

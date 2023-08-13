@@ -223,11 +223,12 @@ class Serializer:
     """
 
     @classmethod
-    def serialize(obj) -> str:
+    def serialize(cls, obj) -> str:
         objSe = pickle.dumps(obj)
         s = base64.b64encode(objSe).decode("utf-8")
         return s
 
-    def deserialize(s: str) -> object:
+    @classmethod
+    def deserialize(cls, s: str) -> object:
         obj = pickle.loads(base64.b64decode(s.encode("utf-8")))
         return obj

@@ -160,6 +160,16 @@ class FilePreProcessor(BasicPreProcessor, metaclass=ABCMeta):
 
 
 class DatabasePreProcessor(BasicPreProcessor, metaclass=ABCMeta):
+    """Used to read and preprocess primitive dataset
+
+    Facade api. Read from database and build `DataSet` object.
+    Provide self-defined preprocess interface for every `DataUnit` in dataset.
+
+    Notes:
+        - Preprocessors only read database and simply transform units into `DataUnit` in dataset
+        - If you require database manipulation or more flexible transformation api, consider `DatabaseTransformer`s in
+        `Commons.DatabaseLayer`
+    """
 
     def __init__(self, initDataset: BasicDataTypes.DataSet, start: int = 0, limit: int = -1) -> None:
         super().__init__()
