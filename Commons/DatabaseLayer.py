@@ -139,8 +139,11 @@ class PwRepresentationTransformer(DatabaseTransformer):
     def read(self, offset: int = 0, limit: int = 1e7) -> list[PwRepUnit]:
         return super().read(offset, limit)
 
-    def insert(self, pr: PwRepresentation):
+    def Insert(self, pr: PwRepresentation):
         self.queryMethods.Insert(pr)
+
+    def SmartInsert(self,pr:PwRepresentation):
+        self.queryMethods.SmartInsert(pr)
 
 
 class RepFrequencyTransformer(DatabaseTransformer):

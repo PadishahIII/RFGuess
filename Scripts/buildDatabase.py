@@ -1,8 +1,8 @@
 from unittest import TestCase
 
 from Commons.DatabaseLayer import *
-from Parser.PIIPreprocessor import PIIPreprocessor
 from Parser.PIIDataTypes import *
+from Parser.PIIPreprocessor import PIIPreprocessor
 
 
 class BuildDatabase(TestCase):
@@ -16,25 +16,30 @@ class BuildDatabase(TestCase):
         Build `pwrepresentation` table based on `pii` dataset.
         Parse all representations of password and store in `pwrepresentation` datatable.
         """
-        processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=10)
+        processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=-1)
         processor.preprocess()
         dataset = processor.getDataSet()
-        for unit in iter(dataset):
-            print(str(unit))
+        # for unit in iter(dataset):
+        #     print(str(unit))
         print(f"Total: {dataset.row}")
         print(f"keyList:{dataset.keyList}")
 
         transformer = PwRepresentationTransformer.getInstance()
         transformer.queryMethods.DeleteAll()
 
-        datasetIter:typing.Iterable[PIIDataUnit] = iter(dataset)
+        datasetIter: typing.Iterable[PIIDataUnit] = iter(dataset)
+        i = 0
         for unit in datasetIter:
             pii = unit.pii
             piiParser = PIIStructureParser(pii)
             piiStructure = piiParser.getPwPIIStructure(pwStr=unit.password)
             for rep in piiStructure.piiRepresentationList:
                 pr = PwRepresentationTransformer.getPwRepresentation(pwStr=unit.password, rep=rep)
-                transformer.insert(pr)
+                transformer.SmartInsert(pr)
+            i += 1
+            if i % 100 == 0:
+                print(f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%)")
+        print(f"Completed! Total password:{i}")
 
     def test_build(self):
         self.buildPwRepresentationTable()

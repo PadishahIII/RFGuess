@@ -12,8 +12,11 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 ## Tutorial for development
 ### Database manipulation and preprocess
 There are two circumstances as for database-manipulation, one of which is about reading from the **primitive** database
-(e.g. PII datatable) and the other is for intermediate databases(namely, datatables employed by algorithms, e.g. datatable
-for representation frequency). Different classes are employed in each of circumstances.
+(e.g. *PII* datatable) and the other is for intermediate databases (namely, datatables employed by algorithms, e.g. datatable
+for representation frequency). Different classes are employed in each of circumstances. `Preprocessor` is defined for processing
+raw dataset so it has many preprocess methods to format the dataset and eliminate duplicates. `DatabaseTransformer` is used as
+the communication bridge between database and high-level algorithms, transformer would provide transformation methods to intermediates and
+dataunits, and proxify the lower level data-manipulation classes.
 1. `Preprocessor`: preprocessors are dedicated in **reading** from **primitive** databases and do some preprocessing like eliminate duplicate or check fields. You can reach such classes
 in `Parsers` package. `BasicPreProcessor` is the ancestor class for all preprocessors deriving `FilePreProcessor` to read
 dataset from file and `DatabasePreProcessor` to load data from certain database. One can write self-defined preprocessors
@@ -39,12 +42,21 @@ method. It's not recommended to use those methods because they would be deprecat
 `BasicManipulateMethods` for high-level manipulations.  
 
 
-### Database build
+### Build database
 All database-building code is included in `Scripts/databaseInit.py`, which is the highest level methods for building databases.
 Raw PII dataset should be accessed and processed by `PreProcessor`. Intermediate datatables used in algorithms should manipulated
 by `DatabaseTransformer`.
 
+### Process dataset
+`Preprocessor`
+
+
 ## Journal
+### Database build(8.14)
+1. Scripts/databaseInit.py: in `LoadDataset` method, add pii field format check before insert into datatable
+
+
+
 ### PII algorithms(8.13)
 1. *(TODO)* Representation => DatagramList
 2. *(TODO)* Build a table to store the final representation of password

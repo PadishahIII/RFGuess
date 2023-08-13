@@ -282,7 +282,7 @@ class EmailParser:
     # return prefix, None means not in email format
     @classmethod
     def parseEmailPrefix(cls, s: str) -> str:
-        m = re.match(r"([^@\.]+)@[^@]+", s)
+        m = re.match(r"([^@]+)@[^@]+", s)
         if m is None:
             return None
         return m.group(1)
