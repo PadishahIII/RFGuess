@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from Commons.DatabaseLayer import *
+from Parser.PIIParsers import PIITagRepresentationStrParser
 
 
 class Test(TestCase):
@@ -21,6 +22,20 @@ class Test(TestCase):
 
     def test_rep_frequency_transformer(self):
         transformer = RepFrequencyTransformer.getInstance()
-        units: list[RepFrequencyUnit] = transformer.read()
+        repStrTransformer: RepStrPropertyTransformer = RepStrPropertyTransformer()
+        repParser = PIITagRepresentationStrParser()
+        units: list[RepFrequencyUnit] = transformer.read(offset=0,limit=10)
+        priority = 0
         for unit in units:
-            print(unit.__dict__)
+            rep: PIIRepresentation = repStrTransformer.transform(unit)
+            s = repParser.representationToStr(rep)
+            priority += 1
+            print(f"{priority}:frequency:{unit.frequency}\n{s}")
+
+
+class TestRepStrPropertyTransformer(TestCase):
+    def test_transform(self):
+        self.fail()
+
+    def test_de_transform(self):
+        self.fail()

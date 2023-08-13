@@ -597,13 +597,14 @@ class RepresentationFrequencyMethods(BasicManipulateMethods):
             units = session.query(self.entityCls).filter_by(representationHash=hashStr).all()
             return units
 
-    def QueryAllWithFrequencyDesc(self) -> list[RepresentationFrequency]:
+    def QueryAllWithFrequencyDesc(self, offset: int = 0, limit: int = 1e7) -> list[RepresentationFrequency]:
         """
         Get all units with frequency in desc order
 
         """
         with Session() as session:
-            units = session.query(self.entityCls).order_by(RepresentationFrequency.frequency.desc())
+            units = session.query(self.entityCls).order_by(
+                RepresentationFrequency.frequency.desc()).offset(offset).limit(limit)
             return units
 
     def Update(self, unit):
