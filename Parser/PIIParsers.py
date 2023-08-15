@@ -766,6 +766,10 @@ class RepUnit:
         self.repHash = repHash
         self.frequency = frequency
 
+    @classmethod
+    def create(cls, repStr: str, repHash: str, frequency: int):
+        return RepUnit(repStr, repHash, frequency)
+
 
 class PwStructure:
     """
@@ -786,7 +790,7 @@ class PIIRepresentationResolver:
     def __init__(self) -> None:
         self.pwList = list()  # list of password string
         self.repPriorityList: list[RepUnit] = list()  # list of repUnit in frequency-descending order
-        self.pwRepDict: dict[str, PIIRepresentation] = dict()  # (output) password with its unique representation
+        self.pwRepDict: dict[str, str] = dict()  # (output) password with its unique representation
 
     def checkPwRepMatch(self, pwStr: str, repUnit: RepUnit) -> bool:
         """

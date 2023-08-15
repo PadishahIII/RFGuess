@@ -122,8 +122,8 @@ class PwRepUnit(RepStrProperty):
                  repStructureHash: str) -> None:
         super().__init__(repStr)
         self.pwStr = pwStr
-        self.rep:PIIRepresentation = rep
-        self.repStructure:PIIRepresentation = repStructure
+        self.rep: PIIRepresentation = rep
+        self.repStructure: PIIRepresentation = repStructure
         self.repHash = repHash
         self.repStructureHash = repStructureHash
 
@@ -132,7 +132,7 @@ class RepFrequencyUnit(RepStrProperty):
     """Unit transformed corresponding to `representation_frequency_view` dataview
 
     Attributes:
-        repStr (str): serialized data
+        repStr (str): serialized data of representation structure
         repHash (str): hash of `repStr`
         frequency (int): frequency of representation
     """
@@ -160,6 +160,7 @@ class PwRepresentationTransformer(DatabaseTransformer):
 
     def __init__(self, queryMethods: BasicManipulateMethods) -> None:
         super().__init__(queryMethods)
+        self.queryMethods: RepresentationMethods = queryMethods
 
     @classmethod
     def getInstance(cls):
@@ -229,6 +230,25 @@ class PwRepresentationTransformer(DatabaseTransformer):
     def SmartInsert(self, pr: PwRepresentation):
         self.queryMethods.SmartInsert(pr)
 
+    def getStructureSample(self, hashStr: str) -> PIIRepresentation:
+        """
+        Input the hash of representation structure, return a sample representation(with pwStr section not empty)
+
+        Args:
+            hashStr: the hash of representation structure
+
+        Returns:
+            a sample of the representation structure
+
+        """
+        units: list[PwRepresentation] = self.queryMethods.QueryWithRepresentationStructureHash(repStructureHash=hashStr,
+                                                                                               offset=0, limit=1)
+        if len(units) <= 0:
+            return None
+        else:
+            unit = units[0]
+            return self.getRepresentation(unit)
+
 
 class RepFrequencyTransformer(DatabaseTransformer):
     """Transformer for `representation_frequency_view` dataview
@@ -248,7 +268,7 @@ class RepFrequencyTransformer(DatabaseTransformer):
         return RepFrequencyTransformer(RepresentationFrequencyMethods())
 
     def transform(self, baseUnit: RepresentationFrequency) -> RepFrequencyUnit:
-        unit = RepFrequencyUnit(repStr=baseUnit.representation, repHash=baseUnit.representationHash,
+        unit = RepFrequencyUnit(repStr=baseUnit.representationStructure, repHash=baseUnit.representationStructureHash,
                                 frequency=baseUnit.frequency)
         return unit
 

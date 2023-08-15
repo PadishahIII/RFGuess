@@ -65,6 +65,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 ### Database build(8.15)
 1. Adjust `PIIVector` and `Tag` to adapt to express *representationStructure*
 2. Add *representationStructure* field in datatables
+3. Complete representation extraction
 
 ### Database build(8.14)
 1. Scripts/databaseInit.py: in `LoadDataset` method, add pii field format check before insert into datatable

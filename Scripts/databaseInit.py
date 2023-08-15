@@ -17,7 +17,7 @@ emailRst = re.compile(r".+?@.+?")
 lineRst = re.compile(
     r"(?P<email>.+?@.+?)-{3,10}(?P<account>.+?)-{3,10}(?P<name>.+?)-{3,10}(?P<idCard>.+?)-{3,10}(?P<password>.+?)-{3,10}(?P<phoneNum>.+?)-{3,10}.*")
 
-logging.basicConfig(filename="database.log")  # filename="database.log"
+logging.basicConfig()  # filename="database.log"
 logger = logging.getLogger("sqlalchemy.engine")
 logger.setLevel(logging.INFO)
 
@@ -573,8 +573,8 @@ class RepresentationFrequency(Base):
     __tablename__ = "representation_frequency_view"
 
     frequency = Column(Integer)
-    representationHash = Column(String, primary_key=True)
-    representation = Column(String)
+    representationStructureHash = Column(String, primary_key=True)
+    representationStructure = Column(String)
 
     def __init__(self, frequency: int, repHash: str, repStr: str):
         """
@@ -625,9 +625,9 @@ class RepresentationFrequencyMethods(BasicManipulateMethods):
     def __init__(self):
         super().__init__(RepresentationFrequency)
 
-    def QueryWithRepHash(self, hashStr: str) -> list[RepresentationFrequency]:
+    def QueryWithRepStructureHash(self, hashStr: str) -> list[RepresentationFrequency]:
         with Session() as session:
-            units = session.query(self.entityCls).filter_by(representationHash=hashStr).all()
+            units = session.query(self.entityCls).filter_by(representationStructureHash=hashStr).all()
             return units
 
     def QueryAllWithFrequencyDesc(self, offset: int = 0, limit: int = 1e7) -> list[RepresentationFrequency]:
