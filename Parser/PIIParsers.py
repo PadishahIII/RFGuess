@@ -26,11 +26,20 @@ Data Structures
 '''
 
 
-# 4-dimension vector data used in model input and Output which is more representative than PIISection
 class PIIVector:
+    """
+    4-dimension vector data used in model input and Output which is more representative than PIISection
+    Attributes:
+        str (str): section string
+        piitype (PIIType): pii type object
+        piitypevalue (int): int value of pii type
+        piivalue (int): value of type
+    """
+
     def __init__(self, s: str, piitype: BasicTypes.PIIType, piivalue: int):
         self.str: str = s
         self.piitype: BasicTypes.PIIType = piitype
+        self.piitypevalue: int = self.piitype.value
         self.piivalue: int = piivalue
         self.row = 0
         self.col = 0
@@ -95,11 +104,31 @@ class PIIStructure:
         }
 
 
-# an intermediate within the process of parsing pii data into pii vector
 class Tag:
-    def __init__(self, t: BasicTypes.PIIType, s: str):
+    """
+    An intermediate within the process of parsing pii data into pii vector
+    """
+
+    def __init__(self, t: BasicTypes.PIIType, value: int, s: str):
         self.piitype = t
+        self.piivalue = value
         self.s = s
+
+    @classmethod
+    def create(cls, type: BasicTypes.PIIType, s: str):
+        """
+        Create a Tag.
+        When value < 0(default), use PIIType's value as Tag's value;
+        When value > 0(LDS tag), use param value as Tag's value.
+
+        """
+        if isinstance(type, BasicTypes.PIIType.BaseTypes):
+            # LDS Tag
+            _len = len(s)
+            return Tag(type, _len, s)
+        else:
+            # PII Tag
+            return Tag(type, type.value, s)
 
 
 # contain all tags for a PII
@@ -160,7 +189,7 @@ class PIITagContainer:
             if not isinstance(v, list):
                 raise Exceptions.PIIParserException(f"Parse TagDict Error: Expected list, given: {type(v)}")
             for i in v:
-                t = Tag(k, i)
+                t = Tag.create(k, i)
                 self._tagList.append(t)
 
 
@@ -510,7 +539,7 @@ class PIITagRepresentationStrParser:
 
         if isinstance(vector.piitype, BasicTypes.PIIType.BaseTypes):
             typeCls = vector.piitype
-            _value = _len
+            _value = vector.piivalue
         else:
             _value = vector.piivalue
 
@@ -664,7 +693,7 @@ def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typi
     if len(pwStr) <= 0:
         # flush the last LDS segment
         if ldsType is not None:
-            tag = Tag(ldsType, ldsStr)
+            tag = Tag.create(ldsType, ldsStr)
             curTags.append(tag)
         outputList.append(curTags)
         return
@@ -677,7 +706,7 @@ def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typi
         newLdsType = LDSStepper.checkLDSType(pwStr[0])
         if ldsType is not None and newLdsType != ldsType:
             # LDS type changed, push old segment into curTags
-            tag = Tag(ldsType, ldsStr)
+            tag = Tag.create(ldsType, ldsStr)
             curTags.append(tag)
             ldsStr = ""
         ldsStr += pwStr[0]
@@ -690,7 +719,7 @@ def parseAllPIITagRecursive(tagList: typing.List[Tag], pwStr: str, curTags: typi
     else:
         # flush LDS stepper when meet pii segment
         if ldsType is not None:
-            tag = Tag(ldsType, ldsStr)
+            tag = Tag.create(ldsType, ldsStr)
             curTags.append(tag)
             ldsType = None
             ldsStr = ""
@@ -716,7 +745,7 @@ def convertTagListToPIIVectorList(tagList: typing.List[Tag]) -> typing.List[PIIV
     """
     l = list()
     for tag in tagList:
-        vector = PIIVector(tag.s, piitype=tag.piitype, piivalue=tag.piitype.value)
+        vector = PIIVector(tag.s, piitype=tag.piitype, piivalue=tag.piivalue)
         l.append(vector)
     return l
 

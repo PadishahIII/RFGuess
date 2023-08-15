@@ -17,9 +17,9 @@ emailRst = re.compile(r".+?@.+?")
 lineRst = re.compile(
     r"(?P<email>.+?@.+?)-{3,10}(?P<account>.+?)-{3,10}(?P<name>.+?)-{3,10}(?P<idCard>.+?)-{3,10}(?P<password>.+?)-{3,10}(?P<phoneNum>.+?)-{3,10}.*")
 
-logging.basicConfig()  # filename="database.log"
+logging.basicConfig(filename="database.log")  # filename="database.log"
 logger = logging.getLogger("sqlalchemy.engine")
-logger.setLevel(logging.CRITICAL)
+logger.setLevel(logging.INFO)
 
 engine = sqlalchemy.create_engine(url="mysql://root:914075@localhost/dataset12306")
 
@@ -390,14 +390,18 @@ class PwRepresentation(Base):
     id = Column(Integer, primary_key=True)
     pwStr = Column(String)
     representation = Column(String)
+    representationStructure = Column(String)
     representationHash = Column(String)
+    representationStructureHash = Column(String)
     hash = Column(String)
 
-    def __init__(self, pwStr: str, repStr: str):
+    def __init__(self, pwStr: str, repStr: str, repStruc: str):
         super().__init__()
         self.pwStr = pwStr
         self.representation = repStr
+        self.representationStructure = repStruc
         self.representationHash = PwRepresentation.getHash(self.representation)
+        self.representationStructureHash = PwRepresentation.getHash(self.representationStructure)
         self.hash = PwRepresentation.getHash(self.pwStr + self.representation)
 
     def __str__(self):
@@ -432,6 +436,8 @@ class PwRepresentation(Base):
         """
         a.pwStr = b.pwStr
         a.representation = b.representation
+        a.representationStructure = b.representationStructure
+        a.representationStructureHash = b.representationStructureHash
         a.representationHash = b.representationHash
         a.hash = b.hash
 
@@ -452,6 +458,18 @@ class PwRepresentation(Base):
         if len(hashStr) <= 0:
             raise ValueError(f"Invalid representation hash: cannot be empty")
         return hashStr
+
+    @validates('representationStructureHash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return hashStr
+
+    @validates('representationStructure')
+    def validateRep(self, key, repStruc):
+        if len(repStruc) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return repStruc
 
     @validates('hash')
     def validateRep(self, key, hashStr):
@@ -481,6 +499,21 @@ class RepresentationMethods(BasicManipulateMethods):
         """
         with Session() as session:
             units = session.query(PwRepresentation).filter_by(representationHash=repHash).all()
+            return units
+
+    def QueryWithRepresentationStructureHash(self, repStructureHash: str, offset: int = 0, limit: int = 1e6) -> list[
+        PwRepresentation]:
+        """
+        Query with representation structure
+        Args:
+            repStructure:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(PwRepresentation).filter_by(representationStructureHash=repStructureHash).offset(
+                offset).limit(limit).all()
             return units
 
     def QueryWithWholeHash(self, hashStr: str) -> list[PwRepresentation]:
@@ -603,7 +636,7 @@ class RepresentationFrequencyMethods(BasicManipulateMethods):
 
         """
         with Session() as session:
-            units = session.query(self.entityCls).order_by(
+            units = session.query(self.entityCls).distinct().order_by(
                 RepresentationFrequency.frequency.desc()).offset(offset).limit(limit)
             return units
 
