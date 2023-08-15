@@ -20,6 +20,15 @@ class Test(TestCase):
         for unit in units:
             print({k: v for k, v in unit.__dict__.items() if k != "representation" and k != "repStr"})
 
+    def test_pw_representation_transformer_read(self):
+        transformer = PwRepresentationTransformer.getInstance()
+        units: list[PwRepUnit] = transformer.read(offset=0, limit=10)
+        parser = PIITagRepresentationStrParser()
+        for unit in units:
+            rep = parser.representationToStr(unit.rep)
+            repStruct = parser.representationToStr(unit.repStructure)
+            print(f"pwStr:{unit.pwStr}\nrep:{rep}\nrepStructure:{repStruct}\n")
+
     def test_rep_frequency_transformer(self):
         transformer = RepFrequencyTransformer.getInstance()
         repStrTransformer: RepStrPropertyTransformer = RepStrPropertyTransformer()

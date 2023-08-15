@@ -112,15 +112,20 @@ class PwRepUnit(RepStrProperty):
     Attributes:
         pwStr (str): password string
         rep (PIIRepresentation): deserialized object
+        repStructure (PIIRepresentation): deserialized object without exact vector string
         repStr (str): serialized data
         repHash (str): hash of `repStr`
+        repStructureHash (str): hash of `repStructure`
     """
 
-    def __init__(self, pwStr: str, rep: PIIRepresentation, repStr: str, repHash: str) -> None:
+    def __init__(self, pwStr: str, rep: PIIRepresentation, repStructure: PIIRepresentation, repStr: str, repHash: str,
+                 repStructureHash: str) -> None:
         super().__init__(repStr)
         self.pwStr = pwStr
-        self.rep = rep
+        self.rep:PIIRepresentation = rep
+        self.repStructure:PIIRepresentation = repStructure
         self.repHash = repHash
+        self.repStructureHash = repStructureHash
 
 
 class RepFrequencyUnit(RepStrProperty):
@@ -143,9 +148,11 @@ class PwRepresentationTransformer(DatabaseTransformer):
     Transform representation serialization data into PIIRepresentation object.
 
     Examples:
+        # get deserialized unit with PIIRepresentation object
         transformer = PwRepresentationTransformer.getInstance()
         units: list[PwRepUnit] = transformer.read()
 
+        # build database, transform PIIRepresentation into database unit
         pr = PwRepresentationTransformer.getPwRepresentation(pwStr=unit.pwStr, rep=rep)
         transformer.insert(pr)
 
@@ -160,14 +167,17 @@ class PwRepresentationTransformer(DatabaseTransformer):
 
     def transform(self, baseUnit: PwRepresentation) -> PwRepUnit:
         repSe: str = baseUnit.representation
+        repStrucSe: str = baseUnit.representationStructure
         rep: PIIRepresentation = Serializer.deserialize(repSe)
+        repStruc: PIIRepresentation = Serializer.deserialize(repStrucSe)
         unit = PwRepUnit(pwStr=baseUnit.pwStr, rep=rep, repStr=baseUnit.representation,
-                         repHash=baseUnit.representationHash)
+                         repHash=baseUnit.representationHash, repStructure=repStruc,
+                         repStructureHash=baseUnit.representationStructureHash)
         return unit
 
     @classmethod
     def getPwRepresentation(cls, pwStr: str, rep: PIIRepresentation) -> PwRepresentation:
-        """
+        """Build database phase
         Parse representation object into `PwRepresentation` object
 
         Args:
@@ -177,12 +187,13 @@ class PwRepresentationTransformer(DatabaseTransformer):
         Returns:
             PwRepresentation
         """
-        newRep:PIIRepresentation = copy(rep)
+        repStr = Serializer.serialize(rep)
+        newRep: PIIRepresentation = copy(rep)
         # vector str(part of pwStr) will be excluded in hash calculation
         for vector in newRep.piiVectorList:
             vector.str = ""
-        repStr = Serializer.serialize(newRep)
-        pr = PwRepresentation(pwStr=pwStr, repStr=repStr)
+        repStructure = Serializer.serialize(newRep)
+        pr = PwRepresentation(pwStr=pwStr, repStr=repStr, repStruc=repStructure)
         return pr
 
     @classmethod
@@ -200,6 +211,16 @@ class PwRepresentationTransformer(DatabaseTransformer):
         return rep
 
     def read(self, offset: int = 0, limit: int = 1e7) -> list[PwRepUnit]:
+        """
+        Read from database and transform unit into `PwRepUnit`
+
+        Args:
+            offset:
+            limit:
+
+        Returns:
+
+        """
         return super().read(offset, limit)
 
     def Insert(self, pr: PwRepresentation):

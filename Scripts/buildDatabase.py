@@ -16,7 +16,7 @@ class BuildDatabase(TestCase):
         Build `pwrepresentation` table based on `pii` dataset.
         Parse all representations of password and store in `pwrepresentation` datatable.
         """
-        processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=-1)
+        processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=100)
         processor.preprocess()
         dataset = processor.getDataSet()
         # for unit in iter(dataset):
@@ -31,6 +31,7 @@ class BuildDatabase(TestCase):
         i = 0
         repCount = 0
         updateCount = 0
+        exceptionCount = 0
         for unit in datasetIter:
             pii = unit.pii
             piiParser = PIIStructureParser(pii)
@@ -42,10 +43,12 @@ class BuildDatabase(TestCase):
                     repCount += 1
                 except Exception as e:
                     print(f"Exception occur: {str(e)}, pr: {str(pr)}")
+                    exceptionCount += 1
             i += 1
             if i % 100 == 0:
                 print(f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%)")
-        print(f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}")
+        print(
+            f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
 
     def test_build(self):
         self.buildPwRepresentationTable()

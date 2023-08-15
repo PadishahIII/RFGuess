@@ -53,8 +53,19 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 ## Data Structures Explanation
 **TODO**
 
+## Database structure
+### `pwrepresentation` datatable
+1. `representation`: rep containing pwStr string section
+2. `representationStructure`: only rep structure, no string section
+3. `representationHash`: hash of `representation`
+4. `hash`: hash of `pwStr` + `representation`
+
 
 ## Journal
+### Database build(8.15)
+1. Adjust `PIIVector` and `Tag` to adapt to express *representationStructure*
+2. Add *representationStructure* field in datatables
+
 ### Database build(8.14)
 1. Scripts/databaseInit.py: in `LoadDataset` method, add pii field format check before insert into datatable
 2. Commons/BasicTypes.py: add `DefaultPII` 
