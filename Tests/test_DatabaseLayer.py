@@ -31,15 +31,18 @@ class Test(TestCase):
 
     def test_rep_frequency_transformer(self):
         transformer = RepFrequencyTransformer.getInstance()
+        pwrepTransformer = PwRepresentationTransformer.getInstance()
         repStrTransformer: RepStrPropertyTransformer = RepStrPropertyTransformer()
         repParser = PIITagRepresentationStrParser()
         units: list[RepFrequencyUnit] = transformer.read(offset=0, limit=10)
         priority = 0
         for unit in units:
-            rep: PIIRepresentation = repStrTransformer.transform(unit)
-            s = repParser.representationToStr(rep)
+            repStructure: PIIRepresentation = repStrTransformer.transform(unit)
+            s = repParser.representationToStr(repStructure)
+            repSample: PIIRepresentation = pwrepTransformer.getStructureSample(unit.repHash)
+            ss = repParser.representationToStr(repSample)
             priority += 1
-            print(f"{priority}:frequency:{unit.frequency}\n{s}")
+            print(f"{priority}:frequency:{unit.frequency}\nStructure:{s}Sample:{ss}")
 
 
 class TestRepStrPropertyTransformer(TestCase):

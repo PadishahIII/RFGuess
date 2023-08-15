@@ -16,7 +16,7 @@ class BuildDatabase(TestCase):
         Build `pwrepresentation` table based on `pii` dataset.
         Parse all representations of password and store in `pwrepresentation` datatable.
         """
-        processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=100)
+        processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=-1)
         processor.preprocess()
         dataset = processor.getDataSet()
         # for unit in iter(dataset):
