@@ -537,6 +537,12 @@ class RepresentationMethods(BasicManipulateMethods):
             units = session.query(PwRepresentation).filter_by(hash=hashStr).all()
             return units
 
+    def QueryWithPwRepStructureHash(self, pwStr: str, repStructureHash: str) -> PwRepresentation:
+        with Session() as session:
+            unit = session.query(PwRepresentation).filter_by(representationStructureHash=repStructureHash,
+                                                             pwStr=pwStr).first()
+            return unit
+
     def Update(self, unit: PwRepresentation):
         """
         Update all units with the same `pwStr` as unit given
@@ -828,6 +834,11 @@ class PwRepUniqueMethods(BasicManipulateMethods):
             units = session.query(self.entityCls).filter_by(pwStr=pwStr).all()
             return units
 
+    def QueryWithId(self, id: int) -> list[PwRepUnique]:
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(id=id).all()
+            return units
+
     def QueryAllPw(self, offset: int = 0, limit: int = 1e6) -> list[str]:
         with Session() as session:
             resultTuple: list[Column] = session.query(PwRepUnique.pwStr).distinct().offset(offset).limit(
@@ -838,10 +849,6 @@ class PwRepUniqueMethods(BasicManipulateMethods):
     def QueryWithRepresentationHash(self, repHash: str) -> list[PwRepUnique]:
         """
         Query with representation's hash
-        Args:
-            repHash:
-
-        Returns:
 
         """
         with Session() as session:

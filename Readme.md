@@ -67,6 +67,11 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 2. Resolver.`getInstance`(load all data in database) succeed in about 4s 
 3. Resolver.`resolve` which is main algorithm succeed
 4. Build datatable `pwrepresentation_unique` to store the unique representation and structure of every password string 
+5. Api hierarchy: `Scripts/databaseInit.py`(bottom) => `Commons/DatabaseLayer.py`(Transformers) => `Scripts/Units`(flexible apis) => `Parser.PIIParsers`(top)
+6. Test the unique datatable in `buildDatabase/test_read_unique` method
+7. *(TODO)* Build LDS segment datatable with priority possibility
+8. 
+
 
 ### Database build(8.15)
 1. Adjust `PIIVector` and `Tag` to adapt to express *representationStructure*

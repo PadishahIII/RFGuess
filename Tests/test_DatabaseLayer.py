@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from Commons.DatabaseLayer import *
-from Parser.PIIParsers import PIITagRepresentationStrParser
+from Parser.PIIParsers import PIITagRepresentationStrParser, PIIStructureParser
 
 
 class Test(TestCase):
@@ -16,13 +16,13 @@ class Test(TestCase):
 
     def test_pw_representation_transformer(self):
         transformer = PwRepresentationTransformer.getInstance()
-        units: list[PwRepUniqueUnit] = transformer.read()
+        units: list[PwRepUnit] = transformer.read()
         for unit in units:
             print({k: v for k, v in unit.__dict__.items() if k != "representation" and k != "repStr"})
 
     def test_pw_representation_transformer_read(self):
         transformer = PwRepresentationTransformer.getInstance()
-        units: list[PwRepUniqueUnit] = transformer.read(offset=0, limit=10)
+        units: list[PwRepUnit] = transformer.read(offset=0, limit=10)
         parser = PIITagRepresentationStrParser()
         for unit in units:
             rep = parser.representationToStr(unit.rep)
