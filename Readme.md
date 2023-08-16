@@ -70,7 +70,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 5. Api hierarchy: `Scripts/databaseInit.py`(bottom) => `Commons/DatabaseLayer.py`(Transformers) => `Scripts/Units`(flexible apis) => `Parser.PIIParsers`(top)
 6. Test the unique datatable in `buildDatabase/test_read_unique` method
 7. *(TODO)* Build LDS segment datatable with priority possibility
-8. 
+8. *(TODO)* Enrich document for data structures and all modules for database building
 
 
 ### Database build(8.15)
