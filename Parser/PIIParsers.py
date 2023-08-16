@@ -1,13 +1,13 @@
 import datetime
-import typing
-from copy import copy
 from enum import Enum
 
-from Commons import BasicTypes, Utils
 from Commons import Exceptions
 from Commons.BasicTypes import PIIType
+from Commons.Modes import Singleton
 from Parser import PIIDataTypes
 from Parser.BasicParsers import BasicParser, BasicParserException
+from Parser.PIIDataTypes import *
+from Scripts import Utils as DatabaseUtils
 from Scripts.databaseInit import *
 
 CONTEXT = None
@@ -24,84 +24,6 @@ pii => parse pii tags from every pii field into respective PII types, get pii ta
 '''
 Data Structures
 '''
-
-
-class PIIVector:
-    """
-    4-dimension vector data used in model input and Output which is more representative than PIISection
-    Attributes:
-        str (str): section string
-        piitype (PIIType): pii type object
-        piitypevalue (int): int value of pii type
-        piivalue (int): value of type
-    """
-
-    def __init__(self, s: str, piitype: BasicTypes.PIIType, piivalue: int):
-        self.str: str = s
-        self.piitype: BasicTypes.PIIType = piitype
-        self.piitypevalue: int = self.piitype.value
-        self.piivalue: int = piivalue
-        self.row = 0
-        self.col = 0
-
-    def __copy__(self):
-        return PIIVector(s=self.str, piitype=self.piitype, piivalue=self.piivalue)
-
-    def _tojson(self):
-        obj = {
-            "PIIType": str(self.piitype) + f" {self.piitype.name}",
-            "s": self.str
-        }
-        return obj
-
-
-# A representation of password string, compose of several PIIVectors(containing LDS)
-class PIIRepresentation:
-    def __init__(self, l: typing.List[PIIVector]):
-        self.piiVectorList: typing.List[PIIVector] = l
-        self.len = len(self.piiVectorList)
-
-    def __len__(self):
-        return self.len
-
-    def __copy__(self):
-        newVectorList = list()
-        for vector in self.piiVectorList:
-            newVector = copy(vector)
-            newVectorList.append(newVector)
-        return PIIRepresentation(newVectorList)
-
-    def _tojson(self):
-        l = list()
-        for vector in self.piiVectorList:
-            if vector != None:
-                l.append(vector._tojson())
-        return {
-            "vector number": self.len,
-            "vectors": l
-        }
-
-    def __str__(self) -> str:
-        pass
-
-
-# All representations of password string, compose of PIIRepresentations in different length
-class PIIStructure:
-    def __init__(self, s: str, l: typing.List[PIIRepresentation]):
-        self.piiRepresentationList: typing.List[PIIRepresentation] = l
-        self.num = len(self.piiRepresentationList)
-        self.s = s
-
-    def __len__(self):
-        return self.num
-
-    def _tojson(self):
-        l = [x._tojson() for x in self.piiRepresentationList if x != None and len(x) > 0]
-        return {
-            "password string": self.s,
-            "representation number": self.num,
-            "representations": l
-        }
 
 
 class Tag:
@@ -517,7 +439,7 @@ class PIITagRepresentationStrParser:
         ss = ",".join(l)
         prefix = f"({len(l)})"
         first = prefix + ss
-        second = "|".join(map(lambda x: x.str, vectorList))
+        second = "|".join(list(map(lambda x: x.str, vectorList)))
         res = f"{first}\n{second}\n"
         return res
 
@@ -755,42 +677,40 @@ Select a representation of password string
 '''
 
 
-class RepUnit:
-    """
-    A unit of representation, rep Hash and frequency
-
-    """
-
-    def __init__(self, repStr: str, repHash: str, frequency: int):
-        self.repStr = repStr
-        self.repHash = repHash
-        self.frequency = frequency
-
-    @classmethod
-    def create(cls, repStr: str, repHash: str, frequency: int):
-        return RepUnit(repStr, repHash, frequency)
-
-
-class PwStructure:
-    """
-    Password string and list of its all representations.
-
-    """
-
-    def __init__(self, pwStr: str, repList: list[PIIRepresentation]) -> None:
-        self.pwStr = pwStr
-        self.repList: list[PIIRepresentation] = repList
-
-
-class PIIRepresentationResolver:
+class PIIRepresentationResolver(Singleton):
     """
     select a representation of password
     """
 
-    def __init__(self) -> None:
-        self.pwList = list()  # list of password string
-        self.repPriorityList: list[RepUnit] = list()  # list of repUnit in frequency-descending order
-        self.pwRepDict: dict[str, str] = dict()  # (output) password with its unique representation
+    def __init__(self,
+                 pwList: list[str],
+                 pwAllRepDict: dict[str, list[RepUnit]],
+                 repPriorityList: list[RepUnit],
+                 ) -> None:
+        self.pwList: list[str] = pwList  # all pwStr
+        self.pwAllRepDict: dict[
+            str, list[RepUnit]] = pwAllRepDict  # pwStr:list of all rep, password string and its all representation
+        self.repPriorityList: list[RepUnit] = repPriorityList  # list of repUnit in frequency-descending order
+        self.pwRepDict: dict[str, RepUnit] = dict()  # (output) password with its unique representation
+
+    @classmethod
+    def getInstance(cls):
+        repPriorityList = DatabaseUtils.getRepStructurePriorityList()
+        # print(f"PriorityList:{len(repPriorityList)}")
+        pwList = DatabaseUtils.getAllPw()
+        pwAllRepDict = dict()
+        _len = len(pwList)
+        _i = 0
+        # print(f"PwList:{len(pwList)}")
+        pwAllRepDict = DatabaseUtils.getAllRepStructureDict()
+        # for pw in pwList:
+        #     repList = DatabaseUtils.getAllRepStructureOfPw(pw)
+        #     pwAllRepDict[pw] = repList
+        #     _i += 1
+        #     print(f"Progress:{(_i / _len) * 100:.2f}%")
+        # print(f"PwRepDict:{len(pwAllRepDict.keys())}\n{list(pwAllRepDict.keys())[:10]}")
+
+        return super().getInstance(pwList, pwAllRepDict, repPriorityList)
 
     def checkPwRepMatch(self, pwStr: str, repUnit: RepUnit) -> bool:
         """
@@ -804,11 +724,84 @@ class PIIRepresentationResolver:
         """
         pass
 
-    def resolve(self):
+    def pwMatch(self, pwStr: str) -> tuple[RepUnit]:
+        """
+        Return all PII structure representations of pwStr
+
+        """
+        if pwStr not in self.pwAllRepDict.keys():
+            raise ResolverException(f"Error: pwStr {pwStr} not in pwAllRepDict ")
+        return tuple(self.pwAllRepDict[pwStr])
+
+    def subtractFrequency(self, repUnitList: list[RepUnit]):
+        """
+        Subtract frequency of all representation structures in `repUnitList`
+
+        """
+
+        for unit in repUnitList:
+            unit.frequency -= 1
+
+    def shortMatch(self, pwStr: str) -> RepUnit:
+
+        """
+        Return the shortest representation structure of pwStr
+
+        """
+        if pwStr not in self.pwAllRepDict.keys():
+            raise ResolverException(f"Error pwStr {pwStr} not in pwAllRepDict")
+        repList: list[RepUnit] = self.pwAllRepDict[pwStr]
+        min = 1e6
+        min_i = 0
+        i = 0
+        _len = len(repList)
+        while i < _len:
+            rep: RepUnit = repList[i]
+            l = DatabaseUtils.getRepLen(rep)
+            if l < min:
+                min_i = i
+                min = l
+            i += 1
+        minRep: RepUnit = repList[min_i]
+        return minRep
+
+    def resolve(self) -> dict[str, RepUnit]:
         """
         Resolve the representations of all passwords
+        `repPriorityList` and `pwList` will turn to empty after call
+        `pwAllRepDict` will not change and `shortMatch` method can use as normal
+
+        Take the frequency of representation structures as the primary consider, if pw's all representations have equal
+         frequency, select the shortest structure.
 
         Returns:
 
         """
-        pass
+        matchSet: list[RepUnit] = self.repPriorityList
+        _len = len(matchSet)
+        item: RepUnit = matchSet.pop(0)
+        while len(matchSet) > 0:
+            print(
+                f"Progress:{_len - len(matchSet)}/{_len}:{((_len - len(matchSet)) / _len * 100):.2f} pwList:{len(self.pwList)}")
+            if item.frequency <= 1:
+                item: RepUnit = matchSet.pop(0)
+                continue
+            for pw in self.pwList:
+                matchPw: tuple[RepUnit] = self.pwMatch(pw)
+                if item in matchPw:
+                    self.pwRepDict[pw] = item
+                    self.pwList.remove(pw)
+                    for remainItem in matchPw:
+                        remainItem.frequency -= 1
+            item: RepUnit = matchSet.pop(0)
+
+        while len(self.pwList) > 0:
+            pw = self.pwList.pop()
+            structure: RepUnit = self.shortMatch(pw)
+            self.pwRepDict[pw] = structure
+        return self.pwRepDict
+
+
+class ResolverException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

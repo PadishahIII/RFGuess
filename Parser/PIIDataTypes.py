@@ -1,8 +1,159 @@
 import typing
 from copy import copy
 
-from Commons import BasicTypes
+from Commons import BasicTypes, Utils
 from Parser import BasicDataTypes
+
+'''
+Foreground analyzing phase datastructures
+'''
+
+
+class PIIVector:
+    """
+    4-dimension vector data used in model input and Output which is more representative than PIISection
+    Attributes:
+        str (str): section string
+        piitype (PIIType): pii type object
+        piitypevalue (int): int value of pii type
+        piivalue (int): value of type
+    """
+
+    def __init__(self, s: str, piitype: BasicTypes.PIIType, piivalue: int):
+        self.str: str = s
+        self.piitype: BasicTypes.PIIType = piitype
+        self.piitypevalue: int = self.piitype.value
+        self.piivalue: int = piivalue
+        self.row = 0
+        self.col = 0
+
+    def __copy__(self):
+        return PIIVector(s=self.str, piitype=self.piitype, piivalue=self.piivalue)
+
+    def _tojson(self):
+        obj = {
+            "PIIType": str(self.piitype) + f" {self.piitype.name}",
+            "s": self.str
+        }
+        return obj
+
+
+# A representation of password string, compose of several PIIVectors(containing LDS)
+class PIIRepresentation:
+    def __init__(self, l: typing.List[PIIVector]):
+        self.piiVectorList: typing.List[PIIVector] = l
+        self.len = len(self.piiVectorList)
+
+    def __len__(self):
+        return self.len
+
+    def __copy__(self):
+        newVectorList = list()
+        for vector in self.piiVectorList:
+            newVector = copy(vector)
+            newVectorList.append(newVector)
+        return PIIRepresentation(newVectorList)
+
+    def _tojson(self):
+        l = list()
+        for vector in self.piiVectorList:
+            if vector != None:
+                l.append(vector._tojson())
+        return {
+            "vector number": self.len,
+            "vectors": l
+        }
+
+    def __str__(self) -> str:
+        pass
+
+
+# All representations of password string, compose of PIIRepresentations in different length
+class PIIStructure:
+    def __init__(self, s: str, l: typing.List[PIIRepresentation]):
+        self.piiRepresentationList: typing.List[PIIRepresentation] = l
+        self.num = len(self.piiRepresentationList)
+        self.s = s
+
+    def __len__(self):
+        return self.num
+
+    def _tojson(self):
+        l = [x._tojson() for x in self.piiRepresentationList if x != None and len(x) > 0]
+        return {
+            "password string": self.s,
+            "representation number": self.num,
+            "representations": l
+        }
+
+
+'''
+PwRepresentation resolver datastructures
+'''
+
+
+class RepUnit:
+    """
+    A unit of representationStructure,repStructure hash and frequency
+    Comparable, hashable
+    """
+
+    def __init__(self, repStructureStr: str, repStructureHash: str, frequency: int):
+        self.repStr = repStructureStr
+        self.repHash = repStructureHash
+        self.frequency = frequency
+        self._hash = Utils.md5(self.repHash)
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, o: object) -> bool:
+        return self._hash == o._hash
+
+    @classmethod
+    def create(cls, repStr: str, repHash: str, frequency: int):
+        return RepUnit(repStr, repHash, frequency)
+
+
+'''
+A password string and its unique representation, representationStructure 
+'''
+
+
+class PwRepAndStructureUnit:
+    """
+    A unit of representationStructure,repStructure hash and frequency
+
+    """
+
+    def __init__(self, pwStr: str, rep: PIIRepresentation, repStructure: PIIRepresentation):
+        self.pwStr = pwStr
+        self.rep: PIIRepresentation = rep
+        self.repStructure: PIIRepresentation = repStructure
+
+    @classmethod
+    def create(cls, pwStr: str, rep: PIIRepresentation, repStructure: PIIRepresentation):
+        return PwRepAndStructureUnit(pwStr, rep, repStructure)
+
+    @classmethod
+    def createFromRepUnit(cls,unit:RepUnit):
+        pass
+
+
+class PwStructure:
+    """
+    Password string and list of its all representations.
+
+    """
+
+    def __init__(self, pwStr: str, repList: list[PIIRepresentation]) -> None:
+        self.pwStr = pwStr
+        self.repList: list[PIIRepresentation] = repList
+
+
+'''
+Preprocessor datastructures
+'''
 
 
 class PIIDataUnit(BasicDataTypes.DataUnit):
