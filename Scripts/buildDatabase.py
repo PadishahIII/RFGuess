@@ -1,8 +1,10 @@
+import random
 from unittest import TestCase
 
 from Commons.DatabaseLayer import *
 from Parser.PIIParsers import *
 from Parser.PIIPreprocessor import PIIPreprocessor
+from Scripts import Utils as DatabaseUtils
 
 
 class BuildDatabase(TestCase):
@@ -63,5 +65,40 @@ class BuildDatabase(TestCase):
             repStr = repParser.representationToStr(rep)
             print(f"pw:{pwStr},rep:{repStr}")
 
-    def test_read_frequency(self):
-        pass
+    def test_build_unique(self):
+        resolver: PIIRepresentationResolver = PIIRepresentationResolver.getInstance()
+        transformer: PwRepUniqueTransformer = PwRepUniqueTransformer.getInstance()
+
+        transformer.queryMethods.DeleteAll()
+
+        exceptionCount = 0
+        i = 0
+
+        pwRepDict: dict[str, RepUnit] = resolver.resolve()
+        _len = len(pwRepDict)
+        print(f"Resolved:{_len}")
+
+        for pwStr, repUnit in pwRepDict.items():
+            unit: PwRepUniqueUnit = DatabaseUtils.getIntermediateFromRepUnit(pwStr, repUnit)
+            try:
+                transformer.Insert(unit)
+            except Exception as e:
+                print(f"Exception occur: {str(e)}, pwStr: {pwStr}, RepUnit:{str(repUnit)}")
+                exceptionCount += 1
+            i += 1
+            if i % 100 == 0:
+                print(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
+        print(f"Completed! Total:{i}, total exception:{exceptionCount}")
+
+    def test_read_unique(self):
+        transformer: PwRepUniqueTransformer = PwRepUniqueTransformer.getInstance()
+        parser: PIITagRepresentationStrParser = PIITagRepresentationStrParser()
+
+        for i in range(10):
+            id = random.randint(1, 129300)
+            unit: PwRepAndStructureUnit = transformer.getParseunitWithId(id)
+            rep: PIIRepresentation = unit.rep
+            repStructure: PIIRepresentation = unit.repStructure
+            repStr = parser.representationToStr(rep)
+            repStructureStr = parser.representationToStr(repStructure)
+            print(f"pw:{unit.pwStr} representation:{repStr}structure:{repStructureStr}")

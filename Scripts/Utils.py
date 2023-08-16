@@ -1,4 +1,4 @@
-from Commons.DatabaseLayer import RepUnit
+from Commons.DatabaseLayer import RepUnit, PwRepUniqueUnit
 from Commons.Utils import Serializer
 from Parser.PIIDataTypes import PIIRepresentation
 
@@ -64,3 +64,23 @@ def getRepLen(repUnit: RepUnit) -> int:
     repStr = repUnit.repStr
     rep: PIIRepresentation = Serializer.deserialize(repStr)
     return rep.len
+
+
+def getIntermediateFromRepUnit(pwStr: str, repUnit: RepUnit) -> PwRepUniqueUnit:
+    """
+    Transform `RepUnit` => `PwRepUniqueUnit`
+
+    """
+    from Commons.DatabaseLayer import PwRepresentationTransformer, PwRepresentation
+
+    pwrepTransformer: PwRepresentationTransformer = PwRepresentationTransformer.getInstance()
+    unit: PwRepresentation = pwrepTransformer.getDatabaseUnitWithRepStructureHash(pwStr=pwStr,
+                                                                                  repStructureHash=repUnit.repHash)
+    if unit is None:
+        raise Exception(
+            f"Database Utils Error: cannot find databaseunit with pwStr:{pwStr}, repStructureHash:{repUnit.repHash}")
+
+    resUnit: PwRepUniqueUnit = PwRepUniqueUnit.create(pwStr=pwStr, repStr=unit.representation,
+                                                      repStructureStr=repUnit.repStr, repHash=unit.representationHash,
+                                                      repStructureHash=repUnit.repHash)
+    return resUnit

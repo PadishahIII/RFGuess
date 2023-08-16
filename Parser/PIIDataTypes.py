@@ -122,7 +122,7 @@ A password string and its unique representation, representationStructure
 
 class PwRepAndStructureUnit:
     """
-    A unit of representationStructure,repStructure hash and frequency
+    A unit of pwStr, representation and structure
 
     """
 
@@ -135,9 +135,6 @@ class PwRepAndStructureUnit:
     def create(cls, pwStr: str, rep: PIIRepresentation, repStructure: PIIRepresentation):
         return PwRepAndStructureUnit(pwStr, rep, repStructure)
 
-    @classmethod
-    def createFromRepUnit(cls,unit:RepUnit):
-        pass
 
 
 class PwStructure:

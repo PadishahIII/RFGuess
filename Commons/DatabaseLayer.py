@@ -106,11 +106,11 @@ class DatabaseTransformer(metaclass=ABCMeta):
 
 
 '''
-Transformer for `pwrepresentation` datatable and `representation_frequency` dataview.
+Intermediate units
 '''
 
 
-class PwRepUniqueUnit(RepStrProperty):
+class PwRepUnit(RepStrProperty):
     """Unit transformed corresponding to `pwrepresentation` dataunit
 
     Attributes:
@@ -167,6 +167,35 @@ class PwRepFrequencyUnit(RepStrProperty):
         self.frequency = frequency
 
 
+class PwRepUniqueUnit(RepStrProperty):
+    """Unit transformed corresponding to `pwrepresentation` dataunit
+
+    Attributes:
+        pwStr (str): password string
+        repStr (str): serialized object
+        repStructureStr (str): serialized object without exact vector string
+        repHash (str): hash of `repStr`
+        repStructureHash (str): hash of `repStructure`
+    """
+
+    def __init__(self, pwStr: str, repStr: str, repStructureStr: str, repHash: str, repStructureHash: str, ) -> None:
+        super().__init__(repStr)
+        self.pwStr = pwStr
+        self.repStr: str = repStr
+        self.repStructureStr: str = repStructureStr
+        self.repHash = repHash
+        self.repStructureHash = repStructureHash
+
+    @classmethod
+    def create(cls, pwStr: str, repStr: str, repStructureStr: str, repHash: str, repStructureHash: str):
+        return PwRepUniqueUnit(pwStr, repStr, repStructureStr, repHash, repStructureHash)
+
+
+'''
+Transformers
+'''
+
+
 class PwRepresentationTransformer(DatabaseTransformer, Singleton):
     """Transformer for `pwrepresentation` datatable
     Transform representation serialization data into PIIRepresentation object.
@@ -190,14 +219,14 @@ class PwRepresentationTransformer(DatabaseTransformer, Singleton):
     def getInstance(cls):
         return super().getInstance(RepresentationMethods())
 
-    def transform(self, baseUnit: PwRepresentation) -> PwRepUniqueUnit:
+    def transform(self, baseUnit: PwRepresentation) -> PwRepUnit:
         repSe: str = baseUnit.representation
         repStrucSe: str = baseUnit.representationStructure
         rep: PIIRepresentation = Serializer.deserialize(repSe)
         repStruc: PIIRepresentation = Serializer.deserialize(repStrucSe)
-        unit = PwRepUniqueUnit(pwStr=baseUnit.pwStr, rep=rep, repStr=baseUnit.representation,
-                               repHash=baseUnit.representationHash, repStructure=repStruc,
-                               repStructureHash=baseUnit.representationStructureHash)
+        unit = PwRepUnit(pwStr=baseUnit.pwStr, rep=rep, repStr=baseUnit.representation,
+                         repHash=baseUnit.representationHash, repStructure=repStruc,
+                         repStructureHash=baseUnit.representationStructureHash)
         return unit
 
     @classmethod
@@ -235,15 +264,9 @@ class PwRepresentationTransformer(DatabaseTransformer, Singleton):
         rep: PIIRepresentation = Serializer.deserialize(repStr)
         return rep
 
-    def read(self, offset: int = 0, limit: int = 1e7) -> list[PwRepUniqueUnit]:
+    def read(self, offset: int = 0, limit: int = 1e7) -> list[PwRepUnit]:
         """
         Read from database and transform unit into `PwRepUnit`
-
-        Args:
-            offset:
-            limit:
-
-        Returns:
 
         """
         return super().read(offset, limit)
@@ -280,6 +303,15 @@ class PwRepresentationTransformer(DatabaseTransformer, Singleton):
         else:
             unit = units[0]
             return self.getRepresentation(unit)
+
+    def getDatabaseUnitWithRepStructureHash(self, pwStr: str, repStructureHash: str) -> PwRepresentation:
+        """
+        Query repStr of pwStr with repStructure.
+        Return first match.
+
+        """
+        unit = self.queryMethods.QueryWithPwRepStructureHash(pwStr=pwStr, repStructureHash=repStructureHash)
+        return unit
 
 
 class RepFrequencyTransformer(DatabaseTransformer, Singleton):
@@ -416,16 +448,36 @@ class PwRepUniqueTransformer(DatabaseTransformer, Singleton):
         return super().getInstance(PwRepUniqueMethods())
 
     def transform(self, baseUnit: PwRepUnique) -> PwRepUniqueUnit:
-        repSe: str = baseUnit.representation
-        repStrucSe: str = baseUnit.representationStructure
-        rep: PIIRepresentation = Serializer.deserialize(repSe)
-        repStruc: PIIRepresentation = Serializer.deserialize(repStrucSe)
-        unit = PwRepUniqueUnit(pwStr=baseUnit.pwStr, rep=rep, repStr=baseUnit.representation,
-                               repHash=baseUnit.representationHash, repStructure=repStruc,
+        """
+        Database Unit => Intermediate unit
+        Args:
+            baseUnit:
+
+        Returns:
+
+        """
+        unit = PwRepUniqueUnit(pwStr=baseUnit.pwStr, repStr=baseUnit.representation,
+                               repHash=baseUnit.representationHash, repStructureStr=baseUnit.representationStructure,
                                repStructureHash=baseUnit.representationStructureHash)
         return unit
 
-    def deTransform(self, unit: PwRepAndStructureUnit) -> PwRepUnique:
+    def transformIntermediateToDatabaseUnit(self, unit: PwRepUniqueUnit) -> PwRepUnique:
+        unit = PwRepUnique(pwStr=unit.pwStr,
+                           repStruc=unit.repStructureStr,
+                           repStr=unit.repStr)
+        return unit
+
+    def transformDatabaseunitToParseunit(self, unit: PwRepUnique) -> PwRepAndStructureUnit:
+        repStr = unit.representation
+        repStructureStr = unit.representationStructure
+
+        rep: PIIRepresentation = Serializer.deserialize(repStr)
+        repStructure: PIIRepresentation = Serializer.deserialize(repStructureStr)
+
+        parseUnit: PwRepAndStructureUnit = PwRepAndStructureUnit(pwStr=unit.pwStr, rep=rep, repStructure=repStructure)
+        return parseUnit
+
+    def transformParseunitToDatabaseunit(self, unit: PwRepAndStructureUnit) -> PwRepUnique:
         """
         Transformer used when writing to database.
         PwRepAndStructureUnit(parse unit) => PwRepUnique(database unit)
@@ -445,45 +497,61 @@ class PwRepUniqueTransformer(DatabaseTransformer, Singleton):
         Insert `PwRepAndStructureUnit`(parse unit) into database
 
         """
-        baseUnit = self.deTransform(unit)
+        baseUnit = self.transformParseunitToDatabaseunit(unit)
         self.Insert(baseUnit)
+
+    def getParseunitWithPw(self, pwStr: str) -> PwRepAndStructureUnit:
+        units: list[PwRepUnique] = self.queryMethods.QueryWithPw(pwStr)
+        unit = units[0]
+        u: PwRepAndStructureUnit = self.transformDatabaseunitToParseunit(unit)
+        return u
+
+    def getParseunitWithId(self, id: int) -> PwRepAndStructureUnit:
+        units: list[PwRepUnique] = self.queryMethods.QueryWithId(id)
+        unit = units[0]
+        u: PwRepAndStructureUnit = self.transformDatabaseunitToParseunit(unit)
+        return u
 
     @classmethod
     def getRepresentation(cls, pwRep: PwRepUnique) -> PIIRepresentation:
         """
-        Convert `PwRepUnique` object into `PIIRepresentation`
-        Args:
-            pwRep: `PwRepUnique` object
-
-        Returns:
-            PIIRepresentation
+        Get representation object of `PwRepUnique` object
         """
         repStr = pwRep.representation
         rep: PIIRepresentation = Serializer.deserialize(repStr)
         return rep
 
+    @classmethod
+    def getRepresentationStructure(cls, pwRep: PwRepUnique) -> PIIRepresentation:
+        """
+        Get representation structure object of `PwRepUnique` object
+        """
+        repStr = pwRep.representationStructure
+        rep: PIIRepresentation = Serializer.deserialize(repStr)
+        return rep
+
     def read(self, offset: int = 0, limit: int = 1e7) -> list[PwRepUniqueUnit]:
         """
-        Read from database and transform unit into `PwRepUnit`
-
-        Args:
-            offset:
-            limit:
-
-        Returns:
+        Get intermediate unit `PwRepUniqueUnit`
 
         """
-        return super().read(offset, limit)
+        l: list[PwRepUnique] = super().read(offset, limit)
+        ll = list(map(lambda x: self.transform(x), l))
+        return ll
 
-    def Insert(self, pr: PwRepUnique):
-        self.queryMethods.Insert(pr)
-
-    def SmartInsert(self, pr: PwRepUnique):
-        self.queryMethods.SmartInsert(pr)
-
-    def getAllPw(self, offset: int = 0, limit: int = 1e6) -> list[str]:
+    def readAsParseUnit(self, offset: int = 0, limit: int = 1e7) -> list[PwRepAndStructureUnit]:
         """
-        Get All password string
+        Get pare unit `PwRepAndStructureUnit`
 
         """
-        return self.queryMethods.QueryAllPw(offset, limit)
+        l: list[PwRepUnique] = super().read(offset, limit)
+        ll = list(map(lambda x: self.transformDatabaseunitToParseunit(x), l))
+        return ll
+
+    def Insert(self, unit: PwRepUniqueUnit):
+        u = self.transformIntermediateToDatabaseUnit(unit)
+        self.queryMethods.Insert(u)
+
+    def SmartInsert(self, unit: PwRepUniqueUnit):
+        u = self.transformIntermediateToDatabaseUnit(unit)
+        self.queryMethods.SmartInsert(u)
