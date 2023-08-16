@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from Commons.DatabaseLayer import *
-from Parser.PIIDataTypes import *
+from Parser.PIIParsers import *
 from Parser.PIIPreprocessor import PIIPreprocessor
 
 

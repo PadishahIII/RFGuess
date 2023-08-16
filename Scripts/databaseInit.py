@@ -19,7 +19,7 @@ lineRst = re.compile(
 
 logging.basicConfig()  # filename="database.log"
 logger = logging.getLogger("sqlalchemy.engine")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.CRITICAL)
 
 engine = sqlalchemy.create_engine(url="mysql://root:914075@localhost/dataset12306")
 
@@ -488,6 +488,13 @@ class RepresentationMethods(BasicManipulateMethods):
             units = session.query(PwRepresentation).filter_by(pwStr=pwStr).all()
             return units
 
+    def QueryAllPw(self, offset: int = 0, limit: int = 1e6) -> list[str]:
+        with Session() as session:
+            resultTuple: list[Column] = session.query(PwRepresentation.pwStr).distinct().offset(offset).limit(
+                limit).all()  # list[tuple]
+            result = list(map(lambda x: x[0], resultTuple))
+            return result
+
     def QueryWithRepresentationHash(self, repHash: str) -> list[PwRepresentation]:
         """
         Query with representation's hash
@@ -570,7 +577,7 @@ Representation Frequency Unit and QueryMethod
 
 
 class RepresentationFrequency(Base):
-    __tablename__ = "representation_frequency_view"
+    __tablename__ = "representation_frequency"
 
     frequency = Column(Integer)
     representationStructureHash = Column(String, primary_key=True)
@@ -655,6 +662,227 @@ class RepresentationFrequencyMethods(BasicManipulateMethods):
         """
         with Session() as session:
             units = session.query(self.entityCls).filter_by(representationHash=unit.representationHash).all()
+            if not units or len(units) <= 0:
+                return False
+            else:
+                return True
+
+
+class PwRepresentationFrequency(Base):
+    __tablename__ = "pwrepresentation_frequency"
+
+    id = Column(Integer, primary_key=True)
+    pwStr = Column(String)
+    frequency = Column(Integer)
+    representationStructureHash = Column(String)
+    representationStructure = Column(String)
+
+    def __init__(self, pwStr: str, frequency: int, repHash: str, repStr: str):
+        """
+
+        Args:
+            frequency:
+            repHash:
+            repStr: serialized representation
+        """
+        super().__init__()
+        self.pwStr = pwStr
+        self.frequency = frequency
+        self.representationHash = repHash
+        self.representation = repStr
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class PwRepresentationFrequencyMethods(BasicManipulateMethods):
+    def __init__(self):
+        super().__init__(PwRepresentationFrequency)
+
+    def QueryWithPw(self, pwStr: str) -> list[PwRepresentationFrequency]:
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(pwStr=pwStr).all()
+            return units
+
+    def Update(self, unit):
+        pass
+
+    def CheckExist(self, unit: PwRepresentationFrequency) -> bool:
+        """
+        Check unit if exists in terms of `representationHash`
+
+        Args:
+            unit:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(pwStr=unit.pwStr).all()
+            if not units or len(units) <= 0:
+                return False
+            else:
+                return True
+
+
+class PwRepUnique(Base):
+    __tablename__ = "PwRepresentation_unique"
+
+    id = Column(Integer, primary_key=True)
+    pwStr = Column(String)
+    representation = Column(String)
+    representationStructure = Column(String)
+    representationHash = Column(String)
+    representationStructureHash = Column(String)
+    hash = Column(String)
+
+    def __init__(self, pwStr: str, repStr: str, repStruc: str):
+        super().__init__()
+        self.pwStr = pwStr
+        self.representation = repStr
+        self.representationStructure = repStruc
+        self.representationHash = PwRepresentation.getHash(self.representation)
+        self.representationStructureHash = PwRepresentation.getHash(self.representationStructure)
+        self.hash = PwRepresentation.getHash(self.pwStr + self.representation)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    @classmethod
+    def getHash(cls, s: str) -> str:
+        """
+        Get hash of representation
+
+        Args:
+            s:
+
+        Returns:
+
+        """
+        hashB = hashlib.md5(s.encode("utf8")).digest()
+        hashS = binascii.hexlify(hashB).decode("utf8")
+        return hashS
+
+    @classmethod
+    def update(cls, a, b):
+        """
+        Update a with b
+
+        Args:
+            a:
+            b:
+
+        Returns:
+
+        """
+        a.pwStr = b.pwStr
+        a.representation = b.representation
+        a.representationStructure = b.representationStructure
+        a.representationStructureHash = b.representationStructureHash
+        a.representationHash = b.representationHash
+        a.hash = b.hash
+
+    @validates('pwStr')
+    def validatePwStr(self, key, pwStr):
+        if len(pwStr) <= 0:
+            raise ValueError(f"Invalid pwStr: cannot be empty")
+        return pwStr
+
+    @validates('representation')
+    def validateRep(self, key, repStr):
+        if len(repStr) <= 0:
+            raise ValueError(f"Invalid representation string: cannot be empty")
+        return repStr
+
+    @validates('representationHash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return hashStr
+
+    @validates('representationStructureHash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return hashStr
+
+    @validates('representationStructure')
+    def validateRep(self, key, repStruc):
+        if len(repStruc) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return repStruc
+
+    @validates('hash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid whole hash: cannot be empty")
+        return hashStr
+
+
+class PwRepUniqueMethods(BasicManipulateMethods):
+    def __init__(self):
+        super().__init__(PwRepUnique)
+
+    def QueryWithPw(self, pwStr: str) -> list[PwRepUnique]:
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(pwStr=pwStr).all()
+            return units
+
+    def QueryAllPw(self, offset: int = 0, limit: int = 1e6) -> list[str]:
+        with Session() as session:
+            resultTuple: list[Column] = session.query(PwRepUnique.pwStr).distinct().offset(offset).limit(
+                limit).all()  # list[tuple]
+            result = list(map(lambda x: x[0], resultTuple))
+            return result
+
+    def QueryWithRepresentationHash(self, repHash: str) -> list[PwRepUnique]:
+        """
+        Query with representation's hash
+        Args:
+            repHash:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(PwRepUnique).filter_by(representationHash=repHash).all()
+            return units
+
+    def QueryWithRepresentationStructureHash(self, repStructureHash: str, offset: int = 0, limit: int = 1e6) -> list[
+        PwRepUnique]:
+        """
+        Query with representation structure
+
+        """
+        with Session() as session:
+            units = session.query(PwRepUnique).filter_by(representationStructureHash=repStructureHash).offset(
+                offset).limit(limit).all()
+            return units
+
+    def QueryWithWholeHash(self, hashStr: str) -> list[PwRepUnique]:
+        """
+        Query with the hash of pwStr+representation
+
+        """
+        with Session() as session:
+            units = session.query(PwRepUnique).filter_by(hash=hashStr).all()
+            return units
+
+    def Update(self, unit):
+        pass
+
+    def CheckExist(self, unit: PwRepUnique) -> bool:
+        """
+        Check unit if exists in terms of `representationHash`
+
+        Args:
+            unit:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(hash=unit.hash).all()
             if not units or len(units) <= 0:
                 return False
             else:

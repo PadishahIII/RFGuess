@@ -1,7 +1,9 @@
 # from Parser.PasswordParsers import PasswordParsers.Segment,PasswordParsers.Datagram,Password
 import base64
-import pickle
 import datetime
+import hashlib
+import pickle
+
 import Commons.BasicTypes
 from Commons.BasicTypes import DefaultPII
 
@@ -244,3 +246,8 @@ class Serializer:
     def deserialize(cls, s: str) -> object:
         obj = pickle.loads(base64.b64decode(s.encode("utf-8")))
         return obj
+
+
+def md5(s: str) -> bytes:
+    hashB = hashlib.md5(s.encode("utf8")).digest()
+    return hashB

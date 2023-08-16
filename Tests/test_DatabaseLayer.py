@@ -16,13 +16,13 @@ class Test(TestCase):
 
     def test_pw_representation_transformer(self):
         transformer = PwRepresentationTransformer.getInstance()
-        units: list[PwRepUnit] = transformer.read()
+        units: list[PwRepUniqueUnit] = transformer.read()
         for unit in units:
             print({k: v for k, v in unit.__dict__.items() if k != "representation" and k != "repStr"})
 
     def test_pw_representation_transformer_read(self):
         transformer = PwRepresentationTransformer.getInstance()
-        units: list[PwRepUnit] = transformer.read(offset=0, limit=10)
+        units: list[PwRepUniqueUnit] = transformer.read(offset=0, limit=10)
         parser = PIITagRepresentationStrParser()
         for unit in units:
             rep = parser.representationToStr(unit.rep)
@@ -102,3 +102,25 @@ class TestPwRepresentationTransformer(TestCase):
         print(f"hash2:{pr2.representationHash}")
 
         assert pr1.representationHash == pr2.representationHash
+
+
+class TestPwRepFrequencyTransformer(TestCase):
+    def test_get_instance(self):
+        transformer = PwRepFrequencyTransformer.getInstance()
+        transformer2 = PwRepFrequencyTransformer.getInstance()
+        print(f"1:{transformer}\n2:{transformer2}")
+
+    def test_transform(self):
+        self.fail()
+
+    def test_transform_to_rep_unit(self):
+        self.fail()
+
+    def test_read(self):
+        self.fail()
+
+    def test_query_with_pw_to_rep_unit(self):
+        self.fail()
+
+    def test_query_with_pw(self):
+        self.fail()

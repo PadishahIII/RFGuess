@@ -62,10 +62,18 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+### Representation Resolver(8.16)
+1. Convert all dataviews into datatable(I found queries on dataview behave too slow)
+2. Resolver.`getInstance`(load all data in database) succeed in about 4s 
+3. Resolver.`resolve` which is main algorithm succeed
+4. Build datatable `pwrepresentation_unique` to store the unique representation and structure of every password string 
+
 ### Database build(8.15)
 1. Adjust `PIIVector` and `Tag` to adapt to express *representationStructure*
 2. Add *representationStructure* field in datatables
 3. Complete representation extraction
+4. Refactor all DatabaseTransformers with `Singleton`
+5. Move all datastructures in `Parsers.PIIParser` to `Parser.PIIDataTypes`
 
 ### Database build(8.14)
 1. Scripts/databaseInit.py: in `LoadDataset` method, add pii field format check before insert into datatable
@@ -84,8 +92,8 @@ hash
 1. *(TODO)* Representation => DatagramList
 2. *(TODO)* Build a table to store the final representation of password
 3. Create `pwrepresentation` table to store passwords and corresponding representations
-4. Create `representation_frequency_view` view to store frequency of representations
-5. *(TODO)* Build `pwrepresentation` and `representation_frequency_view` tables with data
+4. Create `representation_frequency` view to store frequency of representations
+5. *(TODO)* Build `pwrepresentation` and `representation_frequency` tables with data
 6. Scripts/databaseInit.py: refactor the query code with an ancestor class `BasicManipulateMethods`, have added Entity
 type and QueryMethods for each table/view.
 
