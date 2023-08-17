@@ -1,0 +1,124 @@
+<mxfile host="app.diagrams.net" modified="2023-08-17T04:59:05.243Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36" etag="I1-XaWU3u1mNdTbB-ZJv" version="21.6.8" type="device">
+  <diagram id="QXTD78XPPDVz_E4tdgk_" name="第 1 页">
+    <mxGraphModel dx="923" dy="1120" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="node4" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.PIIUnit&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; account: String&lt;br/&gt; email: String&lt;br/&gt; fullName: String&lt;br/&gt; id: Integer&lt;br/&gt; idCard: String&lt;br/&gt; name: String&lt;br/&gt; password: String&lt;br/&gt; phoneNum: String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="2470" y="267.33000000000004" width="221" height="215" as="geometry" />
+        </mxCell>
+        <mxCell id="node1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.PwRepUnique&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; hash: String&lt;br/&gt; id: Integer&lt;br/&gt; pwStr: String&lt;br/&gt; representation: String&lt;br/&gt; representationHash: String&lt;br/&gt; representationStructure: String&lt;br/&gt; representationStructureHash: String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="582.5" y="230" width="272" height="192" as="geometry" />
+        </mxCell>
+        <mxCell id="node2" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.PwRepresentation&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; hash: String&lt;br/&gt; id: Integer&lt;br/&gt; pwStr: String&lt;br/&gt; representation: String&lt;br/&gt; representationHash: String&lt;br/&gt; representationStructure: String&lt;br/&gt; representationStructureHash: String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1981.5" y="260.00000000000006" width="300" height="192" as="geometry" />
+        </mxCell>
+        <mxCell id="node3" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.PwRepresentationFrequency&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; frequency: Integer&lt;br/&gt; id: Integer&lt;br/&gt; pwStr: String&lt;br/&gt; representationStructure: String&lt;br/&gt; representationStructureHash: String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1451.5" y="260" width="373" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="node0" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.RepresentationFrequency&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; frequency: Integer&lt;br/&gt; representationStructure: String&lt;br/&gt; representationStructureHash: String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="981.5" y="260" width="353" height="108" as="geometry" />
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-1" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.BasicManipulateMethods&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; entityCls: &lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self, entityCls): &lt;br/&gt; CheckExist(self, unit: Base): &lt;br/&gt; Update(self, unit: Base): &lt;br/&gt; Insert(self, obj: Base): &lt;br/&gt; QueryAll(self): &lt;br/&gt; QueryWithLimit(self, offset: int = 0, limit: int = 1e6): &lt;br/&gt; DeleteAll(self, ): &lt;br/&gt; SmartInsert(self, unit: Base, update: bool = False): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="2970" y="-180.17000000000002" width="353" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endSize=12;" parent="1" source="glashZKrfmGrVBxdPCrx-4" target="glashZKrfmGrVBxdPCrx-1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-4" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.PIIUnitQueryMethods&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self): &lt;br/&gt; UpdateFullName(self, name, fullname): &lt;br/&gt; Update(self, unit: PIIUnit): &lt;br/&gt; CheckExist(self, unit: PIIUnit): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="2400" y="-116.67" width="326" height="133" as="geometry" />
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-6" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.PwRepUniqueMethods&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self): &lt;br/&gt; QueryWithPw(self, pwStr: str): &lt;br/&gt; QueryWithId(self, id: int): &lt;br/&gt; QueryAllPw(self, offset: int = 0, limit: int = 1e6): &lt;br/&gt; QueryWithRepresentationHash(self, repHash: str): &lt;br/&gt; QueryWithRepresentationStructureHash(self, repStructureHash: str, offset: int = 0, limit: int = 1e6): &lt;br/&gt; QueryWithWholeHash(self, hashStr: str): &lt;br/&gt; Update(self, unit): &lt;br/&gt; CheckExist(self, unit: PwRepUnique): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="540" y="-158.17000000000002" width="357" height="238" as="geometry" />
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-9" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.PwRepresentationFrequencyMethods&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self): &lt;br/&gt; QueryWithPw(self, pwStr: str): &lt;br/&gt; Update(self, unit): &lt;br/&gt; CheckExist(self, unit: PwRepresentationFrequency): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1420" y="-116.67" width="436" height="133" as="geometry" />
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-11" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.RepresentationFrequencyMethods&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self): &lt;br/&gt; QueryWithRepStructureHash(self, hashStr: str): &lt;br/&gt; QueryAllWithFrequencyDesc(self, offset: int = 0, limit: int = 1e7): &lt;br/&gt; Update(self, unit): &lt;br/&gt; CheckExist(self, unit: RepresentationFrequency): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="950" y="-129.67000000000002" width="416" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-12" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Scripts.databaseInit.RepresentationMethods&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;p style=&quot;margin:0 0 0 4px;line-height:1.6;&quot;&gt; __init__(self): &lt;br/&gt; QueryWithPwStr(self, pwStr: str): &lt;br/&gt; QueryAllPw(self, offset: int = 0, limit: int = 1e6): &lt;br/&gt; QueryWithRepresentationHash(self, repHash: str): &lt;br/&gt; QueryWithRepresentationStructureHash(self, repStructureHash: str, offset: int = 0, limit: int = 1e6): &lt;br/&gt; QueryWithWholeHash(self, hashStr: str): &lt;br/&gt; QueryWithPwRepStructureHash(self, pwStr: str, repStructureHash: str): &lt;br/&gt; Update(self, unit: PwRepresentation): &lt;br/&gt; CheckExist(self, unit: PwRepresentation): &lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=14;fontFamily=Helvetica;html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;" parent="1" vertex="1">
+          <mxGeometry x="1940" y="-180.17000000000002" width="383" height="238" as="geometry" />
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-13" value="" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.406;exitY=0.001;exitDx=0;exitDy=0;entryX=0.978;entryY=1.000;entryDx=0;entryDy=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="950.392785571142" y="1168.33" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-14" value="" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=1.001;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1167" y="1334.33" />
+              <mxPoint x="960" y="1334.33" />
+            </Array>
+            <mxPoint x="1167.0000000000002" y="1316.33" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-15" value="" style="html=1;rounded=1;edgeStyle=orthogonalEdgeStyle;dashed=0;startArrow=block;startSize=12;endArrow=none;strokeColor=#595959;exitX=0.500;exitY=0.000;exitDx=0;exitDy=0;entryX=0.500;entryY=1.000;entryDx=0;entryDy=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="782" y="1334.33" />
+              <mxPoint x="960" y="1334.33" />
+            </Array>
+            <mxPoint x="782" y="1354.33" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endSize=12;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-12" target="glashZKrfmGrVBxdPCrx-1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2420.5" y="-256.17" as="sourcePoint" />
+            <mxPoint x="2624.5" y="-256.17" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endSize=12;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-9" target="glashZKrfmGrVBxdPCrx-1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1430.5" y="-206.17000000000002" as="sourcePoint" />
+            <mxPoint x="1634.5" y="-206.17000000000002" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endSize=12;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-11" target="glashZKrfmGrVBxdPCrx-1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1030.5" y="-306.17" as="sourcePoint" />
+            <mxPoint x="1234.5" y="-306.17" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endSize=12;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-6" target="glashZKrfmGrVBxdPCrx-1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="600.5" y="-266.17" as="sourcePoint" />
+            <mxPoint x="804.5" y="-266.17" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;endSize=12;endArrow=open;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-6" target="node1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="133.3888235294117" as="sourcePoint" />
+            <mxPoint x="718.5269999999998" y="269.66599999999994" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;endSize=12;endArrow=open;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-11" target="node0" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1330" y="173.3888235294117" as="sourcePoint" />
+            <mxPoint x="1166.5" y="375.3299999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;endSize=12;endArrow=open;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-9" target="node3" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1500" y="93.38882352941171" as="sourcePoint" />
+            <mxPoint x="1626.5" y="373.3299999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;endSize=12;endArrow=open;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-12" target="node2" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2100" y="153.3888235294117" as="sourcePoint" />
+            <mxPoint x="2131.5" y="267.3299999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="glashZKrfmGrVBxdPCrx-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;endSize=12;endArrow=open;endFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="glashZKrfmGrVBxdPCrx-4" target="node4" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2640" y="113.38882352941171" as="sourcePoint" />
+            <mxPoint x="2602.5000000000005" y="244.32999999999993" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
