@@ -9,6 +9,8 @@ https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-passwo
 2. n_estimators=30: 30 decision trees
 3. criterion='gini': CART decision tree
 
+
+
 ## Tutorial for development
 ### Database manipulation and preprocess
 There are two circumstances as for database-manipulation, one of which is about reading from the **primitive** database
@@ -51,7 +53,10 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 `Preprocessor`
 
 ## Data Structures Explanation
-**TODO**
+### Foreground parsing and database building data structures
+#### PIIDataTypes
+
+
 
 ## Database structure
 ### `pwrepresentation` datatable
@@ -67,7 +72,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 2. Resolver.`getInstance`(load all data in database) succeed in about 4s 
 3. Resolver.`resolve` which is main algorithm succeed
 4. Build datatable `pwrepresentation_unique` to store the unique representation and structure of every password string 
-5. Api hierarchy: `Scripts/databaseInit.py`(bottom) => `Commons/DatabaseLayer.py`(Transformers) => `Scripts/Units`(flexible apis) => `Parser.PIIParsers`(top)
+5. **Api hierarchy**: `Scripts/databaseInit.py`(bottom) => `Commons/DatabaseLayer.py`(Transformers) => `Scripts/Units`(flexible apis) => `Parser.PIIParsers`(top)
 6. Test the unique datatable in `buildDatabase/test_read_unique` method
 7. *(TODO)* Build LDS segment datatable with priority possibility
 8. *(TODO)* Enrich document for data structures and all modules for database building

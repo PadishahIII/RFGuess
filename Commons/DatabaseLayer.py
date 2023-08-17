@@ -198,7 +198,7 @@ Transformers
 
 class PwRepresentationTransformer(DatabaseTransformer, Singleton):
     """Transformer for `pwrepresentation` datatable
-    Transform representation serialization data into PIIRepresentation object.
+    Transformation: PwRepresentation(database unit) => PwRepUnit(intermediate unit) => PIIRepresentation(parse unit)
 
     Examples:
         # get deserialized unit with PIIRepresentation object
@@ -316,7 +316,7 @@ class PwRepresentationTransformer(DatabaseTransformer, Singleton):
 
 class RepFrequencyTransformer(DatabaseTransformer, Singleton):
     """Transformer for `representation_frequency` dataview
-    Transformation: RepresentationFrequency(base unit) => RepFrequencyUnit => RepUnit(parse unit)
+    Transformation: RepresentationFrequency(base unit) => RepFrequencyUnit(intermediate unit) => RepUnit(parse unit)
 
     Examples:
         transformer = RepFrequencyTransformer.getInstance()
@@ -366,7 +366,7 @@ class RepFrequencyTransformer(DatabaseTransformer, Singleton):
 
 class PwRepFrequencyTransformer(DatabaseTransformer, Singleton):
     """Transformer for `pwrepresentation_frequency` dataview
-    Transformation: PwRepresentationFrequency(base unit) => RepFrequencyUnit => RepUnit(parse unit)
+    Transformation: PwRepresentationFrequency(base unit) => RepFrequencyUnit(intermediate unit) => RepUnit(parse unit)
 
     Examples:
         transformer = PwRepFrequencyTransformer.getInstance()
@@ -426,7 +426,7 @@ class PwRepFrequencyTransformer(DatabaseTransformer, Singleton):
 
 class PwRepUniqueTransformer(DatabaseTransformer, Singleton):
     """Transformer for `pwrepresentation_unique` datatable
-    Transformation: PwRepUnique(database unit) => PwRepUniqueUnit => PwRepAndStructureUnit(parse unit)
+    Transformation: PwRepUnique(database unit) => PwRepUniqueUnit(intermediate unit) => PwRepAndStructureUnit(parse unit)
 
     Examples:
         # get deserialized unit with PIIRepresentation object

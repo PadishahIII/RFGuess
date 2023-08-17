@@ -38,8 +38,11 @@ class PIIVector:
         return obj
 
 
-# A representation of password string, compose of several PIIVectors(containing LDS)
 class PIIRepresentation:
+    """
+    A representation of password string, compose of several PIIVectors(containing LDS)
+    """
+
     def __init__(self, l: typing.List[PIIVector]):
         self.piiVectorList: typing.List[PIIVector] = l
         self.len = len(self.piiVectorList)
@@ -68,8 +71,11 @@ class PIIRepresentation:
         pass
 
 
-# All representations of password string, compose of PIIRepresentations in different length
 class PIIStructure:
+    """
+    All representations of password string, compose of PIIRepresentations in different length
+    """
+
     def __init__(self, s: str, l: typing.List[PIIRepresentation]):
         self.piiRepresentationList: typing.List[PIIRepresentation] = l
         self.num = len(self.piiRepresentationList)
@@ -115,13 +121,9 @@ class RepUnit:
         return RepUnit(repStr, repHash, frequency)
 
 
-'''
-A password string and its unique representation, representationStructure 
-'''
-
-
 class PwRepAndStructureUnit:
     """
+    A password string and its unique representation and representationStructure
     A unit of pwStr, representation and structure
 
     """
@@ -134,18 +136,6 @@ class PwRepAndStructureUnit:
     @classmethod
     def create(cls, pwStr: str, rep: PIIRepresentation, repStructure: PIIRepresentation):
         return PwRepAndStructureUnit(pwStr, rep, repStructure)
-
-
-
-class PwStructure:
-    """
-    Password string and list of its all representations.
-
-    """
-
-    def __init__(self, pwStr: str, repList: list[PIIRepresentation]) -> None:
-        self.pwStr = pwStr
-        self.repList: list[PIIRepresentation] = repList
 
 
 '''
@@ -289,7 +279,10 @@ class PIIDataSetException(BasicDataTypes.DatasetException):
         super().__init__(*args)
 
 
-# PII data types extend BasicDataTypes
+'''
+PII data types extend BasicDataTypes
+'''
+
 class PIISection(BasicDataTypes.Section):
 
     def __init__(self, type: BasicTypes.PIIType, value):
