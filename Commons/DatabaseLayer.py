@@ -492,6 +492,17 @@ class PwRepUniqueTransformer(DatabaseTransformer, Singleton):
         baseUnit: PwRepUnique = PwRepUnique(pwStr=unit.pwStr, repStr=repStr, repStruc=repStruct)
         return baseUnit
 
+    def transformIntermediateunitToParseunit(self, unit: PwRepUniqueUnit) -> PwRepAndStructureUnit:
+        pwStr = unit.pwStr
+        repStr = unit.repStr
+        repStructureStr = unit.repStructureStr
+
+        rep: PIIRepresentation = Serializer.deserialize(repStr)
+        repStructure: PIIRepresentation = Serializer.deserialize(repStructureStr)
+
+        res: PwRepAndStructureUnit = PwRepAndStructureUnit.create(pwStr=pwStr, rep=rep, repStructure=repStructure)
+        return res
+
     def InsertPwRepAndStructureUnit(self, unit: PwRepAndStructureUnit):
         """
         Insert `PwRepAndStructureUnit`(parse unit) into database
@@ -545,7 +556,7 @@ class PwRepUniqueTransformer(DatabaseTransformer, Singleton):
 
         """
         l: list[PwRepUnique] = super().read(offset, limit)
-        ll = list(map(lambda x: self.transformDatabaseunitToParseunit(x), l))
+        ll = list(map(lambda x: self.transformIntermediateunitToParseunit(x), l))
         return ll
 
     def Insert(self, unit: PwRepUniqueUnit):

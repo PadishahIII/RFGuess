@@ -285,20 +285,35 @@ PII data types extend BasicDataTypes
 
 
 class PIISection(BasicDataTypes.Section):
+    """
 
-    def __init__(self, type: BasicTypes.PIIType, value):
+    Attributes:
+        type (PIIType.BaseTypes): like `Name`, `Account`,...
+        value (PIIType or int): like `NameType.FullName`
+    Notes:
+        `value` field store either `PIIType` or int, LDS section use int value and pii sections use corresponding Enum type for value
+
+    """
+
+    def __init__(self, type: BasicTypes.PIIType.BaseTypes, value: BasicTypes.PIIType):
         super().__init__(type, value, BasicTypes.KeyboardPosition(0, 0))
+
+    def getIntValue(self) -> int:
+        if isinstance(self.value, int):
+            return self.value
+        else:
+            return self.value.value
 
     def _tojson(self):
         return {
             "PII Type:": str(self.type) + f" {self.type.name}",
-            "PII value": self.value,
+            "PII value": self.value if isinstance(self.value, int) else str(self.value) + f" {self.value.name}",
         }
 
     def _tovector(self) -> list[int, int, int, int]:
         return [
             int(self.type.value),
-            int(self.value),
+            int(self.getIntValue()),
             int(self.keyboardPos.row),
             int(self.keyboardPos.col)
         ]
@@ -315,7 +330,7 @@ class PIILabel(BasicDataTypes.Label):
         return PIILabel(section)
 
     def toInt(self):
-        return self.section.type.value + self.section.value
+        return self.section.type.value + self.section.getIntValue()
 
 
 class PIILabelException(Exception):

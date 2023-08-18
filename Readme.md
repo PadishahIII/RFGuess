@@ -70,6 +70,14 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 ### Factory and train(8.18)
 1. Add diagrams in `Diagrams` folder
 2. Complete `PIIParser` and `PIIFactory` to build train dataset
+3. Parser/PIIParsers.py: implement `PIISectionFactory` as the factory of `PIISection`
+4. Adjust the defination of `PIISection` along with its fields. For now, PIISection's *type* field is the BaseType of section
+like `PIIType.BaseTypes.Name`, *value* field denotes the specified pii type like `NameType.FullName`, and *value* field differs
+for LDS section and PII section. In the condition of LDS section, *value* stores the length of LDS segment, as for PII section,
+it stores a enum value of `PIIType` like `NameType.FullName`
+5. `PIIParser` class has passed the initial test cases
+6. *(TODO)* test `PIIParser` with various data items
+
 
 ### Representation Resolver(8.16)
 1. Convert all dataviews into datatable(I found queries on dataview behave too slow)
