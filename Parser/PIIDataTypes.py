@@ -283,6 +283,7 @@ class PIIDataSetException(BasicDataTypes.DatasetException):
 PII data types extend BasicDataTypes
 '''
 
+
 class PIISection(BasicDataTypes.Section):
 
     def __init__(self, type: BasicTypes.PIIType, value):
@@ -294,10 +295,38 @@ class PIISection(BasicDataTypes.Section):
             "PII value": self.value,
         }
 
+    def _tovector(self) -> list[int, int, int, int]:
+        return [
+            int(self.type.value),
+            int(self.value),
+            int(self.keyboardPos.row),
+            int(self.keyboardPos.col)
+        ]
+
+
+class PIILabel(BasicDataTypes.Label):
+
+    def __init__(self, section: PIISection) -> None:
+        super().__init__()
+        self.section: PIISection = section
+
+    @classmethod
+    def create(cls, section: PIISection):
+        return PIILabel(section)
+
+    def toInt(self):
+        return self.section.type.value + self.section.value
+
+
+class PIILabelException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 
 class PIIDatagram(BasicDataTypes.Datagram):
 
-    def __init__(self, sectionList: list[PIISection], label: typing.Any, offsetInPassword: int, offsetInSegment: int,
+    def __init__(self, sectionList: list[PIISection], label: PIILabel, offsetInPassword: int, offsetInSegment: int,
                  pwStr: str):
         super().__init__(sectionList, label, offsetInPassword, offsetInSegment, pwStr)
 

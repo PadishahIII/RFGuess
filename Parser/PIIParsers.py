@@ -127,6 +127,15 @@ class PIIParserException(BasicParserException):
 
 
 class PIIParser(BasicParser):
+
+    def __init__(self, ctx, pwStr: str, rep: PIIRepresentation):
+        super().__init__(ctx, pwStr)
+        self.rep: PIIRepresentation = rep
+        self.plen = rep.len
+        self.featureList: list[list]
+        self.datagramList: list[PIIDatagram]
+        self.labelList: list[int]
+
     @classmethod
     def parsePIIVectorToPIISection(cls, vector: PIIVector) -> PIIDataTypes.PIISection:
         type = vector.piitype
@@ -142,24 +151,53 @@ class PIIParser(BasicParser):
     def afterParse(self):
         super().afterParse()
 
-    @property
-    def pii(self):
-        return self._pii
-
-    @pii.setter
-    def pii(self, pii: BasicTypes.PII):
-        self._pii = pii
-
     def buildDatagramList(self):
-        piiStructureParser = PIIStructureParser(self.pii)
-        piiStructure: PIIStructure = piiStructureParser.getPwPIIStructure(self.pwStr)
-        self.datagramList = list()
-        for representation in piiStructure.piiRepresentationList:
-            piiSectionList = list()
-            for vector in representation.piiVectorList:
-                piiSection = PIIDataTypes.PIISection(vector.piitype, vector.piivalue)
-                piiSectionList.append(piiSection)
-            PIIDataTypes.PIIDatagram()
+        for i in range(self.plen):
+            sectionList = list()
+            offsetInPassword = 0
+            offsetInSegment = len(self.rep.piiVectorList[i].str)
+            for n in range(self.plen - i):
+                sectionList.append(self.getBeginSection())
+            for n in range(i + 1):
+                vector: PIIVector = self.rep.piiVectorList[n]
+                section: PIISection = self.PIIVectorToPIISection(vector)
+                sectionList.append(section)
+                offsetInPassword += len(vector.str)
+            # resolve label
+            if i < self.plen - 1:
+                nextVector = self.rep.piiVectorList[i + 1]
+                section = self.PIIVectorToPIISection(nextVector)
+                label = PIILabel.create(section)
+            else:
+                # end symbol
+                section = self.getEndSection()
+                label = PIILabel.create(section)
+            dg = PIIDatagram(sectionList=sectionList,
+                             label=label,
+                             offsetInPassword=offsetInPassword,
+                             offsetInSegment=offsetInSegment,
+                             pwStr=self.pwStr)
+            self.datagramList.append(dg)
+
+    def buildFeatureList(self):
+        for dg in self.datagramList:
+            t = dg._tovector()
+            self.featureList.append(t)
+
+    def buildLabelList(self):
+        for dg in self.datagramList:
+            label = dg.label
+            self.labelList.append(label.toInt())
+
+    def PIIVectorToPIISection(self, vector: PIIVector) -> PIISection:
+        section = PIISection(type=vector.piitype, value=vector.piivalue)
+        return section
+
+    def getBeginSection(self) -> PIISection:
+        return PIISection(PIIType.BaseTypes.BeginSymbol, 0)
+
+    def getEndSection(self) -> PIISection:
+        return PIISection(PIIType.BaseTypes.EndSymbol, 0)
 
 
 '''

@@ -67,12 +67,16 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+### Factory and train(8.18)
+1. Add diagrams in `Diagrams` folder
+2. Complete `PIIParser` and `PIIFactory` to build train dataset
+
 ### Representation Resolver(8.16)
 1. Convert all dataviews into datatable(I found queries on dataview behave too slow)
 2. Resolver.`getInstance`(load all data in database) succeed in about 4s 
 3. Resolver.`resolve` which is main algorithm succeed
 4. Build datatable `pwrepresentation_unique` to store the unique representation and structure of every password string 
-5. **Api hierarchy**: `Scripts/databaseInit.py`(bottom) => `Commons/DatabaseLayer.py`(Transformers) => `Scripts/Units`(flexible apis) => `Parser.PIIParsers`(top)
+5. **Foreground Api hierarchy**: `Scripts/databaseInit.py`(bottom) => `Commons/DatabaseLayer.py`(Transformers) => `Scripts/Units`(flexible apis) => `Parser.PIIParsers`(top)
 6. Test the unique datatable in `buildDatabase/test_read_unique` method
 7. *(TODO)* Build LDS segment datatable with priority possibility
 8. *(TODO)* Enrich document for data structures and all modules for database building

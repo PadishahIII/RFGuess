@@ -10,7 +10,21 @@ Dataset: a bunch of Dataunit
 Password: a set of 26-dim vectors expressed by several Datagrams
    Datagram: a 26-dim vector expressed by several Sections
        Section: a 4-dim vector expressed by (type,value,row,col)
+       Label: abstract label class which can be transformed to Integer
 """
+
+class Label(metaclass=ABCMeta):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    @abstractmethod
+    def toInt(self):
+        """
+        Get Integer label
+
+        """
+        pass
 
 
 class Section(metaclass=ABCMeta):
