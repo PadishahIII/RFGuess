@@ -3,10 +3,11 @@ import base64
 import datetime
 import hashlib
 import pickle
-from enum import Enum
 
 import Commons.BasicTypes
+from Commons import BasicTypes
 from Commons.BasicTypes import DefaultPII
+from Commons.Modes import Singleton
 
 PARSERS = False
 if PARSERS is False:
@@ -265,3 +266,92 @@ def getEnumTypeFromInt(t: type, i: int):
         return None
     else:
         return m[i]
+
+
+class PIISectionTypeTranslation(Singleton):
+    """
+    Transform section's pii type into feature type, for example,
+    `NameType.FullName` =>  `BaseTypes.Name` and vice verse
+    """
+
+    def __init__(self) -> None:
+        self.toList = [
+            BasicTypes.PIIType.BaseTypes.Name,
+            BasicTypes.PIIType.BaseTypes.Birthday,
+            BasicTypes.PIIType.BaseTypes.Account,
+            BasicTypes.PIIType.BaseTypes.Email,
+            BasicTypes.PIIType.BaseTypes.PhoneNumber,
+            BasicTypes.PIIType.BaseTypes.IdCardNumber,
+        ]
+        self.fromList = [
+            BasicTypes.PIIType.NameType,
+            BasicTypes.PIIType.BirthdayType,
+            BasicTypes.PIIType.AccountType,
+            BasicTypes.PIIType.EmailPrefixType,
+            BasicTypes.PIIType.PhoneNumberType,
+            BasicTypes.PIIType.IdCardNumberType
+        ]
+        self.translatorPIITypeToBaseType = translation.makeTrans(self.fromList, self.toList)
+        self.translatorBaseTypeToPIIType = translation.makeTrans(self.toList, self.fromList)
+
+    def translatePIITypeToBaseType(self, fromObj) -> int:
+        """
+        For example, `PIIType.NameType` => `BaseTypes.Name`
+
+        """
+
+        return self.translatorPIITypeToBaseType.translate(fromObj)
+
+    def translateBaseTypeToPIIType(self, fromObj):
+        """
+        For example, `BaseTypes.Name` => `PIITypes.NameType`
+        """
+        return self.translatorBaseTypeToPIIType.translate(fromObj)
+
+
+class PIISectionValueTranslation(Singleton):
+    """
+    Transform int value into pii base types, for example,
+    4000 =>  `BaseTypes.Email` and vice verse
+    """
+
+    def __init__(self) -> None:
+        self.fromList = [
+            BasicTypes.PIIType.BaseTypes.Name.value,
+            BasicTypes.PIIType.BaseTypes.Birthday.value,
+            BasicTypes.PIIType.BaseTypes.Account.value,
+            BasicTypes.PIIType.BaseTypes.Email.value,
+            BasicTypes.PIIType.BaseTypes.PhoneNumber.value,
+            BasicTypes.PIIType.BaseTypes.IdCardNumber.value,
+            BasicTypes.PIIType.BaseTypes.L.value,
+            BasicTypes.PIIType.BaseTypes.D.value,
+            BasicTypes.PIIType.BaseTypes.S.value,
+        ]
+        self.toList = [
+            BasicTypes.PIIType.BaseTypes.Name,
+            BasicTypes.PIIType.BaseTypes.Birthday,
+            BasicTypes.PIIType.BaseTypes.Account,
+            BasicTypes.PIIType.BaseTypes.Email,
+            BasicTypes.PIIType.BaseTypes.PhoneNumber,
+            BasicTypes.PIIType.BaseTypes.IdCardNumber,
+            BasicTypes.PIIType.BaseTypes.L,
+            BasicTypes.PIIType.BaseTypes.D,
+            BasicTypes.PIIType.BaseTypes.S,
+
+        ]
+        self.translatorIntToEnum = translation.makeTrans(self.fromList, self.toList)
+        self.translatorEnumToInt = translation.makeTrans(self.toList, self.fromList)
+
+    def translateIntToEnumType(self, fromObj) -> int:
+        """
+        For example, 4000 => `BaseTypes.Email`
+
+        """
+        return self.translatorIntToEnum.translate(fromObj)
+
+    def translateEnumTypeToInt(self, fromObj):
+        """
+        For example, `BaseTypes.Email` => 4000
+
+        """
+        return self.translatorEnumToInt.translate(fromObj)

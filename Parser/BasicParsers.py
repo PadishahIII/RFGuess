@@ -22,8 +22,8 @@ class BasicParser(BasicContext, metaclass=ABCMeta):
     # do some check here
     @abstractmethod
     def beforeParse(self):
-        if self.context is None:
-            raise BasicParserException(f"context cannot be None")
+        # if self.context is None:
+        #     raise BasicParserException(f"context cannot be None")
         if self.pwStr is None or len(self.pwStr) <= 0:
             raise BasicParserException(f"pwStr cannot be empty")
 

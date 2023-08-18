@@ -126,7 +126,90 @@ class PIIParserException(BasicParserException):
         super().__init__(*args)
 
 
+class PIISectionFactory(Singleton):
+
+    def __init__(self) -> None:
+        self.translatorPIIType = Utils.PIISectionTypeTranslation()
+        self.translatorPIIValue = Utils.PIISectionValueTranslation()
+
+    def getBeginSection(self) -> PIISection:
+        return PIISection(PIIType.BaseTypes.BeginSymbol, 0)
+
+    def getEndSection(self) -> PIISection:
+        return PIISection(PIIType.BaseTypes.EndSymbol, 0)
+
+    def createFromPIIVector(self, vector: PIIVector) -> PIISection:
+        enumCls = vector.piitype.__class__
+        if enumCls in self.translatorPIIType.fromList:
+            # pii section
+            typeCls = self.translatorPIIType.translatePIITypeToBaseType(enumCls)
+            valueCls = vector.piitype  # e.g. NameType.FullName
+            section = PIISection(type=typeCls, value=valueCls)
+            return section
+
+        else:
+            # LDS or begin/end section
+            typeCls = vector.piitype
+            value = vector.piivalue
+            section = PIISection(type=typeCls, value=value)
+            return section
+
+    def createFromInt(self, i: int) -> PIISection:
+        if i == 0:
+            return self.getBeginSection()
+        elif i < 0:
+            return self.getEndSection()
+
+        td = int(i // 1e3)
+        if td > 0:
+            typeValue = int(i // 1e3) * 1e3
+            value = int(i % 1e3)
+
+            baseType = self.translatorPIIValue.translateIntToEnumType(typeValue)
+            sectionType = baseType
+            if self.isLDSType(baseType):
+                sectionValue = value
+            else:
+                piiType = self.translatorPIIType.translateBaseTypeToPIIType(baseType)
+                v = Utils.getEnumTypeFromInt(piiType, value)
+                if v == None:
+                    raise PIISectionFactoryException(f"Error: cannot create PIISection, invalid value {value} in {i}")
+                sectionValue = v
+
+            if sectionType is None or sectionValue is None:
+                raise PIISectionFactoryException(
+                    f"Error: cannot create PIISection, invalid pii value:{typeValue}+{value} in {i}")
+            return PIISection(sectionType, sectionValue)
+        else:
+            raise PIISectionFactoryException(f"Error: cannot create PIISection, invalid Integer:{i}")
+
+    def isLDSType(self, t: BasicTypes.PIIType.BaseTypes) -> bool:
+        """
+        Input a type, check whether it's LDS type
+
+        """
+        if t in [BasicTypes.PIIType.BaseTypes.L, BasicTypes.PIIType.BaseTypes.D, BasicTypes.PIIType.BaseTypes.S]:
+            return True
+        else:
+            return False
+
+
+class PIISectionFactoryException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 class PIIParser(BasicParser):
+    order = 6
+    """
+
+    Examples:
+        parser :PIIParser = PIIParser(None,pwStr,rep)
+        parser.parse()
+        parser.getFeatureList()
+        parser.getLabelList()
+    """
 
     def __init__(self, ctx, pwStr: str, rep: PIIRepresentation):
         super().__init__(ctx, pwStr)
@@ -136,16 +219,10 @@ class PIIParser(BasicParser):
         self.datagramList: list[PIIDatagram]
         self.labelList: list[int]
 
-    @classmethod
-    def parsePIIVectorToPIISection(cls, vector: PIIVector) -> PIIDataTypes.PIISection:
-        type = vector.piitype
-        value = vector.piivalue
-        section = PIIDataTypes.PIISection(type, value)
-        return section
+        self.translator = Utils.PIISectionTypeTranslation()
+        self.sectionFactory= PIISectionFactory.getInstance()
 
     def beforeParse(self):
-        if self.pii is None:
-            raise PIIParserException(f"pii field cannot be None")
         super().beforeParse()
 
     def afterParse(self):
@@ -156,21 +233,24 @@ class PIIParser(BasicParser):
             sectionList = list()
             offsetInPassword = 0
             offsetInSegment = len(self.rep.piiVectorList[i].str)
-            for n in range(self.plen - i):
-                sectionList.append(self.getBeginSection())
-            for n in range(i + 1):
+            if i < self.order:
+                for n in range(self.order - i - 1):
+                    sectionList.append(self.sectionFactory.getEndSection())
+            start = max(0, i - self.order + 1)
+            end = i + 1
+            for n in range(start, end):
                 vector: PIIVector = self.rep.piiVectorList[n]
-                section: PIISection = self.PIIVectorToPIISection(vector)
+                section: PIISection = self.sectionFactory.createFromPIIVector(vector)
                 sectionList.append(section)
                 offsetInPassword += len(vector.str)
             # resolve label
             if i < self.plen - 1:
                 nextVector = self.rep.piiVectorList[i + 1]
-                section = self.PIIVectorToPIISection(nextVector)
+                section = self.sectionFactory.createFromPIIVector(nextVector)
                 label = PIILabel.create(section)
             else:
                 # end symbol
-                section = self.getEndSection()
+                section = self.sectionFactory.getEndSection()
                 label = PIILabel.create(section)
             dg = PIIDatagram(sectionList=sectionList,
                              label=label,
@@ -189,15 +269,6 @@ class PIIParser(BasicParser):
             label = dg.label
             self.labelList.append(label.toInt())
 
-    def PIIVectorToPIISection(self, vector: PIIVector) -> PIISection:
-        section = PIISection(type=vector.piitype, value=vector.piivalue)
-        return section
-
-    def getBeginSection(self) -> PIISection:
-        return PIISection(PIIType.BaseTypes.BeginSymbol, 0)
-
-    def getEndSection(self) -> PIISection:
-        return PIISection(PIIType.BaseTypes.EndSymbol, 0)
 
 
 '''
@@ -539,7 +610,7 @@ class PIITagRepresentationStrParser:
             raise PIITagRepresentationStrParserException(f"Error: invaild tag str: {s}")
         ch = s[0]
         di = s[1]
-        typeCls: Enum = self.reTranslation.translate(ch)
+        typeCls: Enum = self.reTranslation.translatePIITypeToBaseType(ch)
         if typeCls in (BasicTypes.PIIType.BaseTypes.L, BasicTypes.PIIType.BaseTypes.D, BasicTypes.PIIType.BaseTypes.S):
             piiTypeCls = typeCls
         else:
