@@ -3,6 +3,7 @@ import base64
 import datetime
 import hashlib
 import pickle
+from enum import Enum
 
 import Commons.BasicTypes
 from Commons.BasicTypes import DefaultPII
@@ -251,3 +252,16 @@ class Serializer:
 def md5(s: str) -> bytes:
     hashB = hashlib.md5(s.encode("utf8")).digest()
     return hashB
+
+
+def getEnumTypeFromInt(t: type, i: int):
+    """
+    Input an int value, return the Enum type it belongs
+    None for error
+
+    """
+    m: dict = t._value2member_map_
+    if i not in m.keys():
+        return None
+    else:
+        return m[i]

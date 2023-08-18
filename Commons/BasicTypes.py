@@ -22,6 +22,8 @@ class PIIType:
         L = 7000
         D = 8000
         S = 9000
+        BeginSymbol = 0
+        EndSymbol = -1
 
     class NameType(Enum):
         FullName = 1
