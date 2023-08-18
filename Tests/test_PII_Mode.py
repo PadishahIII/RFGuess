@@ -2,10 +2,27 @@ import base64
 import json
 import pickle
 from unittest import TestCase
-import  clipboard
+
+import clipboard
+import joblib
+
+from Classifiers.PIIRFTrainner import PIIRFTrainner
+from Parser.Factory import *
 # from PasswordParser import *
 from Parser.PIIParsers import *
-from Parser.PasswordParsers import *
+
+
+class PIITrainTest(TestCase):
+    piiFactory = PIIFactory.getInstance()
+    piiFactory.process()
+    print(
+        f"Train data build Finished.\nSize of featureList:{len(piiFactory.getFeatureList())} LabelList:{len(piiFactory.getLabelList())}")
+    print(f"\nStart Training...")
+    trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
+    trainner.train()
+    savePath = "../save.clf"
+    joblib.dump(trainner.getClf(), savePath)
+    print(f"Train finish, saved to {savePath}")
 
 
 class TestPIIParsers(TestCase):

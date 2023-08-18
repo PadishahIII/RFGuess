@@ -28,6 +28,12 @@ class BasicFactory(metaclass=ABCMeta):
         pass
 
 
+class PIIFactoryException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 class PIIFactory(BasicFactory):
     """
     Examples:
@@ -53,11 +59,15 @@ class PIIFactory(BasicFactory):
     def process(self):
         l: list[PwRepAndStructureUnit] = self.transformer.readAsParseUnit(offset=self.offset, limit=self.limit)
         for unit in l:
-            pwStr = unit.pwStr
-            rep: PIIRepresentation = unit.rep
-            parser: PIIParser = PIIParser(None, pwStr, rep)
-            parser.parse()
-            featureList = parser.getFeatureList()
-            labelList = parser.getLabelList()
-            self.featureList += featureList
-            self.labelList += labelList
+            try:
+                pwStr = unit.pwStr
+                rep: PIIRepresentation = unit.rep
+                parser: PIIParser = PIIParser(None, pwStr, rep)
+                parser.parse()
+                featureList = parser.getFeatureList()
+                labelList = parser.getLabelList()
+                self.featureList += featureList
+                self.labelList += labelList
+            except Exception as e:
+                raise PIIFactoryException(
+                    f"Exception occur when addressing unit {str(unit.__dict__)}\nOriginal Exception: {e}")

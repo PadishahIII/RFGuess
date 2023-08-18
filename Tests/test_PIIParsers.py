@@ -1,5 +1,5 @@
 import json
-from random import random
+import random
 from unittest import TestCase
 
 from Commons.DatabaseLayer import *
@@ -21,8 +21,7 @@ class TestPIIRepresentationResolver(TestCase):
         print(f"pwAllRepDict:{len(resolver.pwAllRepDict)}\n{resolver.pwAllRepDict[resolver.pwList[0]]}")
         for k, v in resolver.pwAllRepDict.items():
             assert v is not None and isinstance(v, list) and len(v) > 0
-        print(
-            f"repPriorityList:{len(resolver.repPriorityList)}\n{list(map(lambda x: x.frequency, resolver.repPriorityList[:10]))}")
+        print(f"repPriorityList:{len(resolver.repPriorityList)}\n{list(map(lambda x: x.frequency, resolver.repPriorityList[:10]))}")
 
     def test_check_pw_rep_match(self):
         self.fail()
@@ -74,16 +73,21 @@ class TestPIIToTagParser(TestCase):
 class TestPIIParser(TestCase):
     def test_build_datagram_list(self):
         transformer: PwRepUniqueTransformer = PwRepUniqueTransformer.getInstance()
-        unit = transformer.getParseunitWithPw(pwStr="chenkan588")
-        unit2 = transformer.getParseunitWithPw(pwStr="w63844810")
-        l: list[PwRepAndStructureUnit] = [unit,unit2 ]
+        minId = 0
+        maxId = 129300
+        l: list[PwRepAndStructureUnit] = []
+        for i in range(100):
+            id = random.randint(minId, maxId)
+            unit = transformer.getParseunitWithId(id)
+            l.append(unit)
+
         repParser: PIITagRepresentationStrParser = PIITagRepresentationStrParser()
         for unit in l:
             parser: PIIParser = PIIParser(None, unit.pwStr, unit.rep)
             parser.parse()
             repStr = repParser.representationToStr(unit.rep)
-            print(
-                f"{unit.pwStr}\n{repStr}feature:{len(parser.getFeatureList()[0])}{parser.getFeatureList()}\nlabel:{parser.getLabelList()}\n")
+            if len(unit.rep.piiVectorList) > 4:
+                print(f"{unit.pwStr}\n{repStr}feature:{len(parser.getFeatureList()[0])}{parser.getFeatureList()}\nlabel:{parser.getLabelList()}\n")
 
 
 class TestPIISectionFactory(TestCase):
@@ -94,22 +98,20 @@ class TestPIISectionFactory(TestCase):
         self.fail()
 
     def test_create_from_piivector(self):
-        factory:PIISectionFactory = PIISectionFactory.getInstance()
+        factory: PIISectionFactory = PIISectionFactory.getInstance()
         # vector = PIIVector(s="jason",piitype=BasicTypes.PIIType.NameType.GivenName,piivalue=)
-        transformer:PwRepUniqueTransformer = PwRepUniqueTransformer.getInstance()
-        parser:PIITagRepresentationStrParser = PIITagRepresentationStrParser()
+        transformer: PwRepUniqueTransformer = PwRepUniqueTransformer.getInstance()
+        parser: PIITagRepresentationStrParser = PIITagRepresentationStrParser()
 
-        unit:PwRepAndStructureUnit= transformer.getParseunitWithPw("w63844810")
+        unit: PwRepAndStructureUnit = transformer.getParseunitWithPw("w63844810")
         print(unit.rep.piiVectorList[1].__dict__)
-        s1:PIISection = factory.createFromPIIVector(unit.rep.piiVectorList[0])
-        s2:PIISection = factory.createFromPIIVector(unit.rep.piiVectorList[1])
+        s1: PIISection = factory.createFromPIIVector(unit.rep.piiVectorList[0])
+        s2: PIISection = factory.createFromPIIVector(unit.rep.piiVectorList[1])
         print(f"s1:{json.dumps(s1._tojson())}")
         print(f"s2:{json.dumps(s2._tojson())}")
 
-
-
     def test_create_from_int(self):
-        factory:PIISectionFactory = PIISectionFactory.getInstance()
+        factory: PIISectionFactory = PIISectionFactory.getInstance()
         s1: PIISection = factory.createFromInt(1001)
         s2 = factory.createFromInt(0)
         s3 = factory.createFromInt(-1)
