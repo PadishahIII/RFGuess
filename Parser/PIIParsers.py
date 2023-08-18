@@ -523,8 +523,8 @@ class PIITagRepresentationStrParser:
 
     def __init__(self):
         piiTypeList = [PIIType.NameType, PIIType.BirthdayType, PIIType.AccountType, PIIType.IdCardNumberType,
-                       PIIType.EmailPrefixType, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S]
-        piiCharList = ["N", "B", "A", "I", "E", "L", "D", "S"]
+                       PIIType.EmailPrefixType, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S,PIIType.PhoneNumberType]
+        piiCharList = ["N", "B", "A", "I", "E", "L", "D", "S","P"]
         trans = Utils.translation.makeTrans(piiTypeList, piiCharList)
         self.translation = trans  # representation => str
         reTrans = Utils.translation.makeTrans(piiCharList, piiTypeList)

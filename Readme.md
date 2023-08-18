@@ -76,7 +76,9 @@ like `PIIType.BaseTypes.Name`, *value* field denotes the specified pii type like
 for LDS section and PII section. In the condition of LDS section, *value* stores the length of LDS segment, as for PII section,
 it stores a enum value of `PIIType` like `NameType.FullName`
 5. `PIIParser` class has passed the initial test cases
-6. *(TODO)* test `PIIParser` with various data items
+6. *(Solved)* test `PIIParser` with various data items
+7. Build train data and **training model** finished
+8. *(TODO)* Implement classifier and generator
 
 
 ### Representation Resolver(8.16)
