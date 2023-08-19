@@ -132,6 +132,12 @@ class PIISectionFactory(Singleton):
         self.translatorPIIValue = Utils.PIISectionValueTranslation.getInstance()
         self.translatorPIIStr = Utils.PIISectionStrTranslation.getInstance()
 
+    def isBeginSection(self, section: PIISection) -> bool:
+        return section.type == PIIType.BaseTypes.BeginSymbol
+
+    def isEndSection(self, section: PIISection) -> bool:
+        return section.type == PIIType.BaseTypes.EndSymbol
+
     def getEmptySection(self) -> PIISection:
         return PIISection(0, 0)
 
@@ -158,6 +164,10 @@ class PIISectionFactory(Singleton):
             return section
 
     def createFromInt(self, i: int) -> PIISection:
+        """
+        4002 => PIISection
+
+        """
         if i == 0:
             return self.getBeginSection()
         elif i < 0:
@@ -205,6 +215,23 @@ class PIISectionFactory(Singleton):
             piiCls = self.translatorPIIType.translateBaseTypeToPIIType(baseCls)  # NameType
             piiValue = piiCls._value2member_map_.get(int(di))  # FullName
             return PIISection(type=piiTypeCls, value=piiValue)
+
+    def parsePIISectionToStr(self, section: PIISection) -> str:
+        """
+        Parse PIISection to string like "N1" or "A2" or "L10"
+
+        """
+        baseCls = section.type
+        piiCls = section.value
+
+        ch = self.translatorPIIStr.translateBaseTypeToStr(baseCls)
+        di = ""
+        if self.isLDSType(baseCls):
+            v = int(piiCls)
+            di = str(v)
+        else:
+            di = str(piiCls.value)
+        return ch + di
 
     def isLDSType(self, t: BasicTypes.PIIType.BaseTypes) -> bool:
         """
@@ -278,6 +305,21 @@ class PIIDatagramFactory(Singleton):
         dg = self.createPIIDatagramOnlyWithFeature(sectionList, offsetInSegment, offsetInPassword)
         dg_ = self.tailorPIIDatagram(dg)
         return dg_
+
+    def parsePIIDatagramToStr(self, dg: PIIDatagram) -> str:
+        """
+        Parse PIIDatagram to string like "A1L10N2"
+        """
+        s = ""
+        for section in dg.sectionList:
+            if section.type == BasicTypes.PIIType.BaseTypes.BeginSymbol:
+                continue
+            try:
+                s += self.sectionFactory.parsePIISectionToStr(section)
+            except Exception as e:
+                raise PIIDatagramFactoryException(
+                    f"Exception occur when parsing section:{section}, Original Exception is {e}")
+        return s
 
 
 class PIIDatagramFactoryException(Exception):
