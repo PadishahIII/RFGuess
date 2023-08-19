@@ -303,8 +303,8 @@ class PIIDatagramFactory(Singleton):
         offsetInSegment = 0
         offsetInPassword = len(sectionList)
         dg = self.createPIIDatagramOnlyWithFeature(sectionList, offsetInSegment, offsetInPassword)
-        dg_ = self.tailorPIIDatagram(dg)
-        return dg_
+        # dg_ = self.tailorPIIDatagram(dg)
+        return dg
 
     def parsePIIDatagramToStr(self, dg: PIIDatagram) -> str:
         """
@@ -370,7 +370,7 @@ class PIIParser(BasicParser):
             offsetInSegment = 0
             if i < self.order:
                 for n in range(self.order - i - 1):
-                    sectionList.append(self.sectionFactory.getEndSection())
+                    sectionList.append(self.sectionFactory.getBeginSection())
             start = max(0, i - self.order + 1)
             end = i + 1
             for n in range(start, end):

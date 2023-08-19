@@ -1,5 +1,6 @@
 import typing
 from abc import abstractmethod, ABCMeta
+from copy import copy
 
 from Commons import BasicTypes
 
@@ -12,6 +13,7 @@ Password: a set of 26-dim vectors expressed by several Datagrams
        Section: a 4-dim vector expressed by (type,value,row,col)
        Label: abstract label class which can be transformed to Integer
 """
+
 
 class Label(metaclass=ABCMeta):
 
@@ -31,11 +33,15 @@ class Section(metaclass=ABCMeta):
     """
     a 4-dim vector expressed by (type,value,row,col)
     """
+
     def __init__(self, type, value, keyboardPos: BasicTypes.KeyboardPosition):
         super().__init__()
         self.type = type
         self.value = value
         self.keyboardPos = keyboardPos
+
+    def __copy__(self):
+        return Section(self.type,self.value,self.keyboardPos)
 
     def _tovector(self) -> list[int, int, int, int]:
         return [
@@ -58,6 +64,7 @@ class Datagram(metaclass=ABCMeta):
     """
     a 26-dim vector expressed by several Sections
     """
+
     def __init__(self, sectionList: list[Section], label: typing.Any, offsetInPassword: int, offsetInSegment: int,
                  pwStr: str):
         super().__init__()
@@ -67,6 +74,16 @@ class Datagram(metaclass=ABCMeta):
         self.offsetInSegment = offsetInSegment
         self.sectionList: list[Section] = sectionList
         self.label = label
+
+    def __copy__(self):
+        """
+        Copy section list
+        """
+        newSectionList = list()
+        for s in self.sectionList:
+            newSection = copy(s)
+            newSectionList.append(newSection)
+        return Datagram(newSectionList, self.label, self.offsetInPassword, self.offsetInSegment, self.pwStr)
 
     def _tojson(self):
         return {
@@ -90,6 +107,7 @@ class Password(metaclass=ABCMeta):
     """
     a set of 26-dim vectors expressed by several Datagrams
     """
+
     def __init__(self, pwStr: str, datagramList: list[Datagram]):
         super().__init__()
         self.datagramList: list[Datagram] = datagramList

@@ -1,7 +1,11 @@
+import os
+
+import joblib
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from Parser.PIIDataTypes import *
+
 from Commons.Modes import Singleton
+from Parser.PIIDataTypes import *
 
 
 class PIIRFTrainner(Singleton):
@@ -11,6 +15,15 @@ class PIIRFTrainner(Singleton):
         self._label = labels
         self._tree = RandomForestClassifier(n_estimators=30, criterion="gini", min_samples_leaf=10)
         self._clf = None
+
+    @classmethod
+    def loadFromFile(cls, clfPath):
+        if not os.path.exists(clfPath):
+            raise PIIRFTrainnerException(f"Error: invalid classifier path: {clfPath}")
+        clf = joblib.load(clfPath)
+        t = PIIRFTrainner.getInstance()
+        t.setClf(clf)
+        return t
 
     def init(self):
         pass
@@ -32,9 +45,54 @@ class PIIRFTrainner(Singleton):
         label = int(label_r.astype(int)[0])
         return label
 
-    def classifyPIIDatagram(self, datagram:PIIDatagram)->int:
+    def _classifyProba(self, vector: list[int], n: int) -> list[int]:
+        """
+        Input a 26-dim vector(namely a `PIIDatagram`), output the classifying result at top-n probability
+        Args:
+            vector (list[int]): 26-dim
+            n (int): get top-n probability classes
+
+        Returns:
+            list of top-n probability classes in descending order
+
+        """
+        feature = np.array(vector)
+        feature = np.array([feature])
+        proba = self._clf.predict_proba(feature)
+        ds = self.getSortedClassesList(proba, n)
+        labelList = list(map(lambda x: x[0], ds))
+        # label = int(label_r.astype(int)[0])
+        return labelList
+
+    def getSortedClassesList(self, proba: tuple[tuple], n: int) -> list[tuple[int, int]]:
+        """
+        Get the top-n classes with probability
+        Args:
+            proba: result of `predict_proba` in format ((0.4,0.6),)
+            n: slice number
+
+        Returns:
+            ((class_label, probability),)
+
+        """
+        d = zip(self._clf.classes_[:n], proba[0][:n])
+        ds = sorted(d, key=lambda x: x[1], reverse=True)
+        return ds
+
+    def classifyPIIDatagram(self, datagram: PIIDatagram) -> int:
         vector = datagram._tovector()
         return self._classify(vector)
+
+    def classifyPIIDatagramProba(self, datagram: PIIDatagram, n) -> list[int]:
+        """
+        Input a `PIIDatagram`, output the classifying result at top-n probability
+
+        Returns:
+            list of top-n probability classes in descending order
+
+        """
+        vector = datagram._tovector()
+        return self._classifyProba(vector, n)
 
     def _train(self):
         self._clf = self._tree.fit(self._feature, self._label)
@@ -44,3 +102,8 @@ class PIIRFTrainner(Singleton):
 
     def setClf(self, clf):
         self._clf = clf
+
+
+class PIIRFTrainnerException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
