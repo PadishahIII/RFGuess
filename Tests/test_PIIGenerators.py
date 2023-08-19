@@ -18,3 +18,11 @@ class TestPIIPatternGenerator(TestCase):
         print(f"s3:{json.dumps(s3._tojson())}")
         print(f"s4:{json.dumps(s4._tojson())}")
         self.assertRaises(PIILabelException, generator.createSectionFromInt, 100)
+
+
+class TestPIIPatternGenerator(TestCase):
+    def test_get_classify_result_from_str_list(self):
+        generator: PIIPatternGenerator = PIIPatternGenerator.getInstance("../save.clf")
+        seedList = ['N1', 'L1', "A1", "E1", "A2"]
+        l = generator.getClassifyResultFromStrList(seedList)
+        print(l)

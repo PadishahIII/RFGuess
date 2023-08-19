@@ -143,11 +143,36 @@ def test_is_ldstype(self):
 
 class TestPIIDatagramFactory(TestCase):
     def test_create_from_str(self):
-        factory :PIIDatagramFactory = PIIDatagramFactory.getInstance()
-        dg1:PIIDatagram = factory.createFromStr("N1A2I3L10")
-        dg2:PIIDatagram = factory.createFromStr("N1A2I3L1")
-        dg3:PIIDatagram = factory.createFromStr("N1A2I3L1S10D9E1I2A3")
+        factory: PIIDatagramFactory = PIIDatagramFactory.getInstance()
+        dg1: PIIDatagram = factory.createFromStr("N1A2I3L10")
+        dg2: PIIDatagram = factory.createFromStr("N1A2I3L1")
+        dg3: PIIDatagram = factory.createFromStr("N1A2I3L1S10D9E1I2A3")
         print(f"{len(dg1._tovector())}:{json.dumps(dg1._tovector())}")
         print(f"{len(dg2._tovector())}:{json.dumps(dg2._tovector())}")
         print(f"{len(dg3._tovector())}:{json.dumps(dg3._tovector())}")
-        print(f"{len(dg3._tovector())}:{json.dumps(dg3._tojson(),indent=2)}")
+        print(f"{len(dg3._tovector())}:{json.dumps(dg3._tojson(), indent=2)}")
+
+
+class TestPIISectionFactory(TestCase):
+    def test_parse_piisection_to_str(self):
+        factory: PIISectionFactory = PIISectionFactory.getInstance()
+        l: list[PIISection] = list()
+        l.append(factory.createFromStr("N1"))
+        l.append(factory.createFromStr("L11"))
+        l.append(factory.createFromStr("A3"))
+        l.append(factory.createFromStr("I1"))
+        for section in l:
+            print(f"{factory.parsePIISectionToStr(section)}")
+
+
+class TestPIIDatagramFactory(TestCase):
+    def test_parse_piidatagram_to_str(self):
+        factory: PIIDatagramFactory = PIIDatagramFactory.getInstance()
+        l:list[PIIDatagram] = list()
+        l.append(factory.createFromStr("N1A2I3L10"))
+        l.append(factory.createFromStr("A1E3N2S3N1A2I3L10"))
+        for dg in l:
+            print(f"{factory.parsePIIDatagramToStr(dg)}")
+
+
+
