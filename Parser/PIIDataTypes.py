@@ -298,6 +298,9 @@ class PIISection(BasicDataTypes.Section):
     def __init__(self, type: BasicTypes.PIIType.BaseTypes, value: BasicTypes.PIIType):
         super().__init__(type, value, BasicTypes.KeyboardPosition(0, 0))
 
+    def __copy__(self):
+        return PIISection(self.type, self.value)
+
     def getIntValue(self) -> int:
         if isinstance(self.value, int):
             return self.value
@@ -344,6 +347,13 @@ class PIIDatagram(BasicDataTypes.Datagram):
     def __init__(self, sectionList: list[PIISection], label: PIILabel, offsetInPassword: int, offsetInSegment: int,
                  pwStr: str):
         super().__init__(sectionList, label, offsetInPassword, offsetInSegment, pwStr)
+
+    def __copy__(self):
+        newList: list[PIISection] = list()
+        for section in self.sectionList:
+            newSection = copy(section)
+            newList.append(newSection)
+        return PIIDatagram(newList, self.label, self.offsetInPassword, self.offsetInSegment, self.pwStr)
 
 
 class PIIPassword(BasicDataTypes.Password):

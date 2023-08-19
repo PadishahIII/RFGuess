@@ -26,3 +26,9 @@ class TestPIIPatternGenerator(TestCase):
         seedList = ['N1', 'L1', "A1", "E1", "A2"]
         l = generator.getClassifyResultFromStrList(seedList)
         print(l)
+    def test_multi_classify(self):
+        generator:PIIPatternGenerator = PIIPatternGenerator.getInstance("../save.clf")
+        seedList = ['N1',"A2","E1","L1","S1","D1","B1","B2"]
+        resList = generator.getMultiClassifyResultFromStrList(seedList,n=2)
+        print(f"seed list len:{len(seedList)}\nres list len:{len(resList)}\n{list(set(resList))}")
+

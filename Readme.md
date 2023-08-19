@@ -69,10 +69,11 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 ## Journal
 ### Generator(8.19)
 1. `PIIPatternGenerator`
-2. *(TODO)* Get multiple classification results
+2. *(Solved)* Get multiple classification results
 3. *(TODO)* Generate a list of most common used password patterns
 4. *(TODO)* Implement the hybrid mode, taking idle characters as `CharacterSection` rather than LDS segments
-5. 
+5. test_PIIGenerators.py: generate patterns
+6. main_PII_Mode.py: train model
 
 ### Factory and train(8.18)
 1. Add diagrams in `Diagrams` folder
