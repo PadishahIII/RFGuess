@@ -4,7 +4,6 @@ from enum import Enum
 from Commons import Exceptions
 from Commons.BasicTypes import PIIType
 from Commons.Modes import Singleton
-from Parser import PIIDataTypes
 from Parser.BasicParsers import BasicParser, BasicParserException
 from Parser.PIIDataTypes import *
 from Scripts import Utils as DatabaseUtils
@@ -129,8 +128,12 @@ class PIIParserException(BasicParserException):
 class PIISectionFactory(Singleton):
 
     def __init__(self) -> None:
-        self.translatorPIIType = Utils.PIISectionTypeTranslation()
-        self.translatorPIIValue = Utils.PIISectionValueTranslation()
+        self.translatorPIIType = Utils.PIISectionTypeTranslation.getInstance()
+        self.translatorPIIValue = Utils.PIISectionValueTranslation.getInstance()
+        self.translatorPIIStr = Utils.PIISectionStrTranslation.getInstance()
+
+    def getEmptySection(self) -> PIISection:
+        return PIISection(0, 0)
 
     def getBeginSection(self) -> PIISection:
         return PIISection(PIIType.BaseTypes.BeginSymbol, 0)
@@ -183,6 +186,26 @@ class PIISectionFactory(Singleton):
         else:
             raise PIISectionFactoryException(f"Error: cannot create PIISection, invalid Integer:{i}")
 
+    def createFromStr(self, s: str) -> PIISection:
+        """
+        Convert string like "A2" or "N1" or "L10" into `PIISection`
+
+        """
+        if len(s) < 2 or not s[0].isalpha() or not s[1:].isdigit():
+            raise PIISectionFactoryException(f"Error: invalid tag str: {s}")
+        ch = s[0]
+        di = s[1:]
+        baseCls = self.translatorPIIStr.translateStrToBaseType(ch)
+        if self.isLDSType(baseCls):
+            piiTypeCls = baseCls
+            piiValue = int(di)
+            return PIISection(type=piiTypeCls, value=piiValue)
+        else:
+            piiTypeCls = baseCls  # BaseTypes.Name
+            piiCls = self.translatorPIIType.translateBaseTypeToPIIType(baseCls)  # NameType
+            piiValue = piiCls._value2member_map_.get(int(di))  # FullName
+            return PIISection(type=piiTypeCls, value=piiValue)
+
     def isLDSType(self, t: BasicTypes.PIIType.BaseTypes) -> bool:
         """
         Input a type, check whether it's LDS type
@@ -192,6 +215,75 @@ class PIISectionFactory(Singleton):
             return True
         else:
             return False
+
+
+class PIIDatagramFactory(Singleton):
+    order = 6
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sectionFactory = PIISectionFactory.getInstance()
+
+    def tailorPIIDatagram(self, dg: PIIDatagram) -> PIIDatagram:
+        """
+        Tailor datagram to 26-dim, datagram must have 6 sections
+
+        """
+        sectionList = dg.sectionList
+        newList = list()
+        if len(sectionList) > self.order:
+            newList = sectionList[-6:]
+        else:
+            n = self.order - len(sectionList)
+            beginSection = self.sectionFactory.getBeginSection()
+            for i in range(n):
+                newList.append(beginSection)
+            newList += sectionList
+        return PIIDatagram(newList, dg.label, dg.offsetInPassword, dg.offsetInSegment, dg.pwStr)
+
+    def createPIIDatagramOnlyWithFeature(self, sectionList: list[PIISection], offsetInSegment: int,
+                                         offsetInPassword: int) -> PIIDatagram:
+        """
+        Create a PIIDatagram only with fields required by `_tovector` method
+        The minimum object that can be passed to trainner
+        """
+        return PIIDatagram(sectionList, PIILabel(self.sectionFactory.getEmptySection()), offsetInPassword,
+                           offsetInSegment, "")
+
+    def createFromStr(self, s: str) -> PIIDatagram:
+        """
+        Convert string "N1A2" into PIIDatagram
+        OffsetInSegment is set to 0 and offsetInPassword is set to len(sectionList)
+        """
+        sectionList: list[PIISection] = list()
+        i = 0
+        sub = ""
+        while i < len(s):
+            if s[i].isalpha():
+                if sub != "":
+                    section: PIISection = self.sectionFactory.createFromStr(sub)
+                    sectionList.append(section)
+                    sub = s[i]
+                else:
+                    sub += s[i]
+            if s[i].isdigit():
+                sub += s[i]
+            i += 1
+        if sub != "":
+            section: PIISection = self.sectionFactory.createFromStr(sub)
+            sectionList.append(section)
+
+        offsetInSegment = 0
+        offsetInPassword = len(sectionList)
+        dg = self.createPIIDatagramOnlyWithFeature(sectionList, offsetInSegment, offsetInPassword)
+        dg_ = self.tailorPIIDatagram(dg)
+        return dg_
+
+
+class PIIDatagramFactoryException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 
 class PIISectionFactoryException(Exception):
@@ -220,7 +312,7 @@ class PIIParser(BasicParser):
         self.labelList: list[int]
 
         self.translator = Utils.PIISectionTypeTranslation()
-        self.sectionFactory= PIISectionFactory.getInstance()
+        self.sectionFactory = PIISectionFactory.getInstance()
 
     def beforeParse(self):
         super().beforeParse()
@@ -232,7 +324,8 @@ class PIIParser(BasicParser):
         for i in range(self.plen):
             sectionList = list()
             offsetInPassword = 0
-            offsetInSegment = len(self.rep.piiVectorList[i].str)
+            # offsetInSegment = len(self.rep.piiVectorList[i].str)
+            offsetInSegment = 0
             if i < self.order:
                 for n in range(self.order - i - 1):
                     sectionList.append(self.sectionFactory.getEndSection())
@@ -242,7 +335,8 @@ class PIIParser(BasicParser):
                 vector: PIIVector = self.rep.piiVectorList[n]
                 section: PIISection = self.sectionFactory.createFromPIIVector(vector)
                 sectionList.append(section)
-                offsetInPassword += len(vector.str)
+                # offsetInPassword += len(vector.str)
+                offsetInPassword += 1
             # resolve label
             if i < self.plen - 1:
                 nextVector = self.rep.piiVectorList[i + 1]
@@ -268,7 +362,6 @@ class PIIParser(BasicParser):
         for dg in self.datagramList:
             label = dg.label
             self.labelList.append(label.toInt())
-
 
 
 '''
@@ -523,8 +616,9 @@ class PIITagRepresentationStrParser:
 
     def __init__(self):
         piiTypeList = [PIIType.NameType, PIIType.BirthdayType, PIIType.AccountType, PIIType.IdCardNumberType,
-                       PIIType.EmailPrefixType, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S,PIIType.PhoneNumberType]
-        piiCharList = ["N", "B", "A", "I", "E", "L", "D", "S","P"]
+                       PIIType.EmailPrefixType, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S,
+                       PIIType.PhoneNumberType]
+        piiCharList = ["N", "B", "A", "I", "E", "L", "D", "S", "P"]
         trans = Utils.translation.makeTrans(piiTypeList, piiCharList)
         self.translation = trans  # representation => str
         reTrans = Utils.translation.makeTrans(piiCharList, piiTypeList)
@@ -599,11 +693,6 @@ class PIITagRepresentationStrParser:
     def strToTag(self, s: str) -> PIIVector:
         """
         (Deprecated)
-
-        Args:
-            s:
-
-        Returns:
 
         """
         if len(s) != 2 or not s[0].isalpha() or not s[1].isdigit():
