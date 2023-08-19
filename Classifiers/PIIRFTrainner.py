@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-
+from Parser.PIIDataTypes import *
 from Commons.Modes import Singleton
 
 
@@ -21,9 +21,9 @@ class PIIRFTrainner(Singleton):
     def train(self):
         self._train()
 
-    def classify(self, vector: list[int]) -> int:
+    def _classify(self, vector: list[int]) -> int:
         """
-        Input a 26-dim vector(namely a PIISection), output the classifying result
+        Input a 26-dim vector(namely a `PIIDatagram`), output the classifying result
 
         """
         feature = np.array(vector)
@@ -31,6 +31,10 @@ class PIIRFTrainner(Singleton):
         label_r = self._clf.predict(feature)
         label = int(label_r.astype(int)[0])
         return label
+
+    def classifyPIIDatagram(self, datagram:PIIDatagram)->int:
+        vector = datagram._tovector()
+        return self._classify(vector)
 
     def _train(self):
         self._clf = self._tree.fit(self._feature, self._label)

@@ -21,7 +21,8 @@ class TestPIIRepresentationResolver(TestCase):
         print(f"pwAllRepDict:{len(resolver.pwAllRepDict)}\n{resolver.pwAllRepDict[resolver.pwList[0]]}")
         for k, v in resolver.pwAllRepDict.items():
             assert v is not None and isinstance(v, list) and len(v) > 0
-        print(f"repPriorityList:{len(resolver.repPriorityList)}\n{list(map(lambda x: x.frequency, resolver.repPriorityList[:10]))}")
+        print(
+            f"repPriorityList:{len(resolver.repPriorityList)}\n{list(map(lambda x: x.frequency, resolver.repPriorityList[:10]))}")
 
     def test_check_pw_rep_match(self):
         self.fail()
@@ -87,7 +88,8 @@ class TestPIIParser(TestCase):
             parser.parse()
             repStr = repParser.representationToStr(unit.rep)
             if len(unit.rep.piiVectorList) > 4:
-                print(f"{unit.pwStr}\n{repStr}feature:{len(parser.getFeatureList()[0])}{parser.getFeatureList()}\nlabel:{parser.getLabelList()}\n")
+                print(
+                    f"{unit.pwStr}\n{repStr}feature:{len(parser.getFeatureList()[0])}{parser.getFeatureList()}\nlabel:{parser.getLabelList()}\n")
 
 
 class TestPIISectionFactory(TestCase):
@@ -124,6 +126,28 @@ class TestPIISectionFactory(TestCase):
         print(f"s4:{json.dumps(s4._tojson())}")
         self.assertRaises(PIISectionFactoryException, factory.createFromInt, 100)
 
+    def test_create_from_str(self):
+        factory: PIISectionFactory = PIISectionFactory.getInstance()
+        l: list[PIISection] = list()
+        l.append(factory.createFromStr("N1"))
+        l.append(factory.createFromStr("A2"))
+        l.append(factory.createFromStr("L9"))
+        l.append(factory.createFromStr("S11"))
+        for s in l:
+            print(f"{json.dumps(s._tojson())}")
+
 
 def test_is_ldstype(self):
     self.fail()
+
+
+class TestPIIDatagramFactory(TestCase):
+    def test_create_from_str(self):
+        factory :PIIDatagramFactory = PIIDatagramFactory.getInstance()
+        dg1:PIIDatagram = factory.createFromStr("N1A2I3L10")
+        dg2:PIIDatagram = factory.createFromStr("N1A2I3L1")
+        dg3:PIIDatagram = factory.createFromStr("N1A2I3L1S10D9E1I2A3")
+        print(f"{len(dg1._tovector())}:{json.dumps(dg1._tovector())}")
+        print(f"{len(dg2._tovector())}:{json.dumps(dg2._tovector())}")
+        print(f"{len(dg3._tovector())}:{json.dumps(dg3._tovector())}")
+        print(f"{len(dg3._tovector())}:{json.dumps(dg3._tojson(),indent=2)}")

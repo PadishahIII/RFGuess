@@ -14,9 +14,9 @@ class PIIVector:
     4-dimension vector data used in model input and Output which is more representative than PIISection
     Attributes:
         str (str): section string
-        piitype (PIIType): pii type object
-        piitypevalue (int): int value of pii type
-        piivalue (int): value of type
+        piitype (PIIType): specified pii type, like "PIIType.FullName"
+        piitypevalue (int): enum value of pii type
+        piivalue (int): value of type, identical to `piitype.value` for pii vector and denotes length of segment in terms of LDS vector
     """
 
     def __init__(self, s: str, piitype: BasicTypes.PIIType, piivalue: int):

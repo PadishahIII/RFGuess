@@ -4,10 +4,10 @@ import datetime
 import hashlib
 import pickle
 
-import Commons.BasicTypes
 from Commons import BasicTypes
 from Commons.BasicTypes import DefaultPII
 from Commons.Modes import Singleton
+from Commons.BasicTypes import PIIType
 
 PARSERS = False
 if PARSERS is False:
@@ -44,7 +44,7 @@ def parseSymbol(c: int) -> CharacterType:
 
 
 # Split a string into several Segments. Continuous characters with identical CharacterType belong to the same PasswordParsers.Segment
-def parseSegment(s: str) -> typing.List[Commons.BasicTypes.Segment]:
+def parseSegment(s: str) -> typing.List[BasicTypes.Segment]:
     segList = list()
     curType = parseType(s[0])
     i = 1
@@ -55,20 +55,20 @@ def parseSegment(s: str) -> typing.List[Commons.BasicTypes.Segment]:
         if tmpType == curType:
             pass
         else:
-            segList.append(Commons.BasicTypes.Segment(curType, start, i))
+            segList.append(BasicTypes.Segment(curType, start, i))
             curType = tmpType
             start = i
         i += 1
-    segList.append(Commons.BasicTypes.Segment(curType, start, i))
+    segList.append(BasicTypes.Segment(curType, start, i))
     return segList
 
 
 # Get the PasswordParsers.Segment substring of s
-def getSegmentStr(seg: Commons.BasicTypes.Segment, s: str) -> str:
+def getSegmentStr(seg: BasicTypes.Segment, s: str) -> str:
     return s[seg.start: seg.end]
 
 
-def getSegmentStrList(segList: typing.List[Commons.BasicTypes.Segment], s: str) -> typing.List[str]:
+def getSegmentStrList(segList: typing.List[BasicTypes.Segment], s: str) -> typing.List[str]:
     return [s[x.start: x.end] for x in segList]
 
 
@@ -355,3 +355,40 @@ class PIISectionValueTranslation(Singleton):
 
         """
         return self.translatorEnumToInt.translate(fromObj)
+
+class PIISectionStrTranslation(Singleton):
+    """
+    Translate between `BaseTypes` like `BaseTypes.Name` and string tag like "N"
+    """
+
+    def __init__(self) -> None:
+        self.fromList = [PIIType.BaseTypes.Name, PIIType.BaseTypes.Birthday, PIIType.BaseTypes.Account, PIIType.BaseTypes.IdCardNumber,
+                       PIIType.BaseTypes.Email, PIIType.BaseTypes.L, PIIType.BaseTypes.D, PIIType.BaseTypes.S,
+                       PIIType.BaseTypes.PhoneNumber]
+        self.toList = ["N", "B", "A", "I", "E", "L", "D", "S", "P"]
+        self.translator = translation.makeTrans(self.fromList,self.toList)
+        self.reTranslator = translation.makeTrans(self.toList,self.fromList)
+
+    def translateBaseTypeToStr(self, fromObj)->str:
+        """
+        For example, `BaseTypes.Account` => "A"
+
+        """
+        return self.translator.translate(fromObj)
+
+    def translateStrToBaseType(self, fromObj:str):
+        """
+        For example, "A" => `BaseTypes.Account`
+
+        """
+        return self.reTranslator.translate(fromObj)
+
+def isLDSType(t: BasicTypes.PIIType.BaseTypes) -> bool:
+    """
+    Input a type, check whether it's LDS type
+
+    """
+    if t in [BasicTypes.PIIType.BaseTypes.L, BasicTypes.PIIType.BaseTypes.D, BasicTypes.PIIType.BaseTypes.S]:
+        return True
+    else:
+        return False

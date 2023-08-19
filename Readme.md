@@ -67,6 +67,8 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+
+
 ### Factory and train(8.18)
 1. Add diagrams in `Diagrams` folder
 2. Complete `PIIParser` and `PIIFactory` to build train dataset
