@@ -68,12 +68,12 @@ class PIIType:
 
 
 class CharacterType(Enum):
-    Digit = 0
-    UpperCaseLetter = 1
-    LowerCaseLetter = 2
-    SpecialCharacter = 3
+    Digit = 1
+    UpperCaseLetter = 2
+    LowerCaseLetter = 3
+    SpecialCharacter = 4
     EndSymbol = -1
-    BeginSymbol = -2
+    BeginSymbol = 0
 
 
 class KeyboardPosition:

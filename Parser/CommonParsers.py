@@ -2,13 +2,13 @@ import typing
 from Core.Decorators import Bean
 from Commons.BasicTypes import KeyboardPosition, CharacterType
 from Commons.Exceptions import ParseException
-
+from Commons.Modes import Singleton
 
 # Encode character into serial number, single-direction map
 # Employ a One-to-one map from charset and (CharacterType, Serial number)
 # Must signal Serial number with CharacterType
 @Bean
-class CharacterParser:
+class CharacterParser(Singleton):
     BeginSymbol = 0
     EndSymbol = -1
 
@@ -60,7 +60,7 @@ class CharacterParser:
 
 
 @Bean
-class KeyboardParser:
+class KeyboardParser(Singleton):
     def __init__(self) -> None:
         self.map = dict()
         row = 1
@@ -98,7 +98,7 @@ class KeyboardParser:
 # Encode/Decode between characters and serial number without CharacterType
 # 0 and -1 is reserved for Begin/End Symbol
 @Bean
-class LabelParser:
+class LabelParser(Singleton):
     def __init__(self) -> None:
         self.charset = "1234567890-=`~!@#$%^&*()_+qwertyuiop[]\\QWERTYUIOP{}|asdfghjkl;'ASDFGHJKL:\"zxcvbnm,./ZXCVBNM<>?"
         self.map = dict()
