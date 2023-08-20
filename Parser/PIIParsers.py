@@ -245,7 +245,8 @@ class PIISectionFactory(Singleton):
 
 
 class PIIDatagramFactory(Singleton):
-    order = 6
+    from Parser import Config
+    order = Config.pii_order
 
     def __init__(self) -> None:
         super().__init__()
@@ -335,7 +336,8 @@ class PIISectionFactoryException(Exception):
 
 
 class PIIParser(BasicParser):
-    order = 6
+    from Parser import Config
+    order = Config.pii_order
     """
 
     Examples:

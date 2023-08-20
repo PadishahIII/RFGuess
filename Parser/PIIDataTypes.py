@@ -301,6 +301,12 @@ class PIISection(BasicDataTypes.Section):
     def __copy__(self):
         return PIISection(self.type, self.value)
 
+    def __eq__(self, other):
+        return super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
     def getIntValue(self) -> int:
         if isinstance(self.value, int):
             return self.value
@@ -343,10 +349,19 @@ class PIILabelException(Exception):
 
 
 class PIIDatagram(BasicDataTypes.Datagram):
+    """
+    Hashable, comparable
+    """
 
     def __init__(self, sectionList: list[PIISection], label: PIILabel, offsetInPassword: int, offsetInSegment: int,
                  pwStr: str):
         super().__init__(sectionList, label, offsetInPassword, offsetInSegment, pwStr)
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __eq__(self, other):
+        return super().__eq__(other)
 
     def __copy__(self):
         newList: list[PIISection] = list()

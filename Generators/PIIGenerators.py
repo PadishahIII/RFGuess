@@ -1,11 +1,52 @@
-import queue
-
 from Classifiers.PIIRFTrainner import PIIRFTrainner
 from Parser.PIIParsers import *
 
 '''
 Generators: use trained model to generate password guessing
 '''
+
+
+class PIICharacterSet(Singleton):
+    """
+    All symbols occur in PII mode.
+
+    """
+
+    def __init__(self) -> None:
+        self.translator = Utils.PIISectionTypeTranslation.getInstance()
+        self.sectionFactory: PIISectionFactory = PIISectionFactory.getInstance()
+        self.charsetInt: list[int] = list()
+        self.charsetPIISection: list[PIISection] = list()
+
+        self._ldsMaxLen = 10
+
+        self._buildCharset()
+
+    def _buildCharset(self):
+        for baseType in self.translator.toList:
+            piiType = self.translator.translatorBaseTypeToPIIType(baseType)
+            i = baseType.value + piiType.value
+            self.charsetInt.append(i)
+            section: PIISection = self.sectionFactory.createFromInt(i)
+            self.charsetPIISection.append(section)
+
+        for ldsType in [BasicTypes.PIIType.BaseTypes.L, BasicTypes.PIIType.BaseTypes.D, BasicTypes.PIIType.BaseTypes.S]:
+            for i in range(self._ldsMaxLen + 1):
+                v = ldsType.value + i
+                self.charsetInt.append(v)
+                section: PIISection = self.sectionFactory.createFromInt(v)
+                self.charsetPIISection.append(section)
+
+        v = BasicTypes.PIIType.BaseTypes.EndSymbol.value
+        self.charsetInt.append(v)
+        section: PIISection = self.sectionFactory.createFromInt(v)
+        self.charsetPIISection.append(section)
+
+    def getCharsetInt(self) -> list[int]:
+        return self.charsetInt
+
+    def getCharsetPIISection(self) -> list[PIISection]:
+        return self.charsetPIISection
 
 
 class PIIPatternGenerator:
@@ -17,6 +58,9 @@ class PIIPatternGenerator:
 
     Parse the result of classifier into `PIISection`
     """
+    from Parser import Config
+    order = Config.pii_order
+    threshold = Config.generator_threshold
 
     def __init__(self, model: PIIRFTrainner) -> None:
         super().__init__()
@@ -73,6 +117,14 @@ class PIIPatternGenerator:
             resStrList.append(s)
         return resStrList
 
+    def getMultiClassifyResultFromStrToProbaDict(self, dgSeedStr: str) -> dict[int, float]:
+        """Get all classes to probability
+        Input a str, return all classes with corresponding probability
+
+        """
+        dg = self.datagramFactory.createFromStr(dgSeedStr)
+        return self.classifyMultiFromPIIDatagramToProbaDict(dg)
+
     def getClassifyResultFromPIIDatagram(self, dgSeed: PIIDatagram) -> PIIDatagram:
         """
         Input a PIIDatagram seed, output the whole PIIDatagram classified.
@@ -85,7 +137,8 @@ class PIIPatternGenerator:
             newSection = self.classifyFromPIIDatagram(resDg)
         return resDg
 
-    def getMultiClassifyResultFromPIIDatagram(self, dgSeed: PIIDatagram, n: int, maxDgSize:int=9) -> list[PIIDatagram]:
+    def getMultiClassifyResultFromPIIDatagram(self, dgSeed: PIIDatagram, n: int, maxDgSize: int = 9) -> list[
+        PIIDatagram]:
         """Get top-n labels at every step
         Input a PIIDatagram seed, output all PIIDatagrams classified.
 
@@ -95,7 +148,7 @@ class PIIPatternGenerator:
         resDgList: list[PIIDatagram] = list()
         # q = queue.Queue()
         # q.put(dgSeed)
-        q :list[PIIDatagram]= list()
+        q: list[PIIDatagram] = list()
         q.append(dgSeed)
         # while not q.empty():
         while len(q) > 0:
@@ -133,6 +186,65 @@ class PIIPatternGenerator:
             section = self.sectionFactory.createFromInt(i)
             sectionList.append(section)
         return sectionList
+
+    def classifyMultiFromPIIDatagramToProbaDict(self, dg: PIIDatagram) -> dict[int, float]:
+        """Get all classes to probability
+        Input a PIIDatagram, return all classes with corresponding probability
+
+        """
+        dg = self.datagramFactory.tailorPIIDatagram(dg)
+        probaDict = self.clf.classifyPIIDatagramToProbaDict(dg)
+        return probaDict
+
+    def generatePattern(self) -> tuple[list[PIIDatagram], list[float]]:
+        """
+        Generate patterns using RF classifier
+        Returns:
+            list[PIIDatagram], list[float] : patternList and probability list in descending order
+
+        """
+        # charset:PIICharacterSet = PIICharacterSet.getInstance()
+        patternList: list[PIIDatagram] = list()  # output
+        probaList: list[float] = list()  # output, probability of pattern
+        patternProbaDict: dict[PIIDatagram, float] = dict()  # output, pattern to probability
+        prefixList: list[PIIDatagram] = list()  # current generated prefix
+        probaDict: dict[PIIDatagram, float] = dict()  # currently generated prefix to probability
+
+        sectionList = [self.sectionFactory.getBeginSection() for i in range(self.order)]
+        beginDg = self.datagramFactory.createPIIDatagramOnlyWithFeature(sectionList, 0, 0)
+        prefixList.append(beginDg)
+        probaDict[beginDg] = 1
+        _num_discarded = 0
+
+        while len(prefixList) > 0:
+            currentPrefix: PIIDatagram = prefixList.pop()
+            pd: dict[int, float] = self.classifyMultiFromPIIDatagramToProbaDict(currentPrefix)
+            for c, proba in pd.items():
+                if proba == 0.0:
+                    continue
+                currentProba = probaDict[currentPrefix]
+                newProba = currentProba * proba
+                if newProba > self.threshold:
+                    newSection: PIISection = self.sectionFactory.createFromInt(c)
+                    newPrefix: PIIDatagram = copy(currentPrefix)
+                    newPrefix.sectionList.append(newSection)
+                    if self.sectionFactory.isEndSection(newSection):
+                        # output
+                        patternList.append(currentPrefix)
+                        probaList.append(currentProba)
+                        # patternProbaDict[currentPrefix] = currentProba
+                    else:
+                        prefixList.append(newPrefix)
+                        probaDict[newPrefix] = newProba
+                else:
+                    _num_discarded += 1
+
+        print(f"generatePattern:discarded:{_num_discarded}")
+        pp = zip(patternList, probaList)
+        pp_sorted = sorted(pp, key=lambda x: x[1], reverse=True)
+        newPatternList = list(map(lambda x: x[0], pp_sorted))
+        newProbaList = list(map(lambda x: x[1], pp_sorted))
+        return newPatternList, newProbaList
 
 
 class PIIPatternGeneratorException(Exception):

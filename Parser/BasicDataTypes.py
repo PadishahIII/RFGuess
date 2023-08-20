@@ -41,7 +41,13 @@ class Section(metaclass=ABCMeta):
         self.keyboardPos = keyboardPos
 
     def __copy__(self):
-        return Section(self.type,self.value,self.keyboardPos)
+        return Section(self.type, self.value, self.keyboardPos)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return hash(self.type) ^ hash(self.value) + hash(self.keyboardPos.row) + hash(self.keyboardPos.col)
 
     def _tovector(self) -> list[int, int, int, int]:
         return [
@@ -74,6 +80,18 @@ class Datagram(metaclass=ABCMeta):
         self.offsetInSegment = offsetInSegment
         self.sectionList: list[Section] = sectionList
         self.label = label
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        h = hash(self.offsetInSegment)
+        h ^= hash(self.pwStr)
+        h ^= hash(self.offsetInPassword)
+        for s in self.sectionList:
+            h ^= hash(s)
+        h ^= hash(self.label)
+        return h
 
     def __copy__(self):
         """
