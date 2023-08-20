@@ -566,3 +566,49 @@ class PwRepUniqueTransformer(DatabaseTransformer, Singleton):
     def SmartInsert(self, unit: PwRepUniqueUnit):
         u = self.transformIntermediateToDatabaseUnit(unit)
         self.queryMethods.SmartInsert(u)
+
+class GeneralPwRepresentationTransformer(PwRepresentationTransformer):
+    """Transformer for `pwrepresentation_general` datatable
+    Transformation: GeneralPwRepresentation(database unit) => PwRepUnit(intermediate unit) => PIIRepresentation(parse unit)
+
+    Examples:
+        # get deserialized unit with PIIRepresentation object
+        transformer = GeneralPwRepresentationTransformer.getInstance()
+        units: list[PwRepUnit] = transformer.read()
+
+        # build database, transform PIIRepresentation into database unit
+        pr = PwRepresentationTransformer.getPwRepresentation(pwStr=unit.pwStr, rep=rep)
+        transformer.insert(pr)
+
+    """
+    def __init__(self, queryMethods: BasicManipulateMethods) -> None:
+        super().__init__(queryMethods)
+        self.queryMethods:GeneralPwRepresentationMethods = queryMethods
+
+    @classmethod
+    def getInstance(cls):
+        return super().getInstance(GeneralPwRepresentationMethods())
+
+
+class GeneralPwRepUniqueTransformer(PwRepUniqueTransformer):
+    """Transformer for `pwrepresentation_unique_general` datatable
+    Transformation: GeneralPwRepUnique(database unit) => PwRepUniqueUnit(intermediate unit) => PwRepAndStructureUnit(parse unit)
+
+    Examples:
+        # get deserialized unit with PIIRepresentation object
+        transformer = GeneralPwRepUniqueTransformer.getInstance()
+        units: list[PwRepUnit] = transformer.read()
+
+        # build database, transform PIIRepresentation into database unit
+        pr = PwRepUniqueTransformer.getPwRepresentation(pwStr=unit.pwStr, rep=rep)
+        transformer.insert(pr)
+
+    """
+    def __init__(self, queryMethods: BasicManipulateMethods) -> None:
+        super().__init__(queryMethods)
+        self.queryMethods:PwRepUniqueMethods = queryMethods
+
+    @classmethod
+    def getInstance(cls):
+        return super().getInstance(PwRepUniqueMethods())
+

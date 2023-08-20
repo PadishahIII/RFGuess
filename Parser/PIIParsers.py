@@ -762,7 +762,7 @@ class PIITagRepresentationStrParserException(Exception):
 
 class PIIStructureParser:
     """
-    (top layer) bound a pii data, parse password string into PIIStructure which can directly feed RF model
+    (top layer) bound a pii data, parse password string into PIIStructure
     constructor: given a pii data bounded to the parser
     getPwPIIStructure: given a password string, Output the PIIStructure which contains all vectors about this password
     """

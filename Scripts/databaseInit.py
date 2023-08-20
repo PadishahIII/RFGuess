@@ -485,7 +485,7 @@ class RepresentationMethods(BasicManipulateMethods):
 
     def QueryWithPwStr(self, pwStr: str) -> list[PwRepresentation]:
         with Session() as session:
-            units = session.query(PwRepresentation).filter_by(pwStr=pwStr).all()
+            units = session.query(self.entityCls).filter_by(pwStr=pwStr).all()
             return units
 
     def QueryAllPw(self, offset: int = 0, limit: int = 1e6) -> list[str]:
@@ -505,7 +505,7 @@ class RepresentationMethods(BasicManipulateMethods):
 
         """
         with Session() as session:
-            units = session.query(PwRepresentation).filter_by(representationHash=repHash).all()
+            units = session.query(self.entityCls).filter_by(representationHash=repHash).all()
             return units
 
     def QueryWithRepresentationStructureHash(self, repStructureHash: str, offset: int = 0, limit: int = 1e6) -> list[
@@ -519,7 +519,7 @@ class RepresentationMethods(BasicManipulateMethods):
 
         """
         with Session() as session:
-            units = session.query(PwRepresentation).filter_by(representationStructureHash=repStructureHash).offset(
+            units = session.query(self.entityCls).filter_by(representationStructureHash=repStructureHash).offset(
                 offset).limit(limit).all()
             return units
 
@@ -534,13 +534,13 @@ class RepresentationMethods(BasicManipulateMethods):
 
         """
         with Session() as session:
-            units = session.query(PwRepresentation).filter_by(hash=hashStr).all()
+            units = session.query(self.entityCls).filter_by(hash=hashStr).all()
             return units
 
     def QueryWithPwRepStructureHash(self, pwStr: str, repStructureHash: str) -> PwRepresentation:
         with Session() as session:
-            unit = session.query(PwRepresentation).filter_by(representationStructureHash=repStructureHash,
-                                                             pwStr=pwStr).first()
+            unit = session.query(self.entityCls).filter_by(representationStructureHash=repStructureHash,
+                                                           pwStr=pwStr).first()
             return unit
 
     def Update(self, unit: PwRepresentation):
@@ -852,7 +852,7 @@ class PwRepUniqueMethods(BasicManipulateMethods):
 
         """
         with Session() as session:
-            units = session.query(PwRepUnique).filter_by(representationHash=repHash).all()
+            units = session.query(self.entityCls).filter_by(representationHash=repHash).all()
             return units
 
     def QueryWithRepresentationStructureHash(self, repStructureHash: str, offset: int = 0, limit: int = 1e6) -> list[
@@ -862,7 +862,7 @@ class PwRepUniqueMethods(BasicManipulateMethods):
 
         """
         with Session() as session:
-            units = session.query(PwRepUnique).filter_by(representationStructureHash=repStructureHash).offset(
+            units = session.query(self.entityCls).filter_by(representationStructureHash=repStructureHash).offset(
                 offset).limit(limit).all()
             return units
 
@@ -872,7 +872,7 @@ class PwRepUniqueMethods(BasicManipulateMethods):
 
         """
         with Session() as session:
-            units = session.query(PwRepUnique).filter_by(hash=hashStr).all()
+            units = session.query(self.entityCls).filter_by(hash=hashStr).all()
             return units
 
     def Update(self, unit):
@@ -894,3 +894,37 @@ class PwRepUniqueMethods(BasicManipulateMethods):
                 return False
             else:
                 return True
+
+
+class GeneralPwRepresentation(PwRepresentation):
+    __tablename__ = "pwrepresentation_general"
+
+
+class GeneralPwRepresentationMethods(RepresentationMethods):
+    def __init__(self):
+        super().__init__()
+        self.entityCls = GeneralPwRepresentation
+
+    def QueryAllPw(self, offset: int = 0, limit: int = 1e6) -> list[str]:
+        with Session() as session:
+            resultTuple: list[Column] = session.query(GeneralPwRepresentation.pwStr).distinct().offset(offset).limit(
+                limit).all()  # list[tuple]
+            result = list(map(lambda x: x[0], resultTuple))
+            return result
+
+
+class GeneralPwRepUnique(PwRepUnique):
+    __tablename__ = "PwRepresentation_unique_general"
+
+
+class GeneralPwRepUniqueMethods(PwRepUniqueMethods):
+    def __init__(self):
+        super().__init__()
+        self.entityCls = GeneralPwRepUnique
+
+    def QueryAllPw(self, offset: int = 0, limit: int = 1e6) -> list[str]:
+        with Session() as session:
+            resultTuple: list[Column] = session.query(GeneralPwRepUnique.pwStr).distinct().offset(offset).limit(
+                limit).all()  # list[tuple]
+            result = list(map(lambda x: x[0], resultTuple))
+            return result
