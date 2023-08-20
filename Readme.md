@@ -67,10 +67,13 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+### Generate pattern and implement *GeneralPII* mode(8.20)
+1. `test_generate_pattern` method: Implement pattern generating algorithm and generate most common used patterns to `patterns.txt`
+
 ### Generator(8.19)
 1. `PIIPatternGenerator`
 2. *(Solved)* Get multiple classification results
-3. *(TODO)* Generate a list of most common used password patterns
+3. *(Solved)* Generate a list of most common used password patterns
 4. *(TODO)* Implement the hybrid mode, taking idle characters as `CharacterSection` rather than LDS segments
 5. test_PIIGenerators.py: generate patterns
 6. main_PII_Mode.py: train model

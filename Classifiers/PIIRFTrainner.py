@@ -64,7 +64,24 @@ class PIIRFTrainner(Singleton):
         # label = int(label_r.astype(int)[0])
         return labelList
 
-    def getSortedClassesList(self, proba: tuple[tuple], n: int) -> list[tuple[int, int]]:
+    def _classifyToProbaDict(self, vector: list[int]) -> dict[int, float]:
+        """
+        Input a 26-dim vector(namely a `PIIDatagram`), output all classes with corresponding probability
+        Args:
+            vector (list[int]): 26-dim
+
+        Returns:
+            dict[int, float]: all classes to corresponding probability in descending order
+
+        """
+        feature = np.array(vector)
+        feature = np.array([feature])
+        proba = self._clf.predict_proba(feature)
+        ds = self.getSortedClassesList(proba, len(self._clf.classes_))
+        d: dict[int, float] = {x[0]: x[1] for x in ds}
+        return d
+
+    def getSortedClassesList(self, proba: tuple[tuple], n: int) -> list[tuple[int, float]]:
         """
         Get the top-n classes with probability
         Args:
@@ -93,6 +110,17 @@ class PIIRFTrainner(Singleton):
         """
         vector = datagram._tovector()
         return self._classifyProba(vector, n)
+
+    def classifyPIIDatagramToProbaDict(self, datagram:PIIDatagram)->dict[int,float]:
+        """
+        Input a `PIIDatagram`, output all classes with corresponding probability
+
+        Returns:
+            all classes with corresponding probability in descending order
+
+        """
+        vector = datagram._tovector()
+        return self._classifyToProbaDict(vector)
 
     def _train(self):
         self._clf = self._tree.fit(self._feature, self._label)

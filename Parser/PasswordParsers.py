@@ -73,7 +73,8 @@ class CharacterVector(BasicContext):
 # standard vector format: {4-dimension(CharacterVector)}{4-dimension}{4-dimension}{4-dimension}{2-dimension for offsetInPassword and offsetInSegment}
 # 6-order set: 6 CharacterVectors regarding to 6 character in prefix
 class Datagram(BasicContext):
-    order = 6  # n-gram model
+    from Parser import Config
+    order = Config.pii_order  # n-gram model
 
     def __init__(self, index: int, passwordStr: str, ctx=None) -> None:
         """
