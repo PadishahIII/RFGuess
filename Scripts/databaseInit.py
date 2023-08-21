@@ -896,8 +896,98 @@ class PwRepUniqueMethods(BasicManipulateMethods):
                 return True
 
 
-class GeneralPwRepresentation(PwRepresentation):
+class GeneralPwRepresentation(Base):
     __tablename__ = "pwrepresentation_general"
+
+    id = Column(Integer, primary_key=True)
+    pwStr = Column(String)
+    representation = Column(String)
+    representationStructure = Column(String)
+    representationHash = Column(String)
+    representationStructureHash = Column(String)
+    hash = Column(String)
+
+    def __init__(self, pwStr: str, repStr: str, repStruc: str):
+        super().__init__()
+        self.pwStr = pwStr
+        self.representation = repStr
+        self.representationStructure = repStruc
+        self.representationHash = PwRepresentation.getHash(self.representation)
+        self.representationStructureHash = PwRepresentation.getHash(self.representationStructure)
+        self.hash = PwRepresentation.getHash(self.pwStr + self.representation)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    @classmethod
+    def getHash(cls, s: str) -> str:
+        """
+        Get hash of representation
+
+        Args:
+            s:
+
+        Returns:
+
+        """
+        hashB = hashlib.md5(s.encode("utf8")).digest()
+        hashS = binascii.hexlify(hashB).decode("utf8")
+        return hashS
+
+    @classmethod
+    def update(cls, a, b):
+        """
+        Update a with b
+
+        Args:
+            a:
+            b:
+
+        Returns:
+
+        """
+        a.pwStr = b.pwStr
+        a.representation = b.representation
+        a.representationStructure = b.representationStructure
+        a.representationStructureHash = b.representationStructureHash
+        a.representationHash = b.representationHash
+        a.hash = b.hash
+
+    @validates('pwStr')
+    def validatePwStr(self, key, pwStr):
+        if len(pwStr) <= 0:
+            raise ValueError(f"Invalid pwStr: cannot be empty")
+        return pwStr
+
+    @validates('representation')
+    def validateRep(self, key, repStr):
+        if len(repStr) <= 0:
+            raise ValueError(f"Invalid representation string: cannot be empty")
+        return repStr
+
+    @validates('representationHash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return hashStr
+
+    @validates('representationStructureHash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return hashStr
+
+    @validates('representationStructure')
+    def validateRep(self, key, repStruc):
+        if len(repStruc) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return repStruc
+
+    @validates('hash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid whole hash: cannot be empty")
+        return hashStr
 
 
 class GeneralPwRepresentationMethods(RepresentationMethods):
@@ -913,8 +1003,98 @@ class GeneralPwRepresentationMethods(RepresentationMethods):
             return result
 
 
-class GeneralPwRepUnique(PwRepUnique):
+class GeneralPwRepUnique(Base):
     __tablename__ = "PwRepresentation_unique_general"
+
+    id = Column(Integer, primary_key=True)
+    pwStr = Column(String)
+    representation = Column(String)
+    representationStructure = Column(String)
+    representationHash = Column(String)
+    representationStructureHash = Column(String)
+    hash = Column(String)
+
+    def __init__(self, pwStr: str, repStr: str, repStruc: str):
+        super().__init__()
+        self.pwStr = pwStr
+        self.representation = repStr
+        self.representationStructure = repStruc
+        self.representationHash = PwRepresentation.getHash(self.representation)
+        self.representationStructureHash = PwRepresentation.getHash(self.representationStructure)
+        self.hash = PwRepresentation.getHash(self.pwStr + self.representation)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    @classmethod
+    def getHash(cls, s: str) -> str:
+        """
+        Get hash of representation
+
+        Args:
+            s:
+
+        Returns:
+
+        """
+        hashB = hashlib.md5(s.encode("utf8")).digest()
+        hashS = binascii.hexlify(hashB).decode("utf8")
+        return hashS
+
+    @classmethod
+    def update(cls, a, b):
+        """
+        Update a with b
+
+        Args:
+            a:
+            b:
+
+        Returns:
+
+        """
+        a.pwStr = b.pwStr
+        a.representation = b.representation
+        a.representationStructure = b.representationStructure
+        a.representationStructureHash = b.representationStructureHash
+        a.representationHash = b.representationHash
+        a.hash = b.hash
+
+    @validates('pwStr')
+    def validatePwStr(self, key, pwStr):
+        if len(pwStr) <= 0:
+            raise ValueError(f"Invalid pwStr: cannot be empty")
+        return pwStr
+
+    @validates('representation')
+    def validateRep(self, key, repStr):
+        if len(repStr) <= 0:
+            raise ValueError(f"Invalid representation string: cannot be empty")
+        return repStr
+
+    @validates('representationHash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return hashStr
+
+    @validates('representationStructureHash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return hashStr
+
+    @validates('representationStructure')
+    def validateRep(self, key, repStruc):
+        if len(repStruc) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return repStruc
+
+    @validates('hash')
+    def validateRep(self, key, hashStr):
+        if len(hashStr) <= 0:
+            raise ValueError(f"Invalid whole hash: cannot be empty")
+        return hashStr
 
 
 class GeneralPwRepUniqueMethods(PwRepUniqueMethods):

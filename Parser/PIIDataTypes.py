@@ -1,6 +1,6 @@
 import typing
 from copy import copy
-
+from Commons.Property import StrProperty
 from Commons import BasicTypes, Utils
 from Parser import BasicDataTypes
 
@@ -9,7 +9,7 @@ Foreground analyzing phase datastructures
 '''
 
 
-class PIIVector:
+class PIIVector(StrProperty):
     """
     4-dimension vector data used in model input and Output which is more representative than PIISection
     Attributes:
@@ -20,7 +20,7 @@ class PIIVector:
     """
 
     def __init__(self, s: str, piitype: BasicTypes.PIIType, piivalue: int):
-        self.str: str = s
+        super().__init__(s)
         self.piitype: BasicTypes.PIIType = piitype
         self.piitypevalue: int = self.piitype.value
         self.piivalue: int = piivalue

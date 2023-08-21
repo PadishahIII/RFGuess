@@ -509,7 +509,7 @@ class PIIFullTagParser:
         self._tagContainer = PIITagContainer(self._pii, nameFuzz=self._nameFuzz)
         self._tagContainer.parse()
 
-    def getTagContainer(self):
+    def getTagContainer(self)->PIITagContainer:
         return self._tagContainer
 
 
@@ -653,9 +653,9 @@ class PIIToTagParser:
         return d
 
 
-class PIITagRepresentationStrParser:
+class PIITagRepresentationStrParser(Singleton):
     """
-    Parse Tag to readable string like A1B2N3
+    Parse PIIRepresentation to readable string like A1B2N3
     """
 
     def __init__(self):
