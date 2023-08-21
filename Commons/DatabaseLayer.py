@@ -1,5 +1,6 @@
 from Commons.Property import *
 from Commons.Utils import Serializer
+from Parser.GeneralPIIDataTypes import *
 from Scripts.databaseInit import *
 
 '''
@@ -169,6 +170,75 @@ class PwRepUniqueUnit(RepStrProperty):
     @classmethod
     def create(cls, pwStr: str, repStr: str, repStructureStr: str, repHash: str, repStructureHash: str):
         return PwRepUniqueUnit(pwStr, repStr, repStructureStr, repHash, repStructureHash)
+
+
+class GeneralPwRepUnit(RepStrProperty):
+    """Unit transformed corresponding to `pwrepresentation_general` dataunit
+
+    Attributes:
+        pwStr (str): password string
+        rep (GeneralPIIRepresentation): deserialized object
+        repStructure (GeneralPIIRepresentation): deserialized object without exact vector string
+        repStr (str): serialized data
+        repHash (str): hash of `repStr`
+        repStructureHash (str): hash of `repStructure`
+    """
+
+    def __init__(self, pwStr: str, rep: GeneralPIIRepresentation, repStructure: GeneralPIIRepresentation, repStr: str,
+                 repHash: str,
+                 repStructureHash: str) -> None:
+        super().__init__(repStr)
+        self.pwStr = pwStr
+        self.rep: GeneralPIIRepresentation = rep
+        self.repStructure: GeneralPIIRepresentation = repStructure
+        self.repHash = repHash
+        self.repStructureHash = repStructureHash
+
+
+class GeneralRepFrequencyUnit(RepFrequencyUnit):
+    """Unit transformed corresponding to `representation_frequency_general` dataview
+
+    Attributes:
+        repStr (str): serialized data of representation structure
+        repHash (str): hash of `repStr`
+        frequency (int): frequency of representation
+    """
+
+    def __init__(self, repStr: str, repHash: str, frequency: int) -> None:
+        super().__init__(repStr, repHash, frequency)
+
+
+class GeneralPwRepFrequencyUnit(PwRepFrequencyUnit):
+    """Unit transformed corresponding to `representation_frequency_general` dataview
+
+    Attributes:
+        pwStr (str): password string
+        repStr (str): serialized data of representation structure
+        repHash (str): hash of `repStr`
+        frequency (int): frequency of representation
+    """
+
+    def __init__(self, pwStr: str, repStructureStr: str, repStructureHash: str, frequency: int) -> None:
+        super().__init__(pwStr, repStructureStr, repStructureHash, frequency)
+
+
+class GeneralPwRepUniqueUnit(PwRepUniqueUnit):
+    """Unit transformed corresponding to `pwrepresentation_unique_general` dataunit
+
+    Attributes:
+        pwStr (str): password string
+        repStr (str): serialized object
+        repStructureStr (str): serialized object without exact vector string
+        repHash (str): hash of `repStr`
+        repStructureHash (str): hash of `repStructure`
+    """
+
+    def __init__(self, pwStr: str, repStr: str, repStructureStr: str, repHash: str, repStructureHash: str) -> None:
+        super().__init__(pwStr, repStr, repStructureStr, repHash, repStructureHash)
+
+    @classmethod
+    def create(cls, pwStr: str, repStr: str, repStructureStr: str, repHash: str, repStructureHash: str):
+        return GeneralPwRepUniqueUnit(pwStr, repStr, repStructureStr, repHash, repStructureHash)
 
 
 '''
@@ -548,9 +618,9 @@ class PwRepUniqueTransformer(DatabaseTransformer, Singleton):
         self.queryMethods.SmartInsert(u)
 
 
-class GeneralPwRepresentationTransformer(PwRepresentationTransformer):
+class GeneralPwRepresentationTransformer(DatabaseTransformer, Singleton):
     """Transformer for `pwrepresentation_general` datatable
-    Transformation: GeneralPwRepresentation(database unit) => PwRepUnit(intermediate unit) => PIIRepresentation(parse unit)
+    Transformation: GeneralPwRepresentation(database unit) => GeneralPwRepUnit(intermediate unit) => GeneralPIIRepresentation(parse unit)
 
     Examples:
         # get deserialized unit with PIIRepresentation object
@@ -558,7 +628,7 @@ class GeneralPwRepresentationTransformer(PwRepresentationTransformer):
         units: list[PwRepUnit] = transformer.read()
 
         # build database, transform PIIRepresentation into database unit
-        pr = PwRepresentationTransformer.getPwRepresentation(pwStr=unit.pwStr, rep=rep)
+        pr = GeneralPwRepresentationTransformer.getPwRepresentation(pwStr=unit.pwStr, rep=rep)
         transformer.insert(pr)
 
     """
@@ -570,6 +640,95 @@ class GeneralPwRepresentationTransformer(PwRepresentationTransformer):
     @classmethod
     def getInstance(cls):
         return super().getInstance(GeneralPwRepresentationMethods())
+
+    def transform(self, baseUnit: GeneralPwRepresentation) -> GeneralPwRepUnit:
+        """Base unit to intermediate unit(as well as parse unit)
+        """
+        repSe: str = baseUnit.representation
+        repStrucSe: str = baseUnit.representationStructure
+        rep: GeneralPIIRepresentation = Serializer.deserialize(repSe)
+        repStruc: GeneralPIIRepresentation = Serializer.deserialize(repStrucSe)
+        unit = GeneralPwRepUnit(pwStr=baseUnit.pwStr, rep=rep, repStr=baseUnit.representation,
+                                repHash=baseUnit.representationHash, repStructure=repStruc,
+                                repStructureHash=baseUnit.representationStructureHash)
+        return unit
+
+    def transformParseunitToBaseunit(self, pwStr: str, rep: GeneralPIIRepresentation) -> GeneralPwRepresentation:
+        """Build database phase
+        Parse representation object into `GeneralPwRepresentation` object
+
+        Args:
+            pwStr: password string
+            rep: `GeneralPIIRepresentation` object
+
+        Returns:
+            GeneralPwRepresentation
+        """
+        repStr = Serializer.serialize(rep)
+        newRep: GeneralPIIRepresentation = copy(rep)
+        # vector str(part of pwStr) will be excluded in hash calculation
+        for vector in newRep.vectorList:
+            if vector.isPIIVector:
+                vector.str = ""
+        repStructure = Serializer.serialize(newRep)
+        pr = GeneralPwRepresentation(pwStr=pwStr, repStr=repStr, repStruc=repStructure)
+        return pr
+
+    def transformBaseunitToParseunit(self, pwRep: GeneralPwRepresentation) -> GeneralPIIRepresentation:
+        """
+        Convert `GeneralPwRepresentation` object into `GeneralPIIRepresentation`
+        """
+        repStr = pwRep.representation
+        rep: GeneralPIIRepresentation = Serializer.deserialize(repStr)
+        return rep
+
+    def read(self, offset: int = 0, limit: int = 1e7) -> list[GeneralPwRepUnit]:
+        """
+        Read from database and transform unit into `PwRepUnit`(intermediate unit)
+
+        """
+        return super().read(offset, limit)
+
+    def Insert(self, pr: GeneralPwRepresentation):
+        self.queryMethods.Insert(pr)
+
+    def SmartInsert(self, pr: GeneralPwRepresentation):
+        self.queryMethods.SmartInsert(pr)
+
+    def getAllPw(self, offset: int = 0, limit: int = 1e6) -> list[str]:
+        """
+        Get All password string
+        """
+        return self.queryMethods.QueryAllPw(offset, limit)
+
+    def getStructureSample(self, hashStr: str) -> GeneralPIIRepresentation:
+        """
+        Input the hash of representation structure, return a sample representation(with pwStr section not empty)
+
+        Args:
+            hashStr: the hash of representation structure
+
+        Returns:
+            a sample of the representation structure
+
+        """
+        units: list[GeneralPwRepresentation] = self.queryMethods.QueryWithRepresentationStructureHash(
+            repStructureHash=hashStr,
+            offset=0, limit=1)
+        if len(units) <= 0:
+            return None
+        else:
+            unit = units[0]
+            return self.transformBaseunitToParseunit(unit)
+
+    def getDatabaseUnitWithRepStructureHash(self, pwStr: str, repStructureHash: str) -> GeneralPwRepresentation:
+        """
+        Query repStr of pwStr with repStructure.
+        Return first match.
+
+        """
+        unit = self.queryMethods.QueryWithPwRepStructureHash(pwStr=pwStr, repStructureHash=repStructureHash)
+        return unit
 
 
 class GeneralPwRepUniqueTransformer(PwRepUniqueTransformer):
