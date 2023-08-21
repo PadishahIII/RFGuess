@@ -71,7 +71,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 1. `test_generate_pattern` method: Implement pattern generating algorithm and generate most common used patterns to `patterns.txt`
 
 - [ ] Create data structures and corresponding factory
-- [ ] PII parsing phase: extend pii data structures and overwrite the PIIStructure parsing algorithm
+- [x] PII parsing phase: extend pii data structures and overwrite the PIIStructure parsing algorithm
 - [ ] Database build: create two new datatable `pwrepresentation_general` and `pwrepresentation_unique_general`, overwrite
 representation select algorithm
 - [ ] Build training data: implement `GeneralPIIParser` to build feature list

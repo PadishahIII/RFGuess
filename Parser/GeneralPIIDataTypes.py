@@ -1,37 +1,42 @@
 from Commons.BasicTypes import *
 from Parser.PIIDataTypes import *
+from Commons.Property import StrProperty
 
 '''
 Foreground analyzing phase datastructures
 '''
 
 
-class CharacterVector:
+class CharacterVector(StrProperty):
     """Denoting a character
     4-dimension vector data used in model input and Output which is more representative than PIISection
     Attributes:
+        ch (str): character string
         type (CharacterType): type of character
         serialNum (PIIType): serial number of character
         keyboardPos (KeyboardPos): keyboard position
     """
 
-    def __init__(self, type: CharacterType, serialNum: int, keyboardPos: KeyboardPosition) -> None:
+    def __init__(self, ch: str, type: CharacterType, serialNum: int, keyboardPos: KeyboardPosition,) -> None:
+        super().__init__(ch)
         self.type: CharacterType = type
         self.serialNum: int = serialNum
         self.keyboardPos: KeyboardPosition = keyboardPos
 
     def __copy__(self):
-        return CharacterVector(self.type, self.serialNum, self.keyboardPos)
+        return CharacterVector(self.getStr(), self.type, self.serialNum, self.keyboardPos)
 
     def _tojson(self):
         return {
             "CharacterType": str(self.type.name),
+            "CharacterStr":self.getStr(),
             "SerialNum": self.serialNum,
             "KeyboardPos": f"{self.keyboardPos.row}:{self.keyboardPos.col}"
         }
 
 
-class GeneralPIIVector:
+
+class GeneralPIIVector(StrProperty):
     """
     A *Unit* object of `PIIVector` and `CharacterVector`
     Attributes:
@@ -39,7 +44,8 @@ class GeneralPIIVector:
         vectorObj (PIIVector or CharacterVector): vector object
     """
 
-    def __init__(self, vector, isPIIVector: bool) -> None:
+    def __init__(self, vector:StrProperty, isPIIVector: bool, ) -> None:
+        super().__init__(vector.getStr())
         self.isPIIVector = isPIIVector
         self.vectorObj = vector
 

@@ -1,26 +1,6 @@
+from Commons.Property import *
 from Commons.Utils import Serializer
 from Scripts.databaseInit import *
-
-'''
-Abstract properties
-'''
-
-
-class AbstractProperty(metaclass=ABCMeta):
-
-    def __init__(self) -> None:
-        super().__init__()
-
-
-class RepStrProperty(AbstractProperty):
-    """
-    A abstract class which only contains 'repStr' property, namely representation serialized string
-    """
-
-    def __init__(self, repStr: str) -> None:
-        super().__init__()
-        self.repStr = repStr
-
 
 '''
 Property Transformers
@@ -567,6 +547,7 @@ class PwRepUniqueTransformer(DatabaseTransformer, Singleton):
         u = self.transformIntermediateToDatabaseUnit(unit)
         self.queryMethods.SmartInsert(u)
 
+
 class GeneralPwRepresentationTransformer(PwRepresentationTransformer):
     """Transformer for `pwrepresentation_general` datatable
     Transformation: GeneralPwRepresentation(database unit) => PwRepUnit(intermediate unit) => PIIRepresentation(parse unit)
@@ -581,9 +562,10 @@ class GeneralPwRepresentationTransformer(PwRepresentationTransformer):
         transformer.insert(pr)
 
     """
+
     def __init__(self, queryMethods: BasicManipulateMethods) -> None:
         super().__init__(queryMethods)
-        self.queryMethods:GeneralPwRepresentationMethods = queryMethods
+        self.queryMethods: GeneralPwRepresentationMethods = queryMethods
 
     @classmethod
     def getInstance(cls):
@@ -604,11 +586,11 @@ class GeneralPwRepUniqueTransformer(PwRepUniqueTransformer):
         transformer.insert(pr)
 
     """
+
     def __init__(self, queryMethods: BasicManipulateMethods) -> None:
         super().__init__(queryMethods)
-        self.queryMethods:PwRepUniqueMethods = queryMethods
+        self.queryMethods: PwRepUniqueMethods = queryMethods
 
     @classmethod
     def getInstance(cls):
         return super().getInstance(PwRepUniqueMethods())
-
