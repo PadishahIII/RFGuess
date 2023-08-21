@@ -72,8 +72,8 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 - [ ] Create data structures and corresponding factory
 - [x] PII parsing phase: extend pii data structures and overwrite the PIIStructure parsing algorithm
-- [ ] Database build: create two new datatable `pwrepresentation_general` and `pwrepresentation_unique_general`, overwrite
-representation select algorithm
+- [x] Database build: create two new datatable `pwrepresentation_general` and `pwrepresentation_unique_general`
+- [ ] Overwrite representation select algorithm
 - [ ] Build training data: implement `GeneralPIIParser` to build feature list
 - [ ] Generate pattern: implement `GeneralPIIGenerator` to generate patterns
 
