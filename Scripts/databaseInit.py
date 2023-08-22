@@ -1003,6 +1003,159 @@ class GeneralPwRepresentationMethods(RepresentationMethods):
             return result
 
 
+class GeneralRepresentationFrequency(Base):
+    __tablename__ = "representation_frequency_general"
+
+    frequency = Column(Integer)
+    representationStructureHash = Column(String, primary_key=True)
+    representationStructure = Column(String)
+
+    def __init__(self, frequency: int, repHash: str, repStr: str):
+        """
+
+        Args:
+            frequency:
+            repHash:
+            repStr: serialized representation
+        """
+        super().__init__()
+        self.frequency = frequency
+        self.representationHash = repHash
+        self.representation = repStr
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    @classmethod
+    def update(cls, a, b):
+        """
+        Update a with b
+
+        """
+        a.frequency = b.frequency
+        a.representationHash = b.representationHash
+        a.representation = b.representation
+
+    @validates('frequency')
+    def validateFrequency(self, key, fre: int):
+        if fre <= 0:
+            raise ValueError(f"Invalid frequency: must larger than 0")
+        return fre
+
+    @validates("representationHash")
+    def validateRepHash(self, key, h: str):
+        if len(h) <= 0:
+            raise ValueError(f"Invalid representation hash: cannot be empty")
+        return h
+
+    @validates("representation")
+    def validateRepStr(self, key, h: str):
+        if len(h) <= 0:
+            raise ValueError(f"Invalid representation serialized data: cannot be empty")
+        return h
+
+
+
+class GeneralRepresentationFrequencyMethods(RepresentationFrequencyMethods):
+    def __init__(self):
+        super().__init__()
+        self.entityCls = GeneralRepresentationFrequency
+
+    def QueryWithRepStructureHash(self, hashStr: str) -> list[GeneralRepresentationFrequency]:
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(representationStructureHash=hashStr).all()
+            return units
+
+    def QueryAllWithFrequencyDesc(self, offset: int = 0, limit: int = 1e7) -> list[GeneralRepresentationFrequency]:
+        """
+        Get all units with frequency in desc order
+
+        """
+        with Session() as session:
+            units = session.query(self.entityCls).distinct().order_by(
+                self.entityCls.frequency.desc()).offset(offset).limit(limit)
+            return units
+
+    def Update(self, unit):
+        pass
+
+    def CheckExist(self, unit: GeneralRepresentationFrequency) -> bool:
+        """
+        Check unit if exists in terms of `representationHash`
+
+        Args:
+            unit:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(representationHash=unit.representationHash).all()
+            if not units or len(units) <= 0:
+                return False
+            else:
+                return True
+
+
+
+class GeneralPwRepresentationFrequency(Base):
+    __tablename__ = "pwrepresentation_frequency_general"
+
+    id = Column(Integer, primary_key=True)
+    pwStr = Column(String)
+    frequency = Column(Integer)
+    representationStructureHash = Column(String)
+    representationStructure = Column(String)
+
+    def __init__(self, pwStr: str, frequency: int, repHash: str, repStr: str):
+        """
+
+        Args:
+            frequency:
+            repHash:
+            repStr: serialized representation
+        """
+        super().__init__()
+        self.pwStr = pwStr
+        self.frequency = frequency
+        self.representationHash = repHash
+        self.representation = repStr
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class GeneralPwRepresentationFrequencyMethods(PwRepresentationFrequencyMethods):
+    def __init__(self):
+        super().__init__()
+        self.entityCls = GeneralPwRepresentationFrequency
+
+    def QueryWithPw(self, pwStr: str) -> list[GeneralPwRepresentationFrequency]:
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(pwStr=pwStr).all()
+            return units
+
+    def Update(self, unit):
+        pass
+
+    def CheckExist(self, unit: GeneralPwRepresentationFrequency) -> bool:
+        """
+        Check unit if exists in terms of `representationHash`
+
+        Args:
+            unit:
+
+        Returns:
+
+        """
+        with Session() as session:
+            units = session.query(self.entityCls).filter_by(pwStr=unit.pwStr).all()
+            if not units or len(units) <= 0:
+                return False
+            else:
+                return True
+
+
 class GeneralPwRepUnique(Base):
     __tablename__ = "PwRepresentation_unique_general"
 

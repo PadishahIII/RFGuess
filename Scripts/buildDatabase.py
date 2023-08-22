@@ -3,10 +3,8 @@ from unittest import TestCase
 
 from Commons.DatabaseLayer import *
 from Parser import PIIDataTypes
-from Parser.PIIParsers import *
-from Parser.PIIPreprocessor import PIIPreprocessor
-from Scripts import Utils as DatabaseUtils
 from Parser.GeneralPIIParsers import *
+from Parser.PIIPreprocessor import PIIPreprocessor
 
 
 class BuildDatabase(TestCase):
@@ -54,7 +52,6 @@ class BuildDatabase(TestCase):
         print(
             f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
 
-
     def buildGeneralPwRepresentationTable(self):
         """
         Build `pwrepresentation_general` table based on `pii` dataset.
@@ -68,7 +65,7 @@ class BuildDatabase(TestCase):
         print(f"Total: {dataset.row}")
         print(f"keyList:{dataset.keyList}")
 
-        transformer:GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
+        transformer: GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
         transformer.queryMethods.DeleteAll()
         datasetIter: typing.Iterable[PIIDataUnit] = iter(dataset)
         i = 0
@@ -80,7 +77,7 @@ class BuildDatabase(TestCase):
             piiParser = GeneralPIIStructureParser(pii)
             piiStructure = piiParser.getGeneralPIIStructure(pwStr=unit.password)
             for rep in piiStructure.repList:
-                pr = transformer.transformParseunitToBaseunit(pwStr=unit.password,rep=rep)
+                pr = transformer.transformParseunitToBaseunit(pwStr=unit.password, rep=rep)
                 try:
                     transformer.Insert(pr)
                     repCount += 1
@@ -110,13 +107,13 @@ class BuildDatabase(TestCase):
             print(f"pw:{pwStr},rep:{repStr}")
 
     def test_read_pwrep_general(self):
-        transformer:GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
-        repParser:GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
-        units: list[GeneralPwRepUnit] = transformer.read(offset=0,limit=10)
+        transformer: GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
+        repParser: GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
+        units: list[GeneralPwRepUnit] = transformer.read(offset=100, limit=10)
         for unit in units:
             pwStr = unit.pwStr
-            rep:GeneralPIIRepresentation = unit.rep
-            repStruc:GeneralPIIRepresentation = unit.repStructure
+            rep: GeneralPIIRepresentation = unit.rep
+            repStruc: GeneralPIIRepresentation = unit.repStructure
             repStr = repParser.representationToStr(rep)
             repStrucStr = repParser.representationToStr(repStruc)
             print(f"pw:{pwStr},rep:{repStr},repStructure:{repStrucStr}")
@@ -146,6 +143,31 @@ class BuildDatabase(TestCase):
                 print(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
         print(f"Completed! Total:{i}, total exception:{exceptionCount}")
 
+    def test_build_general_unique(self):
+        resolver: GeneralPIIRepresentationResolver = GeneralPIIRepresentationResolver.getInstance()
+        transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
+
+        transformer.queryMethods.DeleteAll()
+
+        exceptionCount = 0
+        i = 0
+
+        pwRepDict: dict[str, RepUnit] = resolver.resolve()
+        _len = len(pwRepDict)
+        print(f"Resolved:{_len}")
+
+        for pwStr, repUnit in pwRepDict.items():
+            try:
+                unit: PwRepUniqueUnit = DatabaseUtils.getGeneralIntermediateFromRepUnit(pwStr, repUnit)
+                transformer.Insert(unit)
+            except Exception as e:
+                print(f"Exception occur: {str(e)}, pwStr: {pwStr}, RepUnit:{str(repUnit)}")
+                exceptionCount += 1
+            i += 1
+            if i % 100 == 0:
+                print(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
+        print(f"Completed! Total:{i}, total exception:{exceptionCount}")
+
     def test_read_unique(self):
         transformer: PwRepUniqueTransformer = PwRepUniqueTransformer.getInstance()
         parser: PIITagRepresentationStrParser = PIITagRepresentationStrParser()
@@ -155,6 +177,19 @@ class BuildDatabase(TestCase):
             unit: PwRepAndStructureUnit = transformer.getParseunitWithId(id)
             rep: PIIRepresentation = unit.rep
             repStructure: PIIRepresentation = unit.repStructure
+            repStr = parser.representationToStr(rep)
+            repStructureStr = parser.representationToStr(repStructure)
+            print(f"pw:{unit.pwStr} representation:{repStr}structure:{repStructureStr}")
+
+    def test_read_unique_general(self):
+        transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
+        parser: GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser()
+
+        for i in range(10):
+            id = random.randint(154195, 283494)
+            unit: GeneralPwRepAndStructureUnit = transformer.getParseunitWithId(id)
+            rep: GeneralPIIRepresentation = unit.rep
+            repStructure: GeneralPIIRepresentation = unit.repStructure
             repStr = parser.representationToStr(rep)
             repStructureStr = parser.representationToStr(repStructure)
             print(f"pw:{unit.pwStr} representation:{repStr}structure:{repStructureStr}")

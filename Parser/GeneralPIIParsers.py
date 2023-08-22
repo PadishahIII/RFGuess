@@ -169,3 +169,128 @@ class GeneralPIIRepresentationStrParser(Singleton):
             charVector: CharacterVector = vector.vectorObj
             s = charVector.getStr()
         return s
+
+
+'''
+General representation resolver
+'''
+
+
+class GeneralPIIRepresentationResolver(Singleton):
+    """
+    select a representation of password
+    """
+
+    def __init__(self,
+                 pwList: list[str],
+                 pwAllRepDict: dict[str, list[RepUnit]],
+                 repPriorityList: list[RepUnit],
+                 ) -> None:
+        self.pwList: list[str] = pwList  # all pwStr
+        self.pwAllRepDict: dict[
+            str, list[RepUnit]] = pwAllRepDict  # pwStr:list of all rep, password string and its all representation
+        self.repPriorityList: list[RepUnit] = repPriorityList  # list of repUnit in frequency-descending order
+        self.pwRepDict: dict[str, RepUnit] = dict()  # (output) password with its unique representation
+
+    @classmethod
+    def getInstance(cls):
+        if super()._instances is not None:
+            return super().getInstance()
+        repPriorityList = DatabaseUtils.getGeneralRepStructurePriorityList()
+        # print(f"PriorityList:{len(repPriorityList)}")
+        pwList = DatabaseUtils.getGeneralAllPw()
+        pwAllRepDict = dict()
+        _len = len(pwList)
+        _i = 0
+        # print(f"PwList:{len(pwList)}")
+        pwAllRepDict = DatabaseUtils.getGeneralAllRepStructureDict()
+        # for pw in pwList:
+        #     repList = DatabaseUtils.getAllRepStructureOfPw(pw)
+        #     pwAllRepDict[pw] = repList
+        #     _i += 1
+        #     print(f"Progress:{(_i / _len) * 100:.2f}%")
+        # print(f"PwRepDict:{len(pwAllRepDict.keys())}\n{list(pwAllRepDict.keys())[:10]}")
+
+        return super().getInstance(pwList, pwAllRepDict, repPriorityList)
+
+    def pwMatch(self, pwStr: str) -> tuple[RepUnit]:
+        """
+        Return all PII structure representations of pwStr
+
+        """
+        if pwStr not in self.pwAllRepDict.keys():
+            raise ResolverException(f"Error: pwStr {pwStr} not in pwAllRepDict ")
+        return tuple(self.pwAllRepDict[pwStr])
+
+    def subtractFrequency(self, repUnitList: list[RepUnit]):
+        """
+        Subtract frequency of all representation structures in `repUnitList`
+
+        """
+
+        for unit in repUnitList:
+            unit.frequency -= 1
+
+    def shortMatch(self, pwStr: str) -> RepUnit:
+
+        """
+        Return the shortest representation structure of pwStr
+
+        """
+        if pwStr not in self.pwAllRepDict.keys():
+            raise ResolverException(f"Error pwStr {pwStr} not in pwAllRepDict")
+        repList: list[RepUnit] = self.pwAllRepDict[pwStr]
+        min = 1e6
+        min_i = 0
+        i = 0
+        _len = len(repList)
+        while i < _len:
+            rep: RepUnit = repList[i]
+            l = DatabaseUtils.getRepLen(rep)
+            if l < min:
+                min_i = i
+                min = l
+            i += 1
+        minRep: RepUnit = repList[min_i]
+        return minRep
+
+    def resolve(self) -> dict[str, RepUnit]:
+        """
+        Resolve the representations of all passwords
+        `repPriorityList` and `pwList` will turn to empty after call
+        `pwAllRepDict` will not change and `shortMatch` method can use as normal
+
+        Take the frequency of representation structures as the primary consider, if pw's all representations have equal
+         frequency, select the shortest structure.
+
+        Returns:
+
+        """
+        matchSet: list[RepUnit] = self.repPriorityList
+        _len = len(matchSet)
+        item: RepUnit = matchSet.pop(0)
+        while len(matchSet) > 0:
+            print(
+                f"Resolve Progress:{_len - len(matchSet)}/{_len}:{((_len - len(matchSet)) / _len * 100):.2f} pwList:{len(self.pwList)}")
+            if item.frequency <= 1:
+                item: RepUnit = matchSet.pop(0)
+                continue
+            for pw in self.pwList:
+                matchPw: tuple[RepUnit] = self.pwMatch(pw)
+                if item in matchPw:
+                    self.pwRepDict[pw] = item
+                    self.pwList.remove(pw)
+                    for remainItem in matchPw:
+                        remainItem.frequency -= 1
+            item: RepUnit = matchSet.pop(0)
+
+        while len(self.pwList) > 0:
+            pw = self.pwList.pop()
+            structure: RepUnit = self.shortMatch(pw)
+            self.pwRepDict[pw] = structure
+        return self.pwRepDict
+
+
+class ResolverException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

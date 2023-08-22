@@ -1,6 +1,6 @@
-import json
 from unittest import TestCase
 
+from Generators.PIIGenerators import PIIPatternGenerator
 from Parser.GeneralPIIParsers import *
 
 
@@ -26,9 +26,17 @@ class TestGeneralPIIStructureParser(TestCase):
             print(f"{strParser.representationToStr(rep)}\n")
 
         print(f"\nPIIParser:\n")
-        piiS:PIIStructure = piiParser.getPwPIIStructure(pw1)
+        piiS: PIIStructure = piiParser.getPwPIIStructure(pw1)
 
-        piiStrParser:PIITagRepresentationStrParser = PIITagRepresentationStrParser.getInstance()
+        piiStrParser: PIITagRepresentationStrParser = PIITagRepresentationStrParser.getInstance()
         for rep in piiS.piiRepresentationList:
             print(f"{piiStrParser.representationToStr(rep)}\n")
 
+    def test_generate_pattern(self):
+        generator: PIIPatternGenerator = PIIPatternGenerator.getInstance("../save.clf")
+        l, pl = generator.generatePattern()
+        sl: list[str] = [generator.datagramFactory.parsePIIDatagramToStr(dg) for dg in l]
+
+        with open("../patterns.txt", "w") as f:
+            for i in range(len(sl)):
+                f.write(f"{sl[i]}  {pl[i]}\n")
