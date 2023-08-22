@@ -45,7 +45,7 @@ class CharacterParser(Singleton):
 
         # self._check()
 
-    def encodeCh(self, ch: str):
+    def encodeCh(self, ch: str)->int:
         if len(ch) > 1 or len(ch) < -1:
             raise ParseException(f"{ch} must be a single character")
         if ch not in self.map.keys():
@@ -134,7 +134,7 @@ class LabelParser(Singleton):
             l.append(self.encodeCh(c))
         return l
 
-    def decodeCh(self, serial: int):
+    def decodeCh(self, serial: int)->str:
         if not isinstance(serial, int):
             raise ParseException(f"{serial}({type(serial)}) must be a integer")
         if serial == CharacterParser.BeginSymbol:

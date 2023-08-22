@@ -1,5 +1,6 @@
 from Commons.DatabaseLayer import *
-from Parser.PIIParsers import PIIParser, PIISectionFactory
+from Parser.PIIParsers import *
+from Parser.GeneralPIIParsers import *
 
 '''
 Factory: given a dataset, Output feature list and label list, toppest layer
@@ -87,7 +88,7 @@ class GeneralPIIFactory(BasicFactory):
         self.limit = limit
         self.offset = offset
 
-        self.sectionFactory = PIISectionFactory.getInstance()
+        self.sectionFactory = GeneralPIISectionFactory.getInstance()
 
     @classmethod
     def getInstance(cls, offset: int = 0, limit=1e6):
@@ -96,18 +97,21 @@ class GeneralPIIFactory(BasicFactory):
                           limit=int(limit))
 
     def process(self):
-        l: list[PwRepAndStructureUnit] = self.transformer.readAsParseUnit(offset=self.offset, limit=self.limit)
+        l: list[GeneralPwRepAndStructureUnit] = self.transformer.readAsParseUnit(offset=self.offset, limit=self.limit)
         for unit in l:
             try:
                 pwStr = unit.pwStr
-                rep: PIIRepresentation = unit.rep
-                parser: PIIParser = PIIParser(None, pwStr, rep)
+                rep: GeneralPIIRepresentation = unit.rep
+                parser: GeneralPIIParser = GeneralPIIParser(None, pwStr, rep)
                 parser.parse()
                 featureList = parser.getFeatureList()
                 labelList = parser.getLabelList()
                 self.featureList += featureList
                 self.labelList += labelList
             except Exception as e:
-                raise PIIFactoryException(
+                raise GeneralPIIFactoryException(
                     f"Exception occur when addressing unit {str(unit.__dict__)}\nOriginal Exception: {e}")
 
+class GeneralPIIFactoryException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

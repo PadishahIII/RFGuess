@@ -237,9 +237,15 @@ class CharacterLabel(BasicDataTypes.Label):
 class GeneralPIILabel(BasicDataTypes.Label):
     """
     Store either a PIILabel or CharacterLabel
+
     """
 
     def __init__(self, label: BasicDataTypes.Label, isPIILabel: bool) -> None:
+        """
+        Args:
+            label: PIILabel or CharacterLabel
+            isPIILabel: True for PIILable and False for CharacterLabel
+        """
         super().__init__()
         self.label: BasicDataTypes.Label = label
 

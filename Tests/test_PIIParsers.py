@@ -3,7 +3,7 @@ import random
 from unittest import TestCase
 
 from Commons.DatabaseLayer import *
-from Parser.PIIParsers import *
+from Parser.GeneralPIIParsers import *
 
 
 class TestTag(TestCase):
@@ -92,6 +92,26 @@ class TestPIIParser(TestCase):
                     f"{unit.pwStr}\n{repStr}feature:{len(parser.getFeatureList()[0])}{parser.getFeatureList()}\nlabel:{parser.getLabelList()}\n")
 
 
+    def test_build_general_datagram_list(self):
+        transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
+        minId = 154195
+        maxId = 283494
+        l: list[GeneralPwRepAndStructureUnit] = []
+        for i in range(100):
+            id = random.randint(minId, maxId)
+            unit = transformer.getParseunitWithId(id)
+            l.append(unit)
+
+        repParser: GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser()
+        for unit in l:
+            parser: GeneralPIIParser = GeneralPIIParser(None, unit.pwStr, unit.rep)
+            parser.parse()
+            repStr = repParser.representationToStr(unit.rep)
+            if len(unit.rep.vectorList) > 4:
+                print(
+                    f"{unit.pwStr}\n{repStr}feature:{len(parser.getFeatureList()[0])}{parser.getFeatureList()}\nlabel:{parser.getLabelList()}\n")
+
+
 class TestPIISectionFactory(TestCase):
     def test_get_begin_section(self):
         self.fail()
@@ -168,11 +188,15 @@ class TestPIISectionFactory(TestCase):
 class TestPIIDatagramFactory(TestCase):
     def test_parse_piidatagram_to_str(self):
         factory: PIIDatagramFactory = PIIDatagramFactory.getInstance()
-        l:list[PIIDatagram] = list()
+        l: list[PIIDatagram] = list()
         l.append(factory.createFromStr("N1A2I3L10"))
         l.append(factory.createFromStr("A1E3N2S3N1A2I3L10"))
         for dg in l:
             print(f"{factory.parsePIIDatagramToStr(dg)}")
 
-
-
+    def test_parse_general_piidatagram_to_str(self):
+        factory: GeneralPIIDatagramFactory = GeneralPIIDatagramFactory.getInstance()
+        l: list[GeneralPIIDatagram] = list()
+        l.append(factory.createFromStr("<N1><N2<>>asd123!#$N1<L10>"))
+        for dg in l:
+            print(f"{factory.parseGeneralPIIDatagramToStr(dg)}\n{json.dumps(dg._tojson(), indent=2)}")

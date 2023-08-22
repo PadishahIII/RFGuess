@@ -294,3 +294,356 @@ class GeneralPIIRepresentationResolver(Singleton):
 class ResolverException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+'''
+Factories
+'''
+
+
+class CharacterSectionFactory(Singleton):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.cp: CharacterParser = CharacterParser.getInstance()
+        self.kp: KeyboardParser = KeyboardParser.getInstance()
+        self.lp: LabelParser = LabelParser.getInstance()
+        self.charVectorFactory: CharacterVectorFactory = CharacterVectorFactory.getInstance()
+
+    def getBeginSection(self) -> CharacterSection:
+        return CharacterSection("", type=CharacterType.BeginSymbol, serialNum=CharacterType.BeginSymbol.value,
+                                keyboardPos=KeyboardPosition(0, 0))
+
+    def getEndSection(self) -> CharacterSection:
+        return CharacterSection("", type=CharacterType.EndSymbol, serialNum=CharacterType.EndSymbol.value,
+                                keyboardPos=KeyboardPosition(0, 0))
+
+    def isBeginSection(self, s: CharacterSection) -> bool:
+        return s.type == CharacterType.BeginSymbol
+
+    def isEndSection(self, s: CharacterSection) -> bool:
+        return s.type == CharacterType.EndSymbol
+
+    def createFromCh(self, ch: str) -> CharacterSection:
+        """
+        Create section from single character string
+
+        """
+        vector: CharacterVector = self.charVectorFactory.createFromCh(ch)
+        return self.createFromCharacterVector(vector)
+
+    def createFromCharacterVector(self, vector: CharacterVector) -> CharacterSection:
+        return CharacterSection(ch=vector.getStr(), type=vector.type, serialNum=vector.serialNum,
+                                keyboardPos=vector.keyboardPos)
+
+    def createFromInt(self, i: int) -> CharacterSection:
+        if i == 0:
+            return self.getBeginSection()
+        elif i < 0:
+            return self.getEndSection()
+
+        c: str = self.lp.decodeCh(i)
+        if len(c) > 1 or len(c) <= 0:
+            raise CharacterSectionFactoryException(f"Error: decode serial number fail: {str(i)}")
+        type: CharacterType = Utils.parseType(c)
+        keyPos: KeyboardPosition = self.kp.parseCh(c)
+        return CharacterSection(ch=c, type=type, serialNum=i, keyboardPos=keyPos)
+
+
+class CharacterSectionFactoryException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
+class GeneralPIISectionFactory(Singleton):
+
+    def __init__(self) -> None:
+        self.piiSectionFactory: PIISectionFactory = PIISectionFactory.getInstance()
+        self.charSectionFactory: CharacterSectionFactory = CharacterSectionFactory.getInstance()
+        self.charVectorFactory: CharacterVectorFactory = CharacterVectorFactory.getInstance()
+
+    def getEmptySection(self) -> GeneralPIISection:
+        s: PIISection = self.piiSectionFactory.getEmptySection()
+        return GeneralPIISection(vector=s, isPII=True)
+
+    def getBeginSection(self) -> GeneralPIISection:
+        s: PIISection = self.piiSectionFactory.getBeginSection()
+        return GeneralPIISection(vector=s, isPII=True)
+
+    def getEndSection(self) -> GeneralPIISection:
+        s = self.piiSectionFactory.getEndSection()
+        return GeneralPIISection(vector=s, isPII=True)
+
+    def isBeginSection(self, section: GeneralPIISection) -> bool:
+        if section.isPII:
+            s: PIISection = section.vector
+            return self.piiSectionFactory.isBeginSection(s)
+        else:
+            s: CharacterSection = section.vector
+            return s.type == CharacterType.BeginSymbol
+
+    def isEndSection(self, section: GeneralPIISection) -> bool:
+        if section.isPII:
+            s: PIISection = section.vector
+            return self.piiSectionFactory.isEndSection(s)
+        else:
+            s: CharacterSection = section.vector
+            return s.type == CharacterType.EndSymbol
+
+    def createFromGeneralPIIVector(self, vector: GeneralPIIVector) -> GeneralPIISection:
+        if vector.isPIIVector:
+            v: PIIVector = vector.vectorObj
+            s: PIISection = self.piiSectionFactory.createFromPIIVector(v)
+            return GeneralPIISection(s, True)
+        else:
+            v: CharacterVector = vector.vectorObj
+            s: CharacterSection = self.charSectionFactory.createFromCharacterVector(v)
+            return GeneralPIISection(s, False)
+
+    def createFromInt(self, i: int) -> GeneralPIISection:
+        """
+        4002 => PIISection or serial number => CharacterSection
+
+        """
+        if i < 1e3:
+            # Character Section
+            isPII = False
+            vector = self.charSectionFactory.createFromInt(i)
+        else:
+            isPII = True
+            vector = self.piiSectionFactory.createFromInt(i)
+
+        return GeneralPIISection(vector, isPII)
+
+    def createFromStr(self, s: str) -> GeneralPIISection:
+        """
+        For PIISection, string must be surrounded by "<>", like "<N1>"
+        For CharacterSection, just the character itself
+        """
+        if len(s) < 1:
+            raise GeneralPIISectionFactoryException(f"Error: invalid input string: {s}")
+        if len(s) == 1:
+            # Character section
+            v: CharacterVector = self.charVectorFactory.createFromCh(s)
+            section: CharacterSection = self.charSectionFactory.createFromCharacterVector(v)
+            return GeneralPIISection(section, False)
+        # PIISection
+        m = re.match(r"<(\w{2,3})>", s)
+        if not m:
+            raise GeneralPIISectionFactoryException(f"Format error: string '{s}' must in '<xx>' format")
+        ss = m.group(1)  # N1
+        section: PIISection = self.piiSectionFactory.createFromStr(ss)
+        return GeneralPIISection(section, True)
+
+    def createFromCharacterSection(self, section: CharacterSection) -> GeneralPIISection:
+        return GeneralPIISection(section, False)
+
+    def createFromPIISection(self, section: PIISection) -> GeneralPIISection:
+        return GeneralPIISection(section, True)
+
+    def parseGeneralPIISectionToStr(self, section: GeneralPIISection) -> str:
+        """
+        Parse GeneralPIISection to string like "<N1>"(for PIISection) or character
+        """
+        if section.isPII:
+            s = self.piiSectionFactory.parsePIISectionToStr(section.vector)
+            return f"<{s}>"
+        else:
+            v: CharacterSection = section.vector
+            return v.ch
+
+
+class GeneralPIISectionFactoryException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
+class GeneralPIILabelFactory(Singleton):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def createFromPIILabel(self, label: PIILabel) -> GeneralPIILabel:
+        return GeneralPIILabel(label, True)
+
+    def createFromCharacterLabel(self, label: CharacterLabel) -> GeneralPIILabel:
+        return GeneralPIILabel(label, False)
+
+    def createFromGeneralPIISection(self, section: GeneralPIISection) -> GeneralPIILabel:
+        if section.isPII:
+            l: PIILabel = PIILabel.create(section.vector)
+            return GeneralPIILabel(l, True)
+        else:
+            l: CharacterLabel = CharacterLabel(section.vector)
+            return GeneralPIILabel(l, False)
+
+
+class GeneralPIIDatagramFactory(Singleton):
+    from Parser import Config
+    order = Config.pii_order
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sectionFactory = GeneralPIISectionFactory.getInstance()
+        self.piidatagramFactory: PIIDatagramFactory = PIIDatagramFactory.getInstance()
+        self.labelFactory: GeneralPIILabelFactory = GeneralPIILabelFactory.getInstance()
+        self.charSectionFactory: CharacterSectionFactory = CharacterSectionFactory.getInstance()
+
+    def tailorGeneralPIIDatagram(self, dg: GeneralPIIDatagram) -> GeneralPIIDatagram:
+        """
+        Tailor datagram to 26-dim, datagram must have 6 sections
+
+        """
+        sectionList = dg.sectionList
+        newList = list()
+        if len(sectionList) > self.order:
+            newList = sectionList[-6:]
+        else:
+            n = self.order - len(sectionList)
+            beginSection = self.sectionFactory.getBeginSection()
+            for i in range(n):
+                newList.append(beginSection)
+            newList += sectionList
+        return GeneralPIIDatagram(newList, dg.label, dg.offsetInPassword, dg.offsetInSegment, dg.pwStr)
+
+    def createGeneralPIIDatagramOnlyWithFeature(self, sectionList: list[GeneralPIISection], offsetInSegment: int,
+                                                offsetInPassword: int) -> GeneralPIIDatagram:
+        """
+        Create a GeneralPIIDatagram only with fields required by `_tovector` method
+        The minimum object that can be passed to trainner
+        """
+        emptySection: GeneralPIISection = self.sectionFactory.getEmptySection()
+        label: GeneralPIILabel = self.labelFactory.createFromGeneralPIISection(emptySection)
+
+        return GeneralPIIDatagram(sectionList, label, offsetInPassword,
+                                  offsetInSegment, "")
+
+    def createFromStr(self, s: str) -> GeneralPIIDatagram:
+        """
+        Convert string "<N1>aa123" into GeneralPIIDatagram
+        OffsetInSegment is set to 0 and offsetInPassword is set to len(sectionList)
+        """
+        rst = re.compile(r"^(<\w{2,3}>)")
+        sectionList: list[GeneralPIISection] = list()
+        i = 0
+        while i < len(s):
+            begin = s[i:]
+            m = rst.match(begin)
+            if m is None:
+                # character section
+                section: CharacterSection = self.charSectionFactory.createFromCh(s[i])
+                generalSection = self.sectionFactory.createFromCharacterSection(section)
+                sectionList.append(generalSection)
+                i += 1
+            else:
+                tag = m.group(1)
+                section: GeneralPIISection = self.sectionFactory.createFromStr(tag)
+                sectionList.append(section)
+                i += len(tag)
+
+        offsetInSegment = 0
+        offsetInPassword = len(sectionList)
+        dg = self.createGeneralPIIDatagramOnlyWithFeature(sectionList, offsetInSegment, offsetInPassword)
+        # dg_ = self.tailorPIIDatagram(dg)
+        return dg
+
+    def parseGeneralPIIDatagramToStr(self, dg: GeneralPIIDatagram) -> str:
+        """
+        Parse GeneralPIIDatagram to string like "A1L10N2"
+        """
+        s = ""
+        for section in dg.sectionList:
+            try:
+                s += self.sectionFactory.parseGeneralPIISectionToStr(section)
+            except Exception as e:
+                raise GeneralPIIDatagramFactoryException(
+                    f"Exception occur when parsing section:{section}, Original Exception is {e}")
+
+        return s
+
+
+class GeneralPIIDatagramFactoryException(Exception):
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
+'''
+Training data build
+'''
+
+
+class GeneralPIIParser(BasicParser):
+    from Parser import Config
+    order = Config.pii_order
+    """
+
+    Examples:
+        parser :GeneralPIIParser = GeneralPIIParser(None,pwStr,rep)
+        parser.parse()
+        parser.getFeatureList()
+        parser.getLabelList()
+    """
+
+    def __init__(self, ctx, pwStr: str, rep: GeneralPIIRepresentation):
+        super().__init__(ctx, pwStr)
+        self.rep: GeneralPIIRepresentation = rep
+        self.plen = rep.len
+        self.featureList: list[list]
+        self.datagramList: list[GeneralPIIDatagram]
+        self.labelList: list[int]
+
+        # self.translator = Utils.PIISectionTypeTranslation()
+        self.sectionFactory = GeneralPIISectionFactory.getInstance()
+        self.labelFactory = GeneralPIILabelFactory.getInstance()
+
+    def beforeParse(self):
+        super().beforeParse()
+
+    def afterParse(self):
+        super().afterParse()
+
+    def buildDatagramList(self):
+        for i in range(self.plen):
+            sectionList = list()
+            offsetInPassword = 0
+            # offsetInSegment = len(self.rep.piiVectorList[i].str)
+            offsetInSegment = 0
+            if i < self.order:
+                for n in range(self.order - i - 1):
+                    sectionList.append(self.sectionFactory.getBeginSection())
+            start = max(0, i - self.order + 1)
+            end = i + 1
+            for n in range(start, end):
+                vector: GeneralPIIVector = self.rep.vectorList[n]
+                section: GeneralPIISection = self.sectionFactory.createFromGeneralPIIVector(vector)
+                sectionList.append(section)
+                # offsetInPassword += len(vector.str)
+                offsetInPassword += 1
+            # resolve label
+            if i < self.plen - 1:
+                nextVector: GeneralPIIVector = self.rep.vectorList[i + 1]
+                section: GeneralPIISection = self.sectionFactory.createFromGeneralPIIVector(nextVector)
+                label: GeneralPIILabel = self.labelFactory.createFromGeneralPIISection(section)
+            else:
+                # end symbol
+                section: GeneralPIISection = self.sectionFactory.getEndSection()
+                label = self.labelFactory.createFromGeneralPIISection(section)
+            dg = GeneralPIIDatagram(sectionList=sectionList,
+                                    label=label,
+                                    offsetInPassword=offsetInPassword,
+                                    offsetInSegment=offsetInSegment,
+                                    pwStr=self.pwStr)
+            self.datagramList.append(dg)
+
+    def buildFeatureList(self):
+        for dg in self.datagramList:
+            t = dg._tovector()
+            self.featureList.append(t)
+
+    def buildLabelList(self):
+        for dg in self.datagramList:
+            label = dg.label
+            self.labelList.append(label.toInt())
