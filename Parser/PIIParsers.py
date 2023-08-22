@@ -509,7 +509,7 @@ class PIIFullTagParser:
         self._tagContainer = PIITagContainer(self._pii, nameFuzz=self._nameFuzz)
         self._tagContainer.parse()
 
-    def getTagContainer(self)->PIITagContainer:
+    def getTagContainer(self) -> PIITagContainer:
         return self._tagContainer
 
 

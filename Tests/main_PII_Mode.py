@@ -13,16 +13,30 @@ from Parser.PIIParsers import *
 
 
 class PIITrainTest(TestCase):
-    piiFactory = PIIFactory.getInstance()
-    piiFactory.process()
-    print(
-        f"Train data build Finished.\nSize of featureList:{len(piiFactory.getFeatureList())} LabelList:{len(piiFactory.getLabelList())}")
-    print(f"\nStart Training...")
-    trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
-    trainner.train()
-    savePath = "../save.clf"
-    joblib.dump(trainner.getClf(), savePath)
-    print(f"Train finish, saved to {savePath}")
+    def test_train(self):
+        piiFactory = PIIFactory.getInstance()
+        piiFactory.process()
+        print(
+            f"Train data build Finished.\nSize of featureList:{len(piiFactory.getFeatureList())} LabelList:{len(piiFactory.getLabelList())}")
+        print(f"\nStart Training...")
+        trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
+        trainner.train()
+        savePath = "../save.clf"
+        joblib.dump(trainner.getClf(), savePath)
+        print(f"Train finish, saved to {savePath}")
+
+class GeneralPIITrainTest(TestCase):
+    def test_train_general(self):
+        piiFactory = GeneralPIIFactory.getInstance()
+        piiFactory.process()
+        print(
+            f"Train data build Finished.\nSize of featureList:{len(piiFactory.getFeatureList())} LabelList:{len(piiFactory.getLabelList())}")
+        print(f"\nStart Training...")
+        trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
+        trainner.train()
+        savePath = "../save_general.clf"
+        joblib.dump(trainner.getClf(), savePath)
+        print(f"Train finish, saved to {savePath}")
 
 
 class TestPIIParsers(TestCase):

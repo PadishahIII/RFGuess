@@ -70,7 +70,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 ### Generate pattern and implement *GeneralPII* mode(8.20)
 1. `test_generate_pattern` method: Implement pattern generating algorithm and generate most common used patterns to `patterns.txt`
 
-- [ ] Create data structures and corresponding factory
+- [x] Create data structures and corresponding factory
 - [x] PII parsing phase: extend pii data structures and overwrite the PIIStructure parsing algorithm
 - [x] Database build: create two new datatable `pwrepresentation_general` and `pwrepresentation_unique_general`
 - [x] Overwrite representation select algorithm
