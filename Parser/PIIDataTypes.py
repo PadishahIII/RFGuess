@@ -1,7 +1,8 @@
 import typing
 from copy import copy
-from Commons.Property import StrProperty
+
 from Commons import BasicTypes, Utils
+from Commons.Property import StrProperty
 from Parser import BasicDataTypes
 
 '''
