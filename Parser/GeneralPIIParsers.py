@@ -559,10 +559,12 @@ class GeneralPIIDatagramFactory(Singleton):
         """
         s = ""
         for section in dg.sectionList:
-            section:GeneralPIISection
-            if section.isPII and (section.vector.type == BasicTypes.PIIType.BaseTypes.BeginSymbol or section.vector.type == BasicTypes.PIIType.BaseTypes.EndSymbol):
+            section: GeneralPIISection
+            if section.isPII and (
+                    section.vector.type == BasicTypes.PIIType.BaseTypes.BeginSymbol or section.vector.type == BasicTypes.PIIType.BaseTypes.EndSymbol):
                 continue
-            elif not section.isPII and (section.vector.type == CharacterType.BeginSymbol or section.vector.type == CharacterType.EndSymbol):
+            elif not section.isPII and (
+                    section.vector.type == CharacterType.BeginSymbol or section.vector.type == CharacterType.EndSymbol):
                 continue
 
             try:
@@ -616,6 +618,18 @@ class GeneralPIIParser(BasicParser):
         super().afterParse()
 
     def buildDatagramList(self):
+        # 6 begin section
+        beginSections = [self.sectionFactory.getBeginSection() for i in range(self.order)]
+        beginVector: GeneralPIIVector = self.rep.vectorList[0]
+        beginSection: GeneralPIISection = self.sectionFactory.createFromGeneralPIIVector(beginVector)
+        beginLabel: GeneralPIILabel = self.labelFactory.createFromGeneralPIISection(beginSection)
+        beginDg: GeneralPIIDatagram = GeneralPIIDatagram(sectionList=beginSections,
+                                                         label=beginLabel,
+                                                         offsetInSegment=0,
+                                                         offsetInPassword=0,
+                                                         pwStr="")
+        self.datagramList.append(beginDg)
+
         for i in range(self.plen):
             sectionList = list()
             offsetInPassword = 0
