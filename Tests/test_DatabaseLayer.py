@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from Commons.DatabaseLayer import *
-from Parser.PIIParsers import PIITagRepresentationStrParser, PIIStructureParser
+from Parser.GeneralPIIParsers import *
 
 
 class Test(TestCase):
@@ -124,3 +124,18 @@ class TestPwRepFrequencyTransformer(TestCase):
 
     def test_query_with_pw(self):
         self.fail()
+
+
+class TestGeneralPwRepUniqueTransformer(TestCase):
+    def test_read_as_parse_unit(self):
+        transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
+        l: list[GeneralPwRepAndStructureUnit] = transformer.readAsParseUnit(offset=1000, limit=10)
+        tagParser: GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
+        for unit in l:
+            rep: GeneralPIIRepresentation = unit.rep
+            parser: GeneralPIIParser = GeneralPIIParser(None, unit.pwStr, rep)
+            parser.parse()
+            featureList = parser.getFeatureList()
+            label = parser.getLabelList()
+            s = tagParser.representationToStr(rep)
+            print(f"{s}\nfeature:{len(featureList)},{featureList}\nlabel:{len(label)},{label}")

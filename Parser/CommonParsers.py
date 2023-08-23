@@ -65,7 +65,7 @@ class KeyboardParser(Singleton):
         self.map = dict()
         row = 1
         col = 1
-        for l in ["1234567890-=", "qwertyuiop[]\\", "asdfghjkl;'", "zxcvbnm,./"]:
+        for l in ["`1234567890-=", "qwertyuiop[]\\", "asdfghjkl;'", "zxcvbnm,./"]:
             col = 1
             for c in l:
                 self.map[c] = KeyboardPosition(row, col)
@@ -73,7 +73,7 @@ class KeyboardParser(Singleton):
             row += 1
         row = 1
         col = 1
-        for l in ["!@#$%^&*()_+", r"QWERTYUIOP{}|", 'ASDFGHJKL:"', r"ZXCVBNM<>?"]:
+        for l in ["~!@#$%^&*()_+", r"QWERTYUIOP{}|", 'ASDFGHJKL:"', r"ZXCVBNM<>?"]:
             col = 1
             for c in l:
                 self.map[c] = KeyboardPosition(row, col)

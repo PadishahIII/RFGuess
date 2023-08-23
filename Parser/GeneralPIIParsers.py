@@ -372,6 +372,10 @@ class GeneralPIISectionFactory(Singleton):
         return GeneralPIISection(vector=s, isPII=True)
 
     def getEndSection(self) -> GeneralPIISection:
+        """
+        Use PIISection as end section
+
+        """
         s = self.piiSectionFactory.getEndSection()
         return GeneralPIISection(vector=s, isPII=True)
 
@@ -555,6 +559,12 @@ class GeneralPIIDatagramFactory(Singleton):
         """
         s = ""
         for section in dg.sectionList:
+            section:GeneralPIISection
+            if section.isPII and (section.vector.type == BasicTypes.PIIType.BaseTypes.BeginSymbol or section.vector.type == BasicTypes.PIIType.BaseTypes.EndSymbol):
+                continue
+            elif not section.isPII and (section.vector.type == CharacterType.BeginSymbol or section.vector.type == CharacterType.EndSymbol):
+                continue
+
             try:
                 s += self.sectionFactory.parseGeneralPIISectionToStr(section)
             except Exception as e:
