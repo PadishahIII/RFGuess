@@ -71,7 +71,11 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 1. The patterns generated exists some flaw, some character that have not ever occurred in the train data represent in classified results
 That's led by the ambiguous conversion when counting serial number of characters. Therefore, `CharacterSecionFactory` and `CharacterLabel.toInt` should
 be corrected to address this problem. The label integer of character section is calculated by `LabelParser.encodeCh` which is not ambiguous
-2. *(TODO)* In generated patterns, the proportion of patterns starting with 'q' is abnormally large(570/1330) 
+2. *(Solved)* In generated patterns, the proportion of patterns starting with 'q' is abnormally large(570/1330) 
+3. Solved problem[2] by adding an empty datagram with 6 begin sections for every pwStr and re-train the model
+4. *(TODO)* Write GUI to generate guessing targeted on one PII data
+5. *(TODO)* Test the accuracy of the model on other datasets
+6. *(TODO)* Collect data breach of "Rootkit" or "ClixSense"
 
 ### Generate pattern and implement *GeneralPII* mode(8.20)
 1. `test_generate_pattern` method: Implement pattern generating algorithm and generate most common used patterns to `patterns.txt`

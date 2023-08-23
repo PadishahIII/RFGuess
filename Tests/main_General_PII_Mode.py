@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 import graphviz
-from sklearn.tree import export_graphviz
+from sklearn import  tree
 
 
 from Generators.PIIGenerators import PIIPatternGenerator
@@ -49,6 +49,9 @@ class TestGeneralPIIStructureParser(TestCase):
 
     def test_output_clf(self):
         generator: GeneralPIIPatternGenerator = GeneralPIIPatternGenerator.getInstance("../../save_general.clf")
-        export_graphviz(generator.clf.getClf().estimators_[0],out_file="./graph.dot")
+        # export_graphviz(generator.clf.getClf().estimators_[0],out_file="./graph.dot")
         # graph = graphviz.Source(dot_data)
+        text = tree.export_text(generator.clf.getClf().estimators_[0])
+        with open("tree_text.txt","w") as f:
+            f.write(text)
 
