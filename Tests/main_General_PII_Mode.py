@@ -1,7 +1,12 @@
 from unittest import TestCase
 
+import graphviz
+from sklearn.tree import export_graphviz
+
+
 from Generators.PIIGenerators import PIIPatternGenerator
 from Parser.GeneralPIIParsers import *
+from Generators.GeneralPIIGenerators import *
 
 
 class TestGeneralPIIStructureParser(TestCase):
@@ -33,10 +38,17 @@ class TestGeneralPIIStructureParser(TestCase):
             print(f"{piiStrParser.representationToStr(rep)}\n")
 
     def test_generate_pattern(self):
-        generator: PIIPatternGenerator = PIIPatternGenerator.getInstance("../save.clf")
+        generator: GeneralPIIPatternGenerator = GeneralPIIPatternGenerator.getInstance("../../save_general.clf")
         l, pl = generator.generatePattern()
-        sl: list[str] = [generator.datagramFactory.parsePIIDatagramToStr(dg) for dg in l]
+        print(f"Generate complete: {len(l)}:{len(pl)}")
+        sl: list[str] = [generator.datagramFactory.parseGeneralPIIDatagramToStr(dg) for dg in l]
 
-        with open("../patterns.txt", "w") as f:
+        with open("../patterns_general.txt", "w") as f:
             for i in range(len(sl)):
                 f.write(f"{sl[i]}  {pl[i]}\n")
+
+    def test_output_clf(self):
+        generator: GeneralPIIPatternGenerator = GeneralPIIPatternGenerator.getInstance("../../save_general.clf")
+        export_graphviz(generator.clf.getClf().estimators_[0],out_file="./graph.dot")
+        # graph = graphviz.Source(dot_data)
+

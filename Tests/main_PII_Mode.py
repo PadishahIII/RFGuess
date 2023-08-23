@@ -10,6 +10,7 @@ from Classifiers.PIIRFTrainner import PIIRFTrainner
 from Parser.Factory import *
 # from PasswordParser import *
 from Parser.PIIParsers import *
+from Generators.GeneralPIIGenerators import *
 
 
 class PIITrainTest(TestCase):
@@ -34,9 +35,32 @@ class GeneralPIITrainTest(TestCase):
         print(f"\nStart Training...")
         trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
         trainner.train()
-        savePath = "../save_general.clf"
+        savePath = "../../save_general.clf"
         joblib.dump(trainner.getClf(), savePath)
         print(f"Train finish, saved to {savePath}")
+
+
+    def test_label(self):
+        piiFactory = GeneralPIIFactory.getInstance()
+        sectionFactory:GeneralPIISectionFactory = GeneralPIISectionFactory.getInstance()
+        dgFactory:GeneralPIIDatagramFactory = GeneralPIIDatagramFactory.getInstance()
+        tagParser:GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
+        piiFactory.process()
+
+        labelSet = set(piiFactory.getLabelList())
+        lp:LabelParser = LabelParser.getInstance()
+        labelS = ""
+        sectionList:list[GeneralPIISection] = list()
+        for i in labelSet:
+            section:GeneralPIISection = sectionFactory.createFromInt(i)
+            sectionList.append(section)
+        dg:GeneralPIIDatagram = dgFactory.createGeneralPIIDatagramOnlyWithFeature(sectionList,0,0)
+        labelS = dgFactory.parseGeneralPIIDatagramToStr(dg)
+
+        print(f"{len(piiFactory.getLabelList())}:{len(labelSet)}")
+        print(f"{labelS}")
+        print(f"{labelS.__contains__('`')}")
+        print(f"{labelS.__contains__('[')}")
 
 
 class TestPIIParsers(TestCase):

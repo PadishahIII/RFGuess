@@ -2,6 +2,7 @@ from Commons.BasicTypes import *
 from Parser.PIIDataTypes import *
 from Commons.Property import StrProperty
 
+
 '''
 Foreground analyzing phase datastructures
 '''
@@ -207,7 +208,8 @@ class GeneralPIISection(BasicDataTypes.Section):
         self.vector = vector
 
     def __copy__(self):
-        return GeneralPIISection(self.vector, self.isPII)
+        newVector = copy(self.vector)
+        return GeneralPIISection(newVector, self.isPII)
 
     def __eq__(self, other):
         return self.vector.__eq__(other.vector)
@@ -228,10 +230,12 @@ class GeneralPIISection(BasicDataTypes.Section):
 class CharacterLabel(BasicDataTypes.Label):
     def __init__(self, section: CharacterSection) -> None:
         super().__init__()
+        from Parser.CommonParsers import LabelParser
+        self.lp:LabelParser = LabelParser.getInstance()
         self.section: CharacterSection = section
 
     def toInt(self):
-        return self.section.value
+        return self.lp.encodeCh(self.section.ch)
 
 
 class GeneralPIILabel(BasicDataTypes.Label):

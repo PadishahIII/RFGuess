@@ -67,6 +67,12 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+### (8.23)
+1. The patterns generated exists some flaw, some character that have not ever occurred in the train data represent in classified results
+That's led by the ambiguous conversion when counting serial number of characters. Therefore, `CharacterSecionFactory` and `CharacterLabel.toInt` should
+be corrected to address this problem. The label integer of character section is calculated by `LabelParser.encodeCh` which is not ambiguous
+2. *(TODO)* In generated patterns, the proportion of patterns starting with 'q' is abnormally large(570/1330) 
+
 ### Generate pattern and implement *GeneralPII* mode(8.20)
 1. `test_generate_pattern` method: Implement pattern generating algorithm and generate most common used patterns to `patterns.txt`
 
