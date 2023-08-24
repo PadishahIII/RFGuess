@@ -6,7 +6,7 @@ import re
 from abc import ABCMeta, abstractmethod
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, validates, scoped_session
 
@@ -29,7 +29,7 @@ Session = scoped_session(sessionFactory)
 
 
 class PIIUnit(Base):
-    __tablename__ = 'PII'
+    __tablename__ = TableNames.PII
 
     id = Column(Integer, primary_key=True)
     email = Column(String)
@@ -188,6 +188,16 @@ class BasicManipulateMethods(metaclass=ABCMeta):
             self.Insert(unit)
             return True
         return False
+
+class BaseQueryMethods(BasicManipulateMethods):
+    """With default abstract methods
+    """
+
+    def CheckExist(self, unit: Base) -> bool:
+        return False
+
+    def Update(self, unit: Base):
+        pass
 
 
 '''
@@ -386,7 +396,7 @@ Password representation unit
 
 
 class PwRepresentation(Base):
-    __tablename__ = "PwRepresentation"
+    __tablename__ = TableNames.pwrepresentation
 
     id = Column(Integer, primary_key=True)
     pwStr = Column(String)
@@ -584,7 +594,7 @@ Representation Frequency Unit and QueryMethod
 
 
 class RepresentationFrequency(Base):
-    __tablename__ = "representation_frequency"
+    __tablename__ = TableNames.representation_frequency
 
     frequency = Column(Integer)
     representationStructureHash = Column(String, primary_key=True)
@@ -676,7 +686,7 @@ class RepresentationFrequencyMethods(BasicManipulateMethods):
 
 
 class PwRepresentationFrequency(Base):
-    __tablename__ = "pwrepresentation_frequency"
+    __tablename__ = TableNames.pwrepresentation_frequency
 
     id = Column(Integer, primary_key=True)
     pwStr = Column(String)
@@ -733,7 +743,7 @@ class PwRepresentationFrequencyMethods(BasicManipulateMethods):
 
 
 class PwRepUnique(Base):
-    __tablename__ = "PwRepresentation_unique"
+    __tablename__ = TableNames.pwrepresentation_unique
 
     id = Column(Integer, primary_key=True)
     pwStr = Column(String)
@@ -898,7 +908,7 @@ class PwRepUniqueMethods(BasicManipulateMethods):
 
 
 class GeneralPwRepresentation(Base):
-    __tablename__ = "pwrepresentation_general"
+    __tablename__ = TableNames.pwrepresentation_general
 
     id = Column(Integer, primary_key=True)
     pwStr = Column(String)
@@ -1005,7 +1015,7 @@ class GeneralPwRepresentationMethods(RepresentationMethods):
 
 
 class GeneralRepresentationFrequency(Base):
-    __tablename__ = "representation_frequency_general"
+    __tablename__ = TableNames.representation_frequency_general
 
     frequency = Column(Integer)
     representationStructureHash = Column(String, primary_key=True)
@@ -1056,11 +1066,20 @@ class GeneralRepresentationFrequency(Base):
         return h
 
 
-
 class GeneralRepresentationFrequencyMethods(RepresentationFrequencyMethods):
     def __init__(self):
         super().__init__()
         self.entityCls = GeneralRepresentationFrequency
+
+    def Rebuild(self):
+        q = f"select distinct `fre`.`frequency` AS `frequency`,`fre`.`representationStructureHash` AS `representationStructureHash`,`pw`.`representationStructure` AS `representationStructure` " \
+            f"from (`{TableNames.representation_frequency_base_general}` `fre` " \
+            f"join `{TableNames.pwrepresentation_general}` `pw`) " \
+            f"where (`fre`.`representationStructureHash` = `pw`.`representationStructureHash`) " \
+            f"order by `fre`.`frequency` desc"
+        with Session() as session:
+            session.execute(text(q))
+            session.commit()
 
     def QueryWithRepStructureHash(self, hashStr: str) -> list[GeneralRepresentationFrequency]:
         with Session() as session:
@@ -1098,9 +1117,39 @@ class GeneralRepresentationFrequencyMethods(RepresentationFrequencyMethods):
                 return True
 
 
+class GeneralRepresentationFrequencyBase(Base):
+    __tablename__ = TableNames.representation_frequency_base_general
+
+    frequency = Column(Integer)
+    representationStructureHash = Column(String, primary_key=True)
+
+    def __init__(self, frequency: int, repStructHash: str):
+        super().__init__()
+        self.frequency = frequency
+        self.representationStructureHash = repStructHash
+
+
+class GeneralRepresentationFrequencyBaseQueryMethods(BaseQueryMethods):
+
+    def __init__(self):
+        super().__init__(GeneralRepresentationFrequencyBase)
+
+    def Rebuild(self):
+        """Truncate the table and re-generate from pwrepresentation_general
+        """
+        with Session() as session:
+            session.query(self.entityCls).delete()
+            q = f"INSERT INTO {self.entityCls.__tablename__}" \
+                f" SELECT COUNT(0) AS frequency, {TableNames.pwrepresentation_general}.representationStructureHash AS representationStructureHash " \
+                f"FROM {TableNames.pwrepresentation_general} " \
+                f"GROUP BY {TableNames.pwrepresentation_general}.representationStructureHash"
+            print(q)
+            session.execute(text(q))
+            session.commit()
+
 
 class GeneralPwRepresentationFrequency(Base):
-    __tablename__ = "pwrepresentation_frequency_general"
+    __tablename__ = TableNames.pwrepresentation_frequency_general
 
     id = Column(Integer, primary_key=True)
     pwStr = Column(String)
@@ -1131,6 +1180,15 @@ class GeneralPwRepresentationFrequencyMethods(PwRepresentationFrequencyMethods):
         super().__init__()
         self.entityCls = GeneralPwRepresentationFrequency
 
+    def Rebuild(self):
+        q = f"select `pw`.`id` AS `id`,`pw`.`pwStr` AS `pwStr`,`pw`.`representationStructure` AS `representationStructure`,`pw`.`representationStructureHash` AS `representationStructureHash`,`fre_view`.`frequency` AS `frequency` " \
+            f"from (`{TableNames.pwrepresentation_general}` `pw` " \
+            f"join `{TableNames.representation_frequency_base_general}` `fre_view`) " \
+            f"where (`pw`.`representationStructureHash` = `fre_view`.`representationStructureHash`)"
+        with Session() as session:
+            session.execute(text(q))
+            session.commit()
+
     def QueryWithPw(self, pwStr: str) -> list[GeneralPwRepresentationFrequency]:
         with Session() as session:
             units = session.query(self.entityCls).filter_by(pwStr=pwStr).all()
@@ -1158,7 +1216,7 @@ class GeneralPwRepresentationFrequencyMethods(PwRepresentationFrequencyMethods):
 
 
 class GeneralPwRepUnique(Base):
-    __tablename__ = "PwRepresentation_unique_general"
+    __tablename__ = TableNames.pwrepresentation_unique_general
 
     id = Column(Integer, primary_key=True)
     pwStr = Column(String)

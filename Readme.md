@@ -72,6 +72,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 2. *(TODO)* Regulate the result-testing procedure
 3. *(TODO)* Build LDS datatable in (length, segmentStr)
 4. *(TODO)* Generate guesses for PII-only(with LDS) patterns
+5. Re-generate intermediate datatables in script
 
 ### (8.23)
 1. The patterns generated exists some flaw, some character that have not ever occurred in the train data represent in classified results

@@ -1,3 +1,4 @@
+import time
 from unittest import TestCase
 
 import joblib
@@ -6,6 +7,7 @@ from sklearn import tree
 from Generators.GeneralPIIGenerators import *
 from Generators.PasswordGuessGenerator import *
 from Parser.Factory import *
+from Parser.PIIPreprocessor import *
 
 
 class GeneralPIITrainMain(TestCase):
@@ -57,6 +59,102 @@ class GeneralPIITrainMain(TestCase):
             f.write(text)
 
 
+class BuildDatabase(TestCase):
+    def test_rebuild(self):
+        """Rebuild all datatables
+        """
+        print(f"Start addressing dataset...")
+        self.test_build()
+        print(f"Finish addressing dataset")
+        print(f"Start generating datatables...")
+        time.sleep(1)
+        self.test_generate_frequency_tables()
+        print(f"Finish generating datatables")
+        print(f"Start resolving representations and build unique datatable...")
+        time.sleep(1)
+        self.test_build_general_unique()
+        print(f"\nRebuild complete!")
+
+    def buildGeneralPwRepresentationTable(self):
+        """
+        Build `pwrepresentation_general` table based on `pii` dataset.
+        Parse all representations of password and store in `pwrepresentation_general` datatable.
+        """
+        processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=-1)
+        processor.preprocess()
+        dataset = processor.getDataSet()
+        # for unit in iter(dataset):
+        #     print(str(unit))
+        print(f"Total: {dataset.row}")
+        print(f"keyList:{dataset.keyList}")
+
+        transformer: GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
+        transformer.queryMethods.DeleteAll()
+        datasetIter: typing.Iterable[PIIDataUnit] = iter(dataset)
+        i = 0
+        repCount = 0
+        updateCount = 0
+        exceptionCount = 0
+        for unit in datasetIter:
+            pii = unit.pii
+            piiParser = GeneralPIIStructureParser(pii)
+            piiStructure = piiParser.getGeneralPIIStructure(pwStr=unit.password)
+            for rep in piiStructure.repList:
+                pr = transformer.transformParseunitToBaseunit(pwStr=unit.password, rep=rep)
+                try:
+                    transformer.Insert(pr)
+                    repCount += 1
+                except Exception as e:
+                    print(f"Exception occur: {str(e)}, pr: {str(pr)}")
+                    exceptionCount += 1
+            i += 1
+            if i % 100 == 0:
+                print(f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%)")
+        print(
+            f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
+
+    def test_build(self):
+        self.buildGeneralPwRepresentationTable()
+
+    def test_generate_frequency_tables(self):
+        """Generate three datatable: `representation_frequency_base_general`, `pwrepresentation_frequency_general`, `representation_frequency_general`
+        """
+        transformers = list()
+        transformers.append(GeneralRepFrequencyBaseTransformer.getInstance())
+        transformers.append(GeneralRepFrequencyTransformer.getInstance())
+        transformers.append(GeneralPwRepFrequencyTransformer.getInstance())
+        for t in transformers:
+            t.rebuild()
+        print(f"Re-generate Complete")
+
+    def test_build_general_unique(self):
+        """Build unique datatable
+        """
+        resolver: GeneralPIIRepresentationResolver = GeneralPIIRepresentationResolver.getInstance()
+        transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
+
+        transformer.queryMethods.DeleteAll()
+
+        exceptionCount = 0
+        i = 0
+
+        pwRepDict: dict[str, RepUnit] = resolver.resolve()
+        _len = len(pwRepDict)
+        print(f"Resolved:{_len}")
+
+        for pwStr, repUnit in pwRepDict.items():
+            try:
+                unit: PwRepUniqueUnit = DatabaseUtils.getGeneralIntermediateFromRepUnit(pwStr, repUnit)
+                transformer.Insert(unit)
+            except Exception as e:
+                print(f"Exception occur: {str(e)}, pwStr: {pwStr}, RepUnit:{str(repUnit)}")
+                exceptionCount += 1
+            i += 1
+            if i % 100 == 0:
+                print(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
+        print(f"Completed! Total:{i}, total exception:{exceptionCount}")
+
+
 class TestGeneralPIIStructureParser(TestCase):
     def test_parse_all_general_vector_recursive(self):
         pii = BasicTypes.PII(account="yhang0607",
@@ -84,4 +182,3 @@ class TestGeneralPIIStructureParser(TestCase):
         piiStrParser: PIITagRepresentationStrParser = PIITagRepresentationStrParser.getInstance()
         for rep in piiS.piiRepresentationList:
             print(f"{piiStrParser.representationToStr(rep)}\n")
-
