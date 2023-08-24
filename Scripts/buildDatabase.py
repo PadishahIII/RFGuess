@@ -52,49 +52,8 @@ class BuildDatabase(TestCase):
         print(
             f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
 
-    def buildGeneralPwRepresentationTable(self):
-        """
-        Build `pwrepresentation_general` table based on `pii` dataset.
-        Parse all representations of password and store in `pwrepresentation_general` datatable.
-        """
-        processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=-1)
-        processor.preprocess()
-        dataset = processor.getDataSet()
-        # for unit in iter(dataset):
-        #     print(str(unit))
-        print(f"Total: {dataset.row}")
-        print(f"keyList:{dataset.keyList}")
-
-        transformer: GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
-        transformer.queryMethods.DeleteAll()
-        datasetIter: typing.Iterable[PIIDataUnit] = iter(dataset)
-        i = 0
-        repCount = 0
-        updateCount = 0
-        exceptionCount = 0
-        for unit in datasetIter:
-            pii = unit.pii
-            piiParser = GeneralPIIStructureParser(pii)
-            piiStructure = piiParser.getGeneralPIIStructure(pwStr=unit.password)
-            for rep in piiStructure.repList:
-                pr = transformer.transformParseunitToBaseunit(pwStr=unit.password, rep=rep)
-                try:
-                    transformer.Insert(pr)
-                    repCount += 1
-                except Exception as e:
-                    print(f"Exception occur: {str(e)}, pr: {str(pr)}")
-                    exceptionCount += 1
-            i += 1
-            if i % 100 == 0:
-                print(f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%)")
-        print(
-            f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
-
     def test_build(self):
         self.buildPwRepresentationTable()
-
-    def test_build_general(self):
-        self.buildGeneralPwRepresentationTable()
 
     def test_read_pwrep(self):
         queryMethods = RepresentationMethods()
@@ -143,30 +102,6 @@ class BuildDatabase(TestCase):
                 print(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
         print(f"Completed! Total:{i}, total exception:{exceptionCount}")
 
-    def test_build_general_unique(self):
-        resolver: GeneralPIIRepresentationResolver = GeneralPIIRepresentationResolver.getInstance()
-        transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
-
-        transformer.queryMethods.DeleteAll()
-
-        exceptionCount = 0
-        i = 0
-
-        pwRepDict: dict[str, RepUnit] = resolver.resolve()
-        _len = len(pwRepDict)
-        print(f"Resolved:{_len}")
-
-        for pwStr, repUnit in pwRepDict.items():
-            try:
-                unit: PwRepUniqueUnit = DatabaseUtils.getGeneralIntermediateFromRepUnit(pwStr, repUnit)
-                transformer.Insert(unit)
-            except Exception as e:
-                print(f"Exception occur: {str(e)}, pwStr: {pwStr}, RepUnit:{str(repUnit)}")
-                exceptionCount += 1
-            i += 1
-            if i % 100 == 0:
-                print(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
-        print(f"Completed! Total:{i}, total exception:{exceptionCount}")
 
     def test_read_unique(self):
         transformer: PwRepUniqueTransformer = PwRepUniqueTransformer.getInstance()

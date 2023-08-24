@@ -731,6 +731,27 @@ class GeneralPwRepresentationTransformer(DatabaseTransformer, Singleton):
         return unit
 
 
+class GeneralRepFrequencyBaseTransformer(DatabaseTransformer, Singleton):
+    """Transformer for `representation_frequency_base_general` dataview
+    """
+
+    def __init__(self, queryMethods: BasicManipulateMethods) -> None:
+        super().__init__(queryMethods)
+        self.queryMethods: GeneralRepresentationFrequencyBaseQueryMethods = queryMethods
+
+    def transform(self, baseUnit: Base) -> object:
+        pass
+
+    @classmethod
+    def getInstance(cls):
+        return super().getInstance(GeneralRepresentationFrequencyBaseQueryMethods())
+
+    def rebuild(self):
+        """Truncate the base datatable and re-generate
+        """
+        self.queryMethods.Rebuild()
+
+
 class GeneralRepFrequencyTransformer(DatabaseTransformer, Singleton):
     """Transformer for `representation_frequency_general` dataview
     Transformation: GeneralRepresentationFrequency(base unit) => RepFrequencyUnit(intermediate unit) => RepUnit(parse unit)
@@ -747,6 +768,11 @@ class GeneralRepFrequencyTransformer(DatabaseTransformer, Singleton):
     @classmethod
     def getInstance(cls):
         return super().getInstance(GeneralRepresentationFrequencyMethods())
+
+    def rebuild(self):
+        """Truncate and re-generate
+        """
+        self.queryMethods.Rebuild()
 
     def transform(self, baseUnit: GeneralRepresentationFrequency) -> RepFrequencyUnit:
         unit = RepFrequencyUnit(repStr=baseUnit.representationStructure, repHash=baseUnit.representationStructureHash,
@@ -799,6 +825,11 @@ class GeneralPwRepFrequencyTransformer(DatabaseTransformer, Singleton):
     @classmethod
     def getInstance(cls):
         return super().getInstance(GeneralPwRepresentationFrequencyMethods())
+
+    def rebuild(self):
+        """Truncate and re-generate
+        """
+        self.queryMethods.Rebuild()
 
     def transform(self, baseUnit: GeneralPwRepresentationFrequency) -> PwRepFrequencyUnit:
         unit = PwRepFrequencyUnit(repStructureStr=baseUnit.representationStructure,

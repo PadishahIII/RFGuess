@@ -117,6 +117,9 @@ class RepUnit:
     def __eq__(self, o: object) -> bool:
         return self._hash == o._hash
 
+    def __str__(self):
+        return str(self.__dict__)
+
     @classmethod
     def create(cls, repStr: str, repHash: str, frequency: int):
         return RepUnit(repStr, repHash, frequency)
