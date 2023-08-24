@@ -67,6 +67,12 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+### GUI and automating(8.24)
+1. *(TODO)* Automate the datatable built, support to train by other datasets easily
+2. *(TODO)* Regulate the result-testing procedure
+3. *(TODO)* Build LDS datatable in (length, segmentStr)
+4. *(TODO)* Generate guesses for PII-only(with LDS) patterns
+
 ### (8.23)
 1. The patterns generated exists some flaw, some character that have not ever occurred in the train data represent in classified results
 That's led by the ambiguous conversion when counting serial number of characters. Therefore, `CharacterSecionFactory` and `CharacterLabel.toInt` should

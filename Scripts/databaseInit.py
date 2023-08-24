@@ -11,6 +11,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, validates, scoped_session
 
 from Commons import pinyinUtils
+from Parser.Config import TableNames
 
 Base = declarative_base()
 emailRst = re.compile(r".+?@.+?")

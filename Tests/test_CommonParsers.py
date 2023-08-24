@@ -17,11 +17,11 @@ class TestLabelParser(TestCase):
         lp:LabelParser = LabelParser.getInstance()
         kp:KeyboardParser = KeyboardParser.getInstance()
         cp:CharacterParser = CharacterParser.getInstance()
-        s = "`~["
+        s = "Uu"
         labelList = lp.encodeStr(s)
         cList = cp.encodeStr(s)
-        keyPos:KeyboardPosition = kp.parseCh("`")
-        keyPos1:KeyboardPosition = kp.parseCh("~")
+        keyPos:KeyboardPosition = kp.parseCh("u")
+        keyPos1:KeyboardPosition = kp.parseCh("U")
         print(f"label: {labelList}\nserial: {cList}")
 
         print(f"{keyPos.__dict__}, {keyPos1.__dict__}")
