@@ -58,13 +58,3 @@ class TestPIIPatternGenerator(TestCase):
         pd[s2] = 2
         print(pd)
 
-
-class TestPIIPatternGenerator(TestCase):
-    def test_generate_pattern(self):
-        generator: PIIPatternGenerator = PIIPatternGenerator.getInstance("../save.clf")
-        l, pl = generator.generatePattern()
-        sl: list[str] = [generator.datagramFactory.parsePIIDatagramToStr(dg) for dg in l]
-
-        with open("../patterns.txt", "w") as f:
-            for i in range(len(sl)):
-                f.write(f"{sl[i]}  {pl[i]}\n")

@@ -13,6 +13,13 @@ class GeneralPIIPatternGenerator:
     Pattern Transformation: "<N1><A2>"(input string) => GeneralPIIDatagram
 
     Parse the result of classifier into `GeneralPIISection`
+
+    Examples:
+        generator:GeneralPasswordGenerator = GeneralPasswordGenerator.getInstance(patternFile="../patterns_general.txt",
+                                                                                  outputFile="../passwords_general.txt",
+                                                                                  pii=pii,
+                                                                                  nameFuzz=True)
+        generator.run()
     """
     from Parser import Config
     order = Config.pii_order
@@ -191,7 +198,7 @@ class GeneralPIIPatternGenerator:
                     if self.sectionFactory.isEndSection(newSection):
                         # output
                         patternList.append(newPrefix)
-                        probaList.append(newProba)
+                        probaList.append(currentProba) # exclude proba of EndSymbol
                         # patternProbaDict[currentPrefix] = currentProba
                     else:
                         prefixList.append(newPrefix)

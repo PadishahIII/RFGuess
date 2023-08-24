@@ -28,6 +28,7 @@ Data Structures
 class Tag:
     """
     An intermediate within the process of parsing pii data into pii vector
+    Specified piitype
     """
 
     def __init__(self, t: BasicTypes.PIIType, value: int, s: str):
@@ -66,6 +67,9 @@ class PIITagContainer:
 
     def getTagList(self):
         return self._tagList
+
+    def getTagDict(self):
+        return self._tagDict
 
     def parse(self):
         self._buildTagDict()
@@ -365,6 +369,17 @@ class PIIParser(BasicParser):
         super().afterParse()
 
     def buildDatagramList(self):
+        sectionList: list[PIISection] = [self.sectionFactory.getBeginSection() for i in range(self.order)]
+        beginVector: PIIVector = self.rep.piiVectorList[0]
+        beginSection: PIISection = self.sectionFactory.createFromPIIVector(beginVector)
+        beginLabel: PIILabel = PIILabel.create(beginSection)
+        dg: PIIDatagram = PIIDatagram(sectionList=sectionList,
+                                      label=beginLabel,
+                                      offsetInPassword=0,
+                                      offsetInSegment=0,
+                                      pwStr=self.pwStr)
+        self.datagramList.append(dg)
+
         for i in range(self.plen):
             sectionList = list()
             offsetInPassword = 0
@@ -549,7 +564,7 @@ class PIIToTagParser:
         givenNameWithoutSpace = ''.join(l)
         d[BasicTypes.PIIType.NameType.AbbrName] = firstName[0] + ''.join(x[0] for x in l if len(x) > 0)
         d[BasicTypes.PIIType.NameType.FamilyName] = firstName
-        d[BasicTypes.PIIType.NameType.GivenName] = givenName
+        d[BasicTypes.PIIType.NameType.GivenName] = givenName.replace(" ", "").replace("\t", "")
         d[BasicTypes.PIIType.NameType.GivenName1stPlusFamilyName] = givenName[0] + firstName
         d[BasicTypes.PIIType.NameType.FamilyName1stPlusGivenName] = firstName[0] + givenNameWithoutSpace
         d[BasicTypes.PIIType.NameType.FamilyNameCapitalized] = firstName[0].capitalize() + firstName[1:]
