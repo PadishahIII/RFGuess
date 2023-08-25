@@ -988,6 +988,14 @@ class GeneralPwRepUniqueTransformer(DatabaseTransformer, Singleton):
     def getInstance(cls):
         return super().getInstance(GeneralPwRepUniqueMethods())
 
+    def getMaxId(self) -> int:
+        maxId, minId = self.queryMethods.QueryIdRange()
+        return maxId
+
+    def getMinId(self) -> int:
+        maxId, minId = self.queryMethods.QueryIdRange()
+        return minId
+
     def transform(self, baseUnit: GeneralPwRepUnique) -> PwRepUniqueUnit:
         """
         Database Unit => Intermediate unit

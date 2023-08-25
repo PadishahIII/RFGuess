@@ -6,14 +6,14 @@ from sklearn.ensemble import RandomForestClassifier
 
 from Commons.Modes import Singleton
 from Parser.PIIDataTypes import *
-
+from Parser import Config
 
 class PIIRFTrainner(Singleton):
     def __init__(self, features: list = None, labels: list = None) -> None:
         super().__init__()
         self._feature = features
         self._label = labels
-        self._tree = RandomForestClassifier(n_estimators=30, criterion="gini", min_samples_leaf=10)
+        self._tree = RandomForestClassifier(n_estimators=Config.RFParams.n_estimators, criterion=Config.RFParams.criterion, min_samples_leaf=Config.RFParams.min_samples_leaf)
         self._clf = None
 
     @classmethod

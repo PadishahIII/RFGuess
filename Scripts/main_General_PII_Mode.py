@@ -9,10 +9,12 @@ from Generators.PasswordGuessGenerator import *
 from Parser.Factory import *
 from Parser.PIIPreprocessor import *
 
+TRAINSET_PROPORTION = 0.7  # train set proportion
+
 
 class GeneralPIITrainMain(TestCase):
     def test_train_general(self):
-        piiFactory = GeneralPIIFactory.getInstance()
+        piiFactory = GeneralPIIFactory.getInstance(proportion=TRAINSET_PROPORTION)
         piiFactory.process()
         print(
             f"Train data build Finished.\nSize of featureList:{len(piiFactory.getFeatureList())} LabelList:{len(piiFactory.getLabelList())}")
@@ -85,21 +87,24 @@ class GeneralPIITrainMain(TestCase):
         maxId = transformer.getMaxId()
         minId = transformer.getMinId()
         print(f"max:{maxId},min:{minId}")
-        end = maxId + 1 - 100
+        end = maxId + 1
+        # start = end - int((1 - TRAINSET_PROPORTION) * (maxId - minId))
         start = end - int(0.0001 * (maxId - minId))
         l: list[PIIIntermediateUnit] = transformer.getPIIIntermediateWithIdrange(start, end)
         print(f"number of test pii:{len(l)}")
 
         total = len(l)
+        index = 0
         success = 0
         newlyGenerated = 0
         alreadyGenerated = 0
         successPwList = list()
         failPwList = list()
+        successRepDict = dict() # success guesses with frequency
 
         # PIIListLock = threading.Lock
         def searchStrInList(s: str, l: list[str]) -> bool:
-            d = {k: i for k, i in enumerate(l)}
+            d = {i: k for k, i in enumerate(l)}
             if s in d:
                 return True
             else:
@@ -110,17 +115,22 @@ class GeneralPIITrainMain(TestCase):
             hStr = binascii.hexlify(h).decode('utf8')
             pii, pwStr = transformer.transformIntermediateToPIIAndPw(unit)
 
-            outputFile = filePattern.format(pwStr + "_" + unit.fullName)
-            if os.path.exists(outputFile):
-                alreadyGenerated += 1
-                # read already generated guesses
-                with open(outputFile, "r") as f:
-                    guesses = f.readlines()
-            else:
-                newlyGenerated += 1
-                # generate guesses
-                generator.generateForPII(pii=pii, outputFile=outputFile, nameFuzz=True)
-                guesses = copy(generator.guesses)
+            # outputFile = filePattern.format(pwStr + "_" + unit.fullName)
+            # if os.path.exists(outputFile):
+            #     pass
+            #     # alreadyGenerated += 1
+            #     # # read already generated guesses
+            #     # with open(outputFile, "r") as f:
+            #     #     guesses = f.readlines()
+            # else:
+            #     newlyGenerated += 1
+            #     # generate guesses
+            #     generator.generateForPII(pii=pii, outputFile=outputFile, nameFuzz=True)
+            #     guesses = copy(generator.guesses)
+
+            generator.generateForPII(pii=pii, outputFile=None, nameFuzz=True)
+            guesses = copy(generator.guesses)
+
 
             # match guesses and pwStr
             if searchStrInList(pwStr, guesses):
@@ -129,8 +139,12 @@ class GeneralPIITrainMain(TestCase):
             else:
                 failPwList.append(pwStr)
 
+            index += 1
+            if index % 100 == 0:
+                print(f"Test progress: {index}/{total}, {100*(index/total):.2f}")
+
         print(f"Guess file newly generated:{newlyGenerated},already exists:{alreadyGenerated}")
-        print(f"Test complete. success:{success}/{total}, accuracy:{success / total:.2f}")
+        print(f"Test complete. success:{success}/{total}, accuracy:{success / total:.4f}")
         print(f"successList:{successPwList}\nfail list:{failPwList}")
 
     def test_output_clf(self):

@@ -1340,3 +1340,11 @@ class GeneralPwRepUniqueMethods(PwRepUniqueMethods):
                 limit).all()  # list[tuple]
             result = list(map(lambda x: x[0], resultTuple))
             return result
+
+    def QueryIdRange(self) -> (int, int):
+        """Get maxId and minId
+        """
+        with Session() as session:
+            minId = session.query(func.min(self.entityCls.id)).scalar()
+            maxId = session.query(func.max(self.entityCls.id)).scalar()
+            return maxId, minId

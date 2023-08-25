@@ -14,3 +14,9 @@ class TableNames:
     representation_frequency_general = f"{representation_frequency}_general"
     pwrepresentation_frequency_general = f"{pwrepresentation_frequency}_general"
     pwrepresentation_unique_general = f"{pwrepresentation_unique}_general"
+
+
+class RFParams:
+    n_estimators = 30
+    criterion = 'gini'
+    min_samples_leaf = 10
