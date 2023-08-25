@@ -6,7 +6,7 @@ import re
 from abc import ABCMeta, abstractmethod
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, text
+from sqlalchemy import Column, Integer, String, text, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, validates, scoped_session
 
@@ -189,6 +189,7 @@ class BasicManipulateMethods(metaclass=ABCMeta):
             return True
         return False
 
+
 class BaseQueryMethods(BasicManipulateMethods):
     """With default abstract methods
     """
@@ -208,6 +209,22 @@ PIIUnit query methods
 class PIIUnitQueryMethods(BasicManipulateMethods):
     def __init__(self):
         super().__init__(PIIUnit)
+
+    def QueryWithId(self, id: int) -> PIIUnit:
+        with Session() as session:
+            unit = session.query(self.entityCls).filter_by(id=id).first()
+            return unit
+
+    def QueryIdRange(self) -> (int, int):
+        """Get maxid and minid
+
+        Returns:
+            (int,int) : maxId, minId
+        """
+        with Session() as session:
+            maxId = session.query(func.max(self.entityCls.id)).scalar()
+            minId = session.query(func.min(self.entityCls.id)).scalar()
+            return maxId, minId
 
     def UpdateFullName(self, name, fullname):
         with Session() as session:
@@ -1072,12 +1089,14 @@ class GeneralRepresentationFrequencyMethods(RepresentationFrequencyMethods):
         self.entityCls = GeneralRepresentationFrequency
 
     def Rebuild(self):
-        q = f"select distinct `fre`.`frequency` AS `frequency`,`fre`.`representationStructureHash` AS `representationStructureHash`,`pw`.`representationStructure` AS `representationStructure` " \
+        q = f"INSERT INTO {self.entityCls.__tablename__}" \
+            f" select distinct `fre`.`frequency` AS `frequency`,`fre`.`representationStructureHash` AS `representationStructureHash`,`pw`.`representationStructure` AS `representationStructure` " \
             f"from (`{TableNames.representation_frequency_base_general}` `fre` " \
             f"join `{TableNames.pwrepresentation_general}` `pw`) " \
             f"where (`fre`.`representationStructureHash` = `pw`.`representationStructureHash`) " \
             f"order by `fre`.`frequency` desc"
         with Session() as session:
+            session.query(self.entityCls).delete()
             session.execute(text(q))
             session.commit()
 
@@ -1143,7 +1162,6 @@ class GeneralRepresentationFrequencyBaseQueryMethods(BaseQueryMethods):
                 f" SELECT COUNT(0) AS frequency, {TableNames.pwrepresentation_general}.representationStructureHash AS representationStructureHash " \
                 f"FROM {TableNames.pwrepresentation_general} " \
                 f"GROUP BY {TableNames.pwrepresentation_general}.representationStructureHash"
-            print(q)
             session.execute(text(q))
             session.commit()
 
@@ -1181,11 +1199,13 @@ class GeneralPwRepresentationFrequencyMethods(PwRepresentationFrequencyMethods):
         self.entityCls = GeneralPwRepresentationFrequency
 
     def Rebuild(self):
-        q = f"select `pw`.`id` AS `id`,`pw`.`pwStr` AS `pwStr`,`pw`.`representationStructure` AS `representationStructure`,`pw`.`representationStructureHash` AS `representationStructureHash`,`fre_view`.`frequency` AS `frequency` " \
+        q = f"INSERT INTO {self.entityCls.__tablename__}" \
+            f" select `pw`.`id` AS `id`,`pw`.`pwStr` AS `pwStr`,`pw`.`representationStructure` AS `representationStructure`,`pw`.`representationStructureHash` AS `representationStructureHash`,`fre_view`.`frequency` AS `frequency` " \
             f"from (`{TableNames.pwrepresentation_general}` `pw` " \
             f"join `{TableNames.representation_frequency_base_general}` `fre_view`) " \
             f"where (`pw`.`representationStructureHash` = `fre_view`.`representationStructureHash`)"
         with Session() as session:
+            session.query(self.entityCls).delete()
             session.execute(text(q))
             session.commit()
 

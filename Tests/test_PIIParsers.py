@@ -91,7 +91,6 @@ class TestPIIParser(TestCase):
                 print(
                     f"{unit.pwStr}\n{repStr}feature:{len(parser.getFeatureList()[0])}{parser.getFeatureList()}\nlabel:{parser.getLabelList()}\n")
 
-
     def test_build_general_datagram_list(self):
         transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
         minId = 154195
@@ -200,3 +199,18 @@ class TestPIIDatagramFactory(TestCase):
         l.append(factory.createFromStr("<N1><N2<>>asd123!#$N1<L10>"))
         for dg in l:
             print(f"{factory.parseGeneralPIIDatagramToStr(dg)}\n{json.dumps(dg._tojson(), indent=2)}")
+
+
+class TestPIISectionFactory(TestCase):
+    def test_get_all_piisection_dict(self):
+        factory: PIISectionFactory = PIISectionFactory.getInstance()
+        d = factory.getAllPIISectionDict()
+        for s, section in d.items():
+            print(f"{s}:{json.dumps(section._tojson())}")
+
+    def test_get_all_piidatagram_dict(self):
+        factory:PIIDatagramFactory = PIIDatagramFactory.getInstance()
+        d = factory.getAllBasicPIIDatagramsDict()
+        for s, dg in d.items():
+            print(f"{s}:{json.dumps(dg._tojson())}")
+

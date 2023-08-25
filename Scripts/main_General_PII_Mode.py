@@ -25,13 +25,12 @@ class GeneralPIITrainMain(TestCase):
 
     def test_generate_pattern(self):
         generator: GeneralPIIPatternGenerator = GeneralPIIPatternGenerator.getInstance("../../save_general.clf")
-        l, pl = generator.generatePattern()
-        print(f"Generate complete: {len(l)}:{len(pl)}")
-        sl: list[str] = [generator.datagramFactory.parseGeneralPIIDatagramToStr(dg) for dg in l]
+        l = generator.getPatternStrList()
+        print(f"Generate complete: {len(l)}")
 
         with open("../patterns_general.txt", "w") as f:
-            for i in range(len(sl)):
-                f.write(f"{sl[i]}\n")
+            for i in range(len(l)):
+                f.write(f"{l[i]}\n")
 
     def test_generate_guess(self):
         pii = BasicTypes.PII(account="yhang0607",
@@ -42,13 +41,97 @@ class GeneralPIITrainMain(TestCase):
                              phoneNum="13222245678",
                              email="3501111asd11@qq.com",
                              idcardNum="1213213213")
-
+        pii2 = BasicTypes.PII(account="5201314",
+                              name="qiaohuangyu",
+                              firstName="qiao",
+                              givenName="huang yu",
+                              birthday="19920303",
+                              phoneNum="11111111111",
+                              email="2930222222@qq.com",
+                              idcardNum="77777777777")
         generator: GeneralPasswordGenerator = GeneralPasswordGenerator.getInstance(
             patternFile="../patterns_general.txt",
-            outputFile="../passwords_general.txt",
-            pii=pii,
-            nameFuzz=True)
-        generator.run()
+        )
+        generator.init()
+        generator.generateForPII(outputFile="../passwords_general.txt",
+                                 pii=pii,
+                                 nameFuzz=True)
+        generator.generateForPII(outputFile="../passwords_general_2.txt",
+                                 pii=pii2,
+                                 nameFuzz=True)
+
+    def test_clean_guesses_dir(self):
+        """
+        Clear guesses dir
+
+        """
+        dirName = "../guesses"
+        for filename in os.listdir(dirName):
+            filePath = os.path.join(dirName, filename)
+            if os.path.isfile(filePath):
+                os.remove(filePath)
+
+    def test_accuracy_assessment(self):
+        """Assess the accuracy of generated guesses
+        Get every PII and generate a guesses dictionary, if any guess match the true password, that'll be called by success
+
+        """
+        filePattern = '../guesses/passwords_{0}.txt'
+        transformer: PIIUnitTransformer = PIIUnitTransformer.getInstance()
+        generator: GeneralPasswordGenerator = GeneralPasswordGenerator.getInstance(
+            patternFile="../patterns_general.txt",
+        )
+        generator.init()
+        maxId = transformer.getMaxId()
+        minId = transformer.getMinId()
+        print(f"max:{maxId},min:{minId}")
+        end = maxId + 1 - 100
+        start = end - int(0.0001 * (maxId - minId))
+        l: list[PIIIntermediateUnit] = transformer.getPIIIntermediateWithIdrange(start, end)
+        print(f"number of test pii:{len(l)}")
+
+        total = len(l)
+        success = 0
+        newlyGenerated = 0
+        alreadyGenerated = 0
+        successPwList = list()
+        failPwList = list()
+
+        # PIIListLock = threading.Lock
+        def searchStrInList(s: str, l: list[str]) -> bool:
+            d = {k: i for k, i in enumerate(l)}
+            if s in d:
+                return True
+            else:
+                return False
+
+        for unit in l:
+            h = unit.getHashBytes()
+            hStr = binascii.hexlify(h).decode('utf8')
+            pii, pwStr = transformer.transformIntermediateToPIIAndPw(unit)
+
+            outputFile = filePattern.format(pwStr + "_" + unit.fullName)
+            if os.path.exists(outputFile):
+                alreadyGenerated += 1
+                # read already generated guesses
+                with open(outputFile, "r") as f:
+                    guesses = f.readlines()
+            else:
+                newlyGenerated += 1
+                # generate guesses
+                generator.generateForPII(pii=pii, outputFile=outputFile, nameFuzz=True)
+                guesses = copy(generator.guesses)
+
+            # match guesses and pwStr
+            if searchStrInList(pwStr, guesses):
+                success += 1
+                successPwList.append(pwStr)
+            else:
+                failPwList.append(pwStr)
+
+        print(f"Guess file newly generated:{newlyGenerated},already exists:{alreadyGenerated}")
+        print(f"Test complete. success:{success}/{total}, accuracy:{success / total:.2f}")
+        print(f"successList:{successPwList}\nfail list:{failPwList}")
 
     def test_output_clf(self):
         generator: GeneralPIIPatternGenerator = GeneralPIIPatternGenerator.getInstance("../../save_general.clf")
@@ -126,6 +209,10 @@ class BuildDatabase(TestCase):
         for t in transformers:
             t.rebuild()
         print(f"Re-generate Complete")
+
+    def test_rebuild(self):
+        transformer: GeneralRepFrequencyTransformer = GeneralRepFrequencyTransformer.getInstance()
+        transformer.rebuild()
 
     def test_build_general_unique(self):
         """Build unique datatable

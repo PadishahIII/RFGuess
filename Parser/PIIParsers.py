@@ -220,6 +220,23 @@ class PIISectionFactory(Singleton):
             piiValue = piiCls._value2member_map_.get(int(di))  # FullName
             return PIISection(type=piiTypeCls, value=piiValue)
 
+    def getAllPIISectionDict(self) -> dict[str, PIISection]:
+        """Get pii sections with all PIIType and corresponding string
+        E.g. "N1": PIISection with FullName
+        """
+        d = dict()
+        baseClsList = self.translatorPIIType.fromList
+        for cls in baseClsList:
+            valueList: list[int] = list(cls._value2member_map_.keys())
+
+            for i in valueList:
+                specifiedCls = cls._value2member_map_[i]
+                v = PIIVector(s="", piitype=specifiedCls, piivalue=i)
+                section = self.createFromPIIVector(v)
+                sectionStr = self.parsePIISectionToStr(section)
+                d[sectionStr] = section
+        return d
+
     def parsePIISectionToStr(self, section: PIISection) -> str:
         """
         Parse PIISection to string like "N1" or "A2" or "L10"
@@ -255,6 +272,22 @@ class PIIDatagramFactory(Singleton):
     def __init__(self) -> None:
         super().__init__()
         self.sectionFactory = PIISectionFactory.getInstance()
+
+    def getAllBasicPIIDatagramsDict(self)->dict[str,PIIDatagram]:
+        """Get pii datagrams with all pii types
+        like "N1"
+
+        """
+        d:dict[str,PIISection] = self.sectionFactory.getAllPIISectionDict()
+        resDict:dict[str,PIIDatagram]=dict()
+        for s,section in d.items():
+            sectionList = [section,]
+            endSection :PIISection = self.sectionFactory.getEndSection()
+            endLabel:PIILabel = PIILabel.create(endSection)
+            dg = PIIDatagram(sectionList=sectionList,label=endLabel,offsetInSegment=0,offsetInPassword=1,pwStr="")
+            resDict[s] = dg
+        return resDict
+
 
     def tailorPIIDatagram(self, dg: PIIDatagram) -> PIIDatagram:
         """
