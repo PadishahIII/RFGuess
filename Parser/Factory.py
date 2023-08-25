@@ -1,5 +1,4 @@
 from Commons.DatabaseLayer import *
-from Parser.PIIParsers import *
 from Parser.GeneralPIIParsers import *
 
 '''
@@ -81,20 +80,27 @@ class GeneralPIIFactory(BasicFactory):
     """
 
     def __init__(self, transformer: GeneralPwRepUniqueTransformer,
-                 offset: int = 0,
-                 limit: int = 1e6) -> None:
+                 proportion: float = 1) -> None:
         super().__init__(transformer)
         self.transformer: GeneralPwRepUniqueTransformer = transformer
-        self.limit = limit
-        self.offset = offset
+        self.limit = 1e6
+        self.offset = 0
+
+        minId = self.transformer.getMinId()
+        maxId = self.transformer.getMaxId()
+
+        start = minId
+        end = minId + int(proportion * (maxId - minId))
+
+        self.offset = 0
+        self.limit = end - start
 
         self.sectionFactory = GeneralPIISectionFactory.getInstance()
 
     @classmethod
-    def getInstance(cls, offset: int = 0, limit=1e6):
+    def getInstance(cls, proportion: float = 1):
         return GeneralPIIFactory(transformer=GeneralPwRepUniqueTransformer.getInstance(),
-                          offset=offset,
-                          limit=int(limit))
+                                 proportion=proportion)
 
     def process(self):
         l: list[GeneralPwRepAndStructureUnit] = self.transformer.readAsParseUnit(offset=self.offset, limit=self.limit)
@@ -111,6 +117,7 @@ class GeneralPIIFactory(BasicFactory):
             except Exception as e:
                 raise GeneralPIIFactoryException(
                     f"Exception occur when addressing unit {str(unit.__dict__)}\nOriginal Exception: {e}")
+
 
 class GeneralPIIFactoryException(Exception):
     def __init__(self, *args: object) -> None:

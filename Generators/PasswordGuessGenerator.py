@@ -1,5 +1,9 @@
+import logging
+
 from Parser.GeneralPIIParsers import *
 
+logger = logging.getLogger("Generator")
+logger.setLevel(logging.CRITICAL)
 
 class GeneralPasswordGenerator(Singleton):
     """
@@ -45,11 +49,11 @@ class GeneralPasswordGenerator(Singleton):
 
         Args:
             pii: PII data
-            outputFile: guesses output path
+            outputFile: guesses output path, None for no save
             nameFuzz: if toggle name fuzzer or not
 
         """
-        print(f"Preparing PII tag container...")
+        logger.info(f"Preparing PII tag container...")
         self.pii = pii
         self.guesses: list[str] = list()
         self.patterns: list[GeneralPIIDatagram] = list()
@@ -59,18 +63,19 @@ class GeneralPasswordGenerator(Singleton):
         self.tagDict: dict[Enum, list[str]] = self.piiTagContainer.getTagDict()  # specified pii type to string
 
         self.eliminatePatternDatagrams()
-        print(
+        logger.info(
             f"Number of patterns after eliminating: {len(self.patterns)}, remove: {len(self.initPatterns) - len(self.patterns)}")
 
-        print(f"Start generating guesses...")
+        logger.info(f"Start generating guesses...")
         self.generateALlGuesses()
         primaryLen = len(self.guesses)
         self.guesses = self.eliminateDuplicateGuess()
         newLen = len(self.guesses)
-        print(f"Generating complete, number of guesses: {primaryLen}")
-        print(f"Eliminate guesses: remove {primaryLen - newLen} duplicates, final guess number: {newLen}")
-        self.save()
-        print(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n")
+        logger.info(f"Generating complete, number of guesses: {primaryLen}")
+        logger.info(f"Eliminate guesses: remove {primaryLen - newLen} duplicates, final guess number: {newLen}")
+        if self.outputFile != None and len(self.outputFile) >0:
+            self.save()
+        logger.info(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n")
 
     def readPatternsAsDatagram(self):
         """
