@@ -139,3 +139,30 @@ class TestGeneralPwRepUniqueTransformer(TestCase):
             label = parser.getLabelList()
             s = tagParser.representationToStr(rep)
             print(f"{s}\nfeature:{len(featureList)},{featureList}\nlabel:{len(label)},{label}")
+
+
+class TestPIIUnitTransformer(TestCase):
+    def test_get_piiintermediate_with_idrange(self):
+        transformer: PIIUnitTransformer = PIIUnitTransformer.getInstance()
+        maxId = transformer.getMaxId()
+        minId = transformer.getMinId()
+        print(f"max:{maxId},min:{minId}")
+        end = maxId + 1
+        start = maxId - int(0.01 * (maxId - minId))
+        l: list[PIIIntermediateUnit] = transformer.getPIIIntermediateWithIdrange(start, end)
+        print(f"len:{len(l)}")
+        for unit in l:
+            print(unit)
+
+
+class TestPIIUnitTransformer(TestCase):
+    def test_transform_intermediate_to_piiand_pw(self):
+        transformer: PIIUnitTransformer = PIIUnitTransformer.getInstance()
+        minId = transformer.getMinId()
+        piiU:PIIUnit = transformer.queryMethods.QueryWithId(minId)
+        piiI:PIIIntermediateUnit = transformer.transform(piiU)
+        pii,pwStr = transformer.transformIntermediateToPIIAndPw(piiI)
+        print(str(pii.__dict__))
+        print(pwStr)
+
+

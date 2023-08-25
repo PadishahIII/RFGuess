@@ -1,5 +1,3 @@
-import os
-
 from Parser.GeneralPIIParsers import *
 
 
@@ -13,40 +11,57 @@ class GeneralPasswordGenerator(Singleton):
     Examples:
         generator: GeneralPasswordGenerator = GeneralPasswordGenerator.getInstance(
             patternFile="../patterns_general.txt",
-            outputFile="../passwords_general.txt",
-            pii=pii,
-            nameFuzz=True)
-        generator.run()
+        )
+        generator.init()
+        generator.generateForPII(outputFile="../passwords_general.txt",
+                                 pii=pii,
+                                 nameFuzz=True)
+        generator.generateForPII(outputFile="../passwords_general_2.txt",
+                                 pii=pii2,
+                                 nameFuzz=True)
 
     """
 
-    def __init__(self, patternFile: str, outputFile: str, pii: PII, nameFuzz: bool = False) -> None:
+    def __init__(self, patternFile: str) -> None:
         super().__init__()
         self.patternFile = patternFile
-        self.pii = pii
-        self.outputFile = outputFile
 
-        self.patterns: list[GeneralPIIDatagram] = list()
+        self.initPatterns: list[GeneralPIIDatagram] = list()  # patters without eliminate
         self.patternStrList: list[str] = list()
-        self.guesses: list[str] = list()
-
-        self.datagramFactory: GeneralPIIDatagramFactory = GeneralPIIDatagramFactory.getInstance()
-        self.sectionFactory: GeneralPIISectionFactory = GeneralPIISectionFactory.getInstance()
-        self.piiTagContainer: PIITagContainer = PIITagContainer(pii=self.pii, nameFuzz=nameFuzz)
-        self.piiTagContainer.parse()
-
-        self.tagDict: dict[Enum, list[str]] = self.piiTagContainer.getTagDict()  # specified pii type to string
 
     @classmethod
-    def getInstance(cls, patternFile: str, outputFile: str, pii: PII, nameFuzz: bool = False):
-        return super().getInstance(patternFile, outputFile, pii, nameFuzz=nameFuzz)
+    def getInstance(cls, patternFile: str):
+        return super().getInstance(patternFile)
 
-    def run(self):
+    def init(self):
+        self.datagramFactory: GeneralPIIDatagramFactory = GeneralPIIDatagramFactory.getInstance()
+        self.sectionFactory: GeneralPIISectionFactory = GeneralPIISectionFactory.getInstance()
         print(f"Load pattern file: {self.patternFile}")
         self.readPatternsAsDatagram()
-        print(f"Read patterns: {len(self.patterns)}")
+        print(f"Read patterns: {len(self.initPatterns)}\n")
+
+    def generateForPII(self, pii: PII, outputFile: str, nameFuzz: bool = False):
+        """Generate guesses for certain PII
+
+        Args:
+            pii: PII data
+            outputFile: guesses output path
+            nameFuzz: if toggle name fuzzer or not
+
+        """
+        print(f"Preparing PII tag container...")
+        self.pii = pii
+        self.guesses: list[str] = list()
+        self.patterns: list[GeneralPIIDatagram] = list()
+        self.outputFile = outputFile
+        self.piiTagContainer: PIITagContainer = PIITagContainer(pii=self.pii, nameFuzz=nameFuzz)
+        self.piiTagContainer.parse()
+        self.tagDict: dict[Enum, list[str]] = self.piiTagContainer.getTagDict()  # specified pii type to string
+
         self.eliminatePatternDatagrams()
-        print(f"Number of patterns after eliminating: {len(self.patterns)}")
+        print(
+            f"Number of patterns after eliminating: {len(self.patterns)}, remove: {len(self.initPatterns) - len(self.patterns)}")
+
         print(f"Start generating guesses...")
         self.generateALlGuesses()
         primaryLen = len(self.guesses)
@@ -55,7 +70,7 @@ class GeneralPasswordGenerator(Singleton):
         print(f"Generating complete, number of guesses: {primaryLen}")
         print(f"Eliminate guesses: remove {primaryLen - newLen} duplicates, final guess number: {newLen}")
         self.save()
-        print(f"\nComplete!\nCount:{newLen}\nSaved to {self.outputFile}")
+        print(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n")
 
     def readPatternsAsDatagram(self):
         """
@@ -73,10 +88,10 @@ class GeneralPasswordGenerator(Singleton):
                     continue
                 try:
                     dg: GeneralPIIDatagram = self.datagramFactory.createFromStr(line)
-                    self.patterns.append(dg)
+                    self.initPatterns.append(dg)
                 except Exception as e:
                     raise PasswordGuessGeneratorException(
-                        f"Exception occur when parsing pattern file, Original exception is {e}\nTraceback:{e.with_traceback()}")
+                        f"Exception occur when parsing pattern file, Original exception is {e}")
                 line = f.readline()
 
     def eliminatePatternDatagrams(self):
@@ -85,7 +100,7 @@ class GeneralPasswordGenerator(Singleton):
 
         """
         newPatterns: list[GeneralPIIDatagram] = list()
-        for dg in self.patterns:
+        for dg in self.initPatterns:
             sectionList: list[GeneralPIISection] = dg.sectionList
             accept: bool = True
             for section in sectionList:

@@ -91,6 +91,29 @@ Intermediate units
 '''
 
 
+class PIIIntermediateUnit:
+    """Unit transformed corresponding to `pii` dataunit
+    Identical to PIIUnit (database unit)
+    Hashable
+    """
+
+    def __init__(self, email, account, name, idCard, phoneNum, password, fullName=None):
+        super().__init__()
+        self.email = email
+        self.account = account
+        self.name = name
+        self.idCard = idCard
+        self.phoneNum = phoneNum
+        self.password = password
+        self.fullName = fullName
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def getHashBytes(self):
+        return Utils.md5(str(self))
+
+
 class PwRepUnit(RepStrProperty):
     """Unit transformed corresponding to `pwrepresentation` dataunit
 
@@ -244,6 +267,74 @@ class GeneralPwRepUniqueUnit(PwRepUniqueUnit):
 '''
 Transformers
 '''
+
+
+class PIIUnitTransformer(DatabaseTransformer, Singleton):
+    """Transformer for `pii` datatable
+    Transformation: PIIUnit(database unit) => PIIIntermediateUnit(intermediate unit) => PII(parse unit)
+
+    Examples:
+        # get deserialized unit with PIIRepresentation object
+        transformer = PwRepresentationTransformer.getInstance()
+        units: list[PwRepUnit] = transformer.read()
+
+        # build database, transform PIIRepresentation into database unit
+        pr = PwRepresentationTransformer.getPwRepresentation(pwStr=unit.pwStr, rep=rep)
+        transformer.insert(pr)
+
+    """
+
+    def __init__(self, queryMethods: BasicManipulateMethods) -> None:
+        super().__init__(queryMethods)
+        self.queryMethods: PIIUnitQueryMethods = queryMethods
+
+    @classmethod
+    def getInstance(cls):
+        return super().getInstance(PIIUnitQueryMethods())
+
+    def getMaxId(self) -> int:
+        """
+        """
+        maxId, minId = self.queryMethods.QueryIdRange()
+        return int(maxId)
+
+    def getMinId(self) -> int:
+        maxId, minId = self.queryMethods.QueryIdRange()
+        return int(minId)
+
+    def transform(self, baseUnit: PIIUnit) -> PIIIntermediateUnit:
+        """Convert PIIUnit(database unit) into PIIIntermediateUnit(intermediate unit)
+        """
+        return PIIIntermediateUnit(email=baseUnit.email,
+                                   account=baseUnit.account,
+                                   name=baseUnit.name,
+                                   idCard=baseUnit.idCard,
+                                   phoneNum=baseUnit.phoneNum,
+                                   password=baseUnit.password,
+                                   fullName=baseUnit.fullName
+                                   )
+
+    def transformIntermediateTobaseunit(self, unit: PIIIntermediateUnit) -> PIIUnit:
+        """PIIIntermediateUnit => PIIUnit(base unit)
+        """
+        return PIIUnit(email=unit.email, account=unit.account, name=unit.name, idCard=unit.idCard,
+                       password=unit.password, phoneNum=unit.phoneNum, fullName=unit.fullName)
+
+    def transformIntermediateToPIIAndPw(self, unit: PIIIntermediateUnit) -> (PII, str):
+        """Transform PII intermediate into PII and pwStr
+        """
+        pii, pwStr = Utils.parsePIIUnitToPIIAndPwStr(self.transformIntermediateTobaseunit(unit))
+
+        return pii, pwStr
+
+    def getPIIIntermediateWithIdrange(self, minId: int, maxId: int) -> list[PIIIntermediateUnit]:
+        """Get all PII intermediate unit in id range (minId,maxId) which contains minId and exclude maxId
+        """
+        baseL: list[PIIIntermediateUnit] = list()
+        for id in range(minId, maxId):
+            unit: PIIUnit = self.queryMethods.QueryWithId(id)
+            baseL.append(self.transform(unit))
+        return baseL
 
 
 class PwRepresentationTransformer(DatabaseTransformer, Singleton):

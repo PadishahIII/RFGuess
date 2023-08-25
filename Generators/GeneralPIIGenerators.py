@@ -2,7 +2,6 @@ import numpy as np
 
 from Classifiers.PIIRFTrainner import PIIRFTrainner
 from Parser.GeneralPIIParsers import *
-from Parser.GeneralPIIParsers import *
 
 
 class GeneralPIIPatternGenerator:
@@ -101,8 +100,8 @@ class GeneralPIIPatternGenerator:
         return resDg
 
     def getMultiClassifyResultFromGeneralPIIDatagram(self, dgSeed: GeneralPIIDatagram, n: int, maxDgSize: int = 9) -> \
-    list[
-        GeneralPIIDatagram]:
+            list[
+                GeneralPIIDatagram]:
         """Get top-n labels at every step
         Input a GeneralPIIDatagram seed, output all GeneralPIIDatagrams classified.
 
@@ -160,6 +159,23 @@ class GeneralPIIPatternGenerator:
         probaDict = self.clf.classifyPIIDatagramToProbaDict(dg)
         return probaDict
 
+    def getBasicPIIPatterns(self) -> list[str]:
+        """Get all basic pii patterns like "N1", "B2"
+        """
+        d: dict[str, GeneralPIIDatagram] = self.datagramFactory.getAllBasicGeneralPIIDatagramsDict()
+        sl: list[str] = list()
+        for dg in d.values():
+            sl.append(self.datagramFactory.parseGeneralPIIDatagramToStr(dg))
+        return sl
+
+    def getPatternStrList(self) -> list[str]:
+        """Transform datagram list into str list, and add some basic patterns to list
+        """
+        l, pl = self.generatePattern()
+        sl: list[str] = [self.datagramFactory.parseGeneralPIIDatagramToStr(dg) for dg in l]
+        newSl = self.getBasicPIIPatterns() + sl
+        return newSl
+
     def generatePattern(self) -> tuple[list[GeneralPIIDatagram], list[float]]:
         """
         Generate patterns using RF classifier
@@ -169,7 +185,7 @@ class GeneralPIIPatternGenerator:
         """
         # charset:PIICharacterSet = PIICharacterSet.getInstance()
         patternList: list[GeneralPIIDatagram] = list()  # output
-        probaList:list[float] = list() # output
+        probaList: list[float] = list()  # output
         patternProbaDict: dict[GeneralPIIDatagram, float] = dict()  # output, pattern to probability
         prefixList: list[GeneralPIIDatagram] = list()  # current generated prefix
         probaDict: dict[GeneralPIIDatagram, float] = dict()  # currently generated prefix to probability
@@ -198,7 +214,7 @@ class GeneralPIIPatternGenerator:
                     if self.sectionFactory.isEndSection(newSection):
                         # output
                         patternList.append(newPrefix)
-                        probaList.append(currentProba) # exclude proba of EndSymbol
+                        probaList.append(currentProba)  # exclude proba of EndSymbol
                         # patternProbaDict[currentPrefix] = currentProba
                     else:
                         prefixList.append(newPrefix)
@@ -207,7 +223,8 @@ class GeneralPIIPatternGenerator:
                     _num_discarded += 1
                 _i += 1
                 if _i % 1000 == 0:
-                    print(f"Progress: {_i}, remain prefix: {len(prefixList)}, current prefix len: {len(prefixList[-1].sectionList)}, completed: {len(patternList)}, discarded:{_num_discarded}")
+                    print(
+                        f"Progress: {_i}, remain prefix: {len(prefixList)}, current prefix len: {len(prefixList[-1].sectionList)}, completed: {len(patternList)}, discarded:{_num_discarded}")
 
         probaArray = np.array(probaStatisticList)
         m = np.average(probaArray)

@@ -495,6 +495,23 @@ class GeneralPIIDatagramFactory(Singleton):
         self.labelFactory: GeneralPIILabelFactory = GeneralPIILabelFactory.getInstance()
         self.charSectionFactory: CharacterSectionFactory = CharacterSectionFactory.getInstance()
 
+    def createFromPIIDatagram(self, dg: PIIDatagram) -> GeneralPIIDatagram:
+        sectionList: list[GeneralPIISection] = list()
+        for section in dg.sectionList:
+            sectionList.append(self.sectionFactory.createFromPIISection(section))
+        newLabel = self.labelFactory.createFromPIILabel(dg.label)
+        newDg = GeneralPIIDatagram(sectionList=sectionList, label=newLabel, offsetInSegment=dg.offsetInSegment,
+                                   offsetInPassword=dg.offsetInPassword, pwStr=dg.pwStr)
+        return newDg
+
+    def getAllBasicGeneralPIIDatagramsDict(self) -> dict[str, GeneralPIIDatagram]:
+        d: dict[str, PIIDatagram] = self.piidatagramFactory.getAllBasicPIIDatagramsDict()
+        resDict: dict[str, GeneralPIIDatagram] = dict()
+        for s, dg in d.items():
+            generalDg: GeneralPIIDatagram = self.createFromPIIDatagram(dg)
+            resDict[s] = generalDg
+        return resDict
+
     def tailorGeneralPIIDatagram(self, dg: GeneralPIIDatagram) -> GeneralPIIDatagram:
         """
         Tailor datagram to 26-dim, datagram must have 6 sections

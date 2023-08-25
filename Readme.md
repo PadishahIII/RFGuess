@@ -67,6 +67,10 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+### Accuracy assessment(8.25)
+1. Add basic patterns into generated patterns(like "N1","B2")
+2. 
+
 ### GUI and automating(8.24)
 1. *(TODO)* Automate the datatable built, support to train by other datasets easily
 2. *(TODO)* Regulate the result-testing procedure
