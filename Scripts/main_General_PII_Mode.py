@@ -183,7 +183,7 @@ class BuildDatabase(TestCase):
         print(f"keyList:{dataset.keyList}")
 
         transformer: GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
-        transformer.queryMethods.DeleteAll()
+        # transformer.queryMethods.DeleteAll()
         datasetIter: typing.Iterable[PIIDataUnit] = iter(dataset)
         i = 0
         repCount = 0
@@ -280,3 +280,36 @@ class TestGeneralPIIStructureParser(TestCase):
         piiStrParser: PIITagRepresentationStrParser = PIITagRepresentationStrParser.getInstance()
         for rep in piiS.piiRepresentationList:
             print(f"{piiStrParser.representationToStr(rep)}\n")
+
+
+    def test_pii_structure_parser(self):
+        piiUnit:PIIUnit = PIIUnit(email="o0oo0o5353@vip.qq.com",
+                                  account="o0oo0o5353",
+                                  name="刘璋",
+                                  idCard="412301198604044512",
+                                  phoneNum="15503708389",
+                                  password="o0oo0o0000",
+                                  fullName="liu zhang")
+        pii,pwStr = Utils.parsePIIUnitToPIIAndPwStr(piiUnit)
+        print(pii.__dict__)
+        # pw = "qq763699438"
+        # pw = "ty333763699438"
+        # pw = "haijing0325"
+        pw = pwStr
+
+        parser:GeneralPIIStructureParser = GeneralPIIStructureParser(pii=pii)
+        struct:GeneralPIIStructure = parser.getGeneralPIIStructure(pw)
+        repParser:GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
+
+        tagParser:PIIFullTagParser = PIIFullTagParser(pii,nameFuzz=True)
+        tagParser.parseTag()
+        tagList:list[Tag] = tagParser.getTagContainer().getTagList()
+        for tag in tagList:
+            print(f"{tag.__dict__}")
+
+        print(f"Rep:{len(struct.repList)}")
+
+        for rep in struct.repList[:10]:
+            s = repParser.representationToStr(rep)
+            print(f"{s}")
+

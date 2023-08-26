@@ -1,7 +1,5 @@
 from Commons.BasicTypes import *
 from Parser.PIIDataTypes import *
-from Commons.Property import StrProperty
-
 
 '''
 Foreground analyzing phase datastructures
@@ -18,11 +16,17 @@ class CharacterVector(StrProperty):
         keyboardPos (KeyboardPos): keyboard position
     """
 
-    def __init__(self, ch: str, type: CharacterType, serialNum: int, keyboardPos: KeyboardPosition,) -> None:
+    def __init__(self, ch: str, type: CharacterType, serialNum: int, keyboardPos: KeyboardPosition, ) -> None:
         super().__init__(ch)
         self.type: CharacterType = type
         self.serialNum: int = serialNum
         self.keyboardPos: KeyboardPosition = keyboardPos
+
+    def __hash__(self):
+        return hash((self.type, self.serialNum, self.keyboardPos.row, self.keyboardPos.col))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
     def __copy__(self):
         return CharacterVector(self.getStr(), self.type, self.serialNum, self.keyboardPos)
@@ -30,11 +34,10 @@ class CharacterVector(StrProperty):
     def _tojson(self):
         return {
             "CharacterType": str(self.type.name),
-            "CharacterStr":self.getStr(),
+            "CharacterStr": self.getStr(),
             "SerialNum": self.serialNum,
             "KeyboardPos": f"{self.keyboardPos.row}:{self.keyboardPos.col}"
         }
-
 
 
 class GeneralPIIVector(StrProperty):
@@ -45,10 +48,16 @@ class GeneralPIIVector(StrProperty):
         vectorObj (PIIVector or CharacterVector): vector object
     """
 
-    def __init__(self, vector:StrProperty, isPIIVector: bool, ) -> None:
+    def __init__(self, vector: StrProperty, isPIIVector: bool, ) -> None:
         super().__init__(vector.getStr())
         self.isPIIVector = isPIIVector
         self.vectorObj = vector
+
+    def __hash__(self):
+        return hash((self.isPIIVector, self.vectorObj))
+
+    def __eq__(self, other):
+        return self.isPIIVector == other.isPIIVector and self.vectorObj == other.vectorObj
 
     def __copy__(self):
         newVector = copy(self.vectorObj)
@@ -69,6 +78,13 @@ class GeneralPIIRepresentation:
 
     def __len__(self):
         return self.len
+
+    def __hash__(self):
+        t = tuple(self.vectorList)
+        return hash(t)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
     def __copy__(self):
         newVectorList = list()
@@ -231,7 +247,7 @@ class CharacterLabel(BasicDataTypes.Label):
     def __init__(self, section: CharacterSection) -> None:
         super().__init__()
         from Parser.CommonParsers import LabelParser
-        self.lp:LabelParser = LabelParser.getInstance()
+        self.lp: LabelParser = LabelParser.getInstance()
         self.section: CharacterSection = section
 
     def toInt(self):

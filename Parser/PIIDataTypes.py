@@ -28,6 +28,12 @@ class PIIVector(StrProperty):
         self.row = 0
         self.col = 0
 
+    def __hash__(self):
+        return hash((self.piitype.__class__, self.piivalue, self.piitypevalue, self.row, self.col))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
     def __copy__(self):
         return PIIVector(s=self.str, piitype=self.piitype, piivalue=self.piivalue)
 

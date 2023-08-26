@@ -89,7 +89,14 @@ class GeneralPIIStructureParser:
 
         generalRepList: list[GeneralPIIRepresentation] = list()
         self.parseAllGeneralVectorRecursive(pwStr, list(), generalRepList)
+        # newRepList:list[GeneralPIIRepresentation] = self.eliminateDuplicateRep(generalRepList)
         return GeneralPIIStructure(pwStr, generalRepList)
+
+    def eliminateDuplicateRep(self, l: list[GeneralPIIRepresentation]) -> list[GeneralPIIRepresentation]:
+        """Remove duplicates
+        """
+        nl = list(set(l))
+        return nl
 
     def parseAllGeneralVectorRecursive(self, pwStr: str, curVectors: list[GeneralPIIVector],
                                        outputList: list[GeneralPIIRepresentation]
