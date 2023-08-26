@@ -16,6 +16,22 @@ TRAINSET_PROPORTION = 0.5  # train set proportion
 
 
 class GeneralPIITrainMain(TestCase):
+    def test_train_generate_assess(self):
+        """Train, generate pattern and assess accuracy
+        """
+        print(f"[Train] procession start")
+        time.sleep(1)
+        self.test_train_general()
+        print(f"[Generate Pattern] procession start")
+        time.sleep(1)
+        self.test_generate_pattern()
+        print(f"[Clean Guess dir]")
+        time.sleep(1)
+        self.test_clean_guesses_dir()
+        print(f"[Assessment] procession start")
+        time.sleep(1)
+        self.test_accuracy_assessment()
+
     def test_train_general(self):
         piiFactory = GeneralPIIFactory.getInstance(proportion=TRAINSET_PROPORTION)
         piiFactory.process()
@@ -246,6 +262,7 @@ class BuildDatabase(TestCase):
 
         print(
             f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
+        threadpool.shutdown()
 
     def test_build(self):
         self.buildGeneralPwRepresentationTable()
@@ -276,17 +293,36 @@ class BuildDatabase(TestCase):
         _len = len(pwRepDict)
         print(f"Resolved:{_len}")
 
-        for pwStr, repUnit in pwRepDict.items():
+        executor = ThreadPoolExecutor()
+        futureList = list()
+
+        def insertUnit(pwStr: str, repUnit: RepUnit) -> int:
+            exceptionCount = 0
             try:
                 unit: PwRepUniqueUnit = DatabaseUtils.getGeneralIntermediateFromRepUnit(pwStr, repUnit)
                 transformer.Insert(unit)
             except Exception as e:
                 print(f"Exception occur: {str(e)}, pwStr: {pwStr}, RepUnit:{str(repUnit)}")
                 exceptionCount += 1
+            finally:
+                return exceptionCount
+
+        i = 0
+        for pwStr, repUnit in pwRepDict.items():
+            futureList.append(executor.submit(insertUnit, pwStr, repUnit))
+            i += 1
+            print(f"Submit progress:{i}/{_len}({(i / _len) * 100:.2f})")
+
+        i = 0
+        for future in concurrent.futures.as_completed(futureList):
+            exceptionCountAdd = future.result()
+            exceptionCount += exceptionCountAdd
             i += 1
             if i % 100 == 0:
                 print(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
+
         print(f"Completed! Total:{i}, total exception:{exceptionCount}")
+        executor.shutdown()
 
 
 class TestGeneralPIIStructureParser(TestCase):
