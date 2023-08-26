@@ -20,3 +20,4 @@ class RFParams:
     n_estimators = 30
     criterion = 'gini'
     min_samples_leaf = 10
+    max_features = 0.8

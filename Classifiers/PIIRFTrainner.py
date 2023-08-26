@@ -5,15 +5,19 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
 from Commons.Modes import Singleton
-from Parser.PIIDataTypes import *
 from Parser import Config
+from Parser.PIIDataTypes import *
+
 
 class PIIRFTrainner(Singleton):
     def __init__(self, features: list = None, labels: list = None) -> None:
         super().__init__()
         self._feature = features
         self._label = labels
-        self._tree = RandomForestClassifier(n_estimators=Config.RFParams.n_estimators, criterion=Config.RFParams.criterion, min_samples_leaf=Config.RFParams.min_samples_leaf)
+        self._tree = RandomForestClassifier(n_estimators=Config.RFParams.n_estimators,
+                                            criterion=Config.RFParams.criterion,
+                                            min_samples_leaf=Config.RFParams.min_samples_leaf,
+                                            max_features=Config.RFParams.max_features)
         self._clf = None
 
     @classmethod
@@ -111,7 +115,7 @@ class PIIRFTrainner(Singleton):
         vector = datagram._tovector()
         return self._classifyProba(vector, n)
 
-    def classifyPIIDatagramToProbaDict(self, datagram:PIIDatagram)->dict[int,float]:
+    def classifyPIIDatagramToProbaDict(self, datagram: PIIDatagram) -> dict[int, float]:
         """
         Input a `PIIDatagram`, output all classes with corresponding probability
 

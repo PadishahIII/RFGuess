@@ -336,6 +336,15 @@ class PIIUnitTransformer(DatabaseTransformer, Singleton):
             baseL.append(self.transform(unit))
         return baseL
 
+    def QueryWithLimit(self, offset: int = 0, limit: int = 1e6) -> list[PIIIntermediateUnit]:
+        """Get PIIIntermediateUnit
+        """
+        unitList: list[PIIUnit] = self.queryMethods.QueryWithLimit(offset, limit)
+        resList: list[PIIIntermediateUnit] = list()
+        for unit in unitList:
+            resList.append(self.transform(unit))
+        return resList
+
 
 class PwRepresentationTransformer(DatabaseTransformer, Singleton):
     """Transformer for `pwrepresentation` datatable
