@@ -695,8 +695,13 @@ class PIIToTagParser:
                 digitSegmentList.append(seg)
         if len(letterSegmentList) <= 0 and len(digitSegmentList) <= 0:
             raise Exceptions.PIIParserException("parse Account error")
-        d[BasicTypes.PIIType.AccountType.LetterSegment] = list(map(lambda x: x.s, letterSegmentList))
-        d[BasicTypes.PIIType.AccountType.DigitSegment] = list(map(lambda x: x.s, digitSegmentList))
+        letterSegStrList = list(map(lambda x: x.s, letterSegmentList))
+        digitSegStrList = list(map(lambda x: x.s, digitSegmentList))
+        letterSegStrSet = set(letterSegStrList) # remove duplicate
+        digitSegStrSet = set(digitSegStrList)
+
+        d[BasicTypes.PIIType.AccountType.LetterSegment] = list(letterSegStrSet)
+        d[BasicTypes.PIIType.AccountType.DigitSegment] = list(digitSegStrSet)
         return d
 
     @classmethod
