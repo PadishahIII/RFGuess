@@ -74,6 +74,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 3. Add email site as a new tag type
 4. Add FamilyName1st and GivenNameAbbr as new tag type
 5. Optimize account lds tag for all segments
+6. Accelerate the test procession with threadpool
 
 ### Accuracy assessment(8.25)
 1. Add basic patterns into generated patterns(like "N1","B2")

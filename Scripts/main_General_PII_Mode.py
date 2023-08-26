@@ -1,4 +1,7 @@
+import concurrent.futures
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from unittest import TestCase
 
 import joblib
@@ -183,14 +186,22 @@ class BuildDatabase(TestCase):
         print(f"keyList:{dataset.keyList}")
 
         transformer: GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
-        # transformer.queryMethods.DeleteAll()
+        transformer.queryMethods.DeleteAll()
         datasetIter: typing.Iterable[PIIDataUnit] = iter(dataset)
         i = 0
         repCount = 0
         updateCount = 0
         exceptionCount = 0
-        for unit in datasetIter:
+        timeUseList: list[float] = list()
+
+        threadpool = ThreadPoolExecutor()
+        countLock = threading.Lock()
+        futureList = list()
+
+        def parsePII(unit: PIIDataUnit) -> (int, int):
             pii = unit.pii
+            repCount = 0
+            exceptionCount = 0
             try:
                 piiParser = GeneralPIIStructureParser(pii)
                 piiStructure = piiParser.getGeneralPIIStructure(pwStr=unit.password)
@@ -202,12 +213,37 @@ class BuildDatabase(TestCase):
                     except Exception as e:
                         print(f"Exception occur: {str(e)}, pr: {str(pr)}")
                         exceptionCount += 1
+                    finally:
+                        return repCount, exceptionCount
             except Exception as e:
                 print(f"Exception occur: {str(e)}")
                 exceptionCount += 1
+            finally:
+                return repCount, exceptionCount
+
+        t1 = time.time()
+        for unit in datasetIter:
+            futureList.append(threadpool.submit(parsePII, unit))
             i += 1
-            if i % 100 == 0:
-                print(f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%)")
+            if i % 500 == 0:
+                print(f"Submit progress:{i}/{dataset.row}({(i / dataset.row) * 100:.2f})")
+
+        oldTime = time.time()
+        print(f"Submit tasks take:{int(oldTime - t1)}s")
+        i = 0
+        for future in concurrent.futures.as_completed(futureList):
+            repCountAdd, exceptionCountAdd = future.result()
+            repCount += repCountAdd
+            exceptionCount += exceptionCountAdd
+            i += 1
+            if i % 500 == 0:
+                timeUse = 1000 * (time.time() - oldTime)
+                timeUseList.append(timeUse)
+                remainSec = (dataset.row - i) / 500 * (sum(timeUseList) / len(timeUseList))
+                print(
+                    f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%), remain time:{int(remainSec) // 60}m{int(remainSec) % 60}s")
+                oldTime = time.time()
+
         print(
             f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
 
@@ -281,29 +317,28 @@ class TestGeneralPIIStructureParser(TestCase):
         for rep in piiS.piiRepresentationList:
             print(f"{piiStrParser.representationToStr(rep)}\n")
 
-
     def test_pii_structure_parser(self):
-        piiUnit:PIIUnit = PIIUnit(email="o0oo0o5353@vip.qq.com",
-                                  account="o0oo0o5353",
-                                  name="刘璋",
-                                  idCard="412301198604044512",
-                                  phoneNum="15503708389",
-                                  password="o0oo0o0000",
-                                  fullName="liu zhang")
-        pii,pwStr = Utils.parsePIIUnitToPIIAndPwStr(piiUnit)
+        piiUnit: PIIUnit = PIIUnit(email="o0oo0o5353@vip.qq.com",
+                                   account="o0oo0o5353",
+                                   name="刘璋",
+                                   idCard="412301198604044512",
+                                   phoneNum="15503708389",
+                                   password="o0oo0o0000",
+                                   fullName="liu zhang")
+        pii, pwStr = Utils.parsePIIUnitToPIIAndPwStr(piiUnit)
         print(pii.__dict__)
         # pw = "qq763699438"
         # pw = "ty333763699438"
         # pw = "haijing0325"
         pw = pwStr
 
-        parser:GeneralPIIStructureParser = GeneralPIIStructureParser(pii=pii)
-        struct:GeneralPIIStructure = parser.getGeneralPIIStructure(pw)
-        repParser:GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
+        parser: GeneralPIIStructureParser = GeneralPIIStructureParser(pii=pii)
+        struct: GeneralPIIStructure = parser.getGeneralPIIStructure(pw)
+        repParser: GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
 
-        tagParser:PIIFullTagParser = PIIFullTagParser(pii,nameFuzz=True)
+        tagParser: PIIFullTagParser = PIIFullTagParser(pii, nameFuzz=True)
         tagParser.parseTag()
-        tagList:list[Tag] = tagParser.getTagContainer().getTagList()
+        tagList: list[Tag] = tagParser.getTagContainer().getTagList()
         for tag in tagList:
             print(f"{tag.__dict__}")
 
@@ -312,4 +347,3 @@ class TestGeneralPIIStructureParser(TestCase):
         for rep in struct.repList[:10]:
             s = repParser.representationToStr(rep)
             print(f"{s}")
-
