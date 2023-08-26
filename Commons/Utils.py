@@ -219,7 +219,7 @@ def parsePIIUnitToPIIAndPwStr(unit: PIIUnit) -> (PII, str):
 
     d['email'] = unit.email if emailRst.match(unit.email) else DefaultPII.email
     d['account'] = unit.account if len(unit.account) > 0 else DefaultPII.account
-    d['name'] = unit.name if len(unit.name) > 0 else DefaultPII.name
+    d['name'] = unit.fullName if len(unit.fullName) > 0 else DefaultPII.name
     firstname = getFirstName(unit.fullName)
     d['firstName'] = firstname if len(firstname) > 0 else DefaultPII.firstName
     givenname = getGivenName(unit.fullName)

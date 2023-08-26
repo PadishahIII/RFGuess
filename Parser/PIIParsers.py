@@ -85,16 +85,45 @@ class PIITagContainer:
             else:
                 self._tagDict[k] = l
 
+    def filter(self, s: str) -> str:
+        """Remove special characters, ensure string only have digit, alpha and space character
+        """
+        ss = ''
+        for c in s:
+            if c.isdigit() or c.isalpha() or c.isspace():
+                ss += c
+        return ss
+
+    def filterDigit(self, s: str) -> str:
+        """Retain only digit
+        """
+        ss = ''
+        for c in s:
+            if c.isdigit() or c.isspace():
+                ss += c
+        return ss
+
     def _buildTagDict(self):
+        name = self.filter(self._pii.name)
+        firstName = self.filter(self._pii.firstName)
+        givenName = self.filter(self._pii.givenName)
+        if len(name) < 1:
+            name = BasicTypes.DefaultPII.name
+        if len(firstName) < 1:
+            firstName = BasicTypes.DefaultPII.firstName
+        if len(givenName) < 1:
+            givenName = BasicTypes.DefaultPII.givenName
+
         if self._nameFuzz is True:
-            for tu in Fuzzers.fuzzName(self._pii.name, self._pii.firstName, self._pii.givenName):
+            for tu in Fuzzers.fuzzName(name, firstName, givenName):
                 d = PIIToTagParser.parseNameToTagDict(tu[0], tu[1], tu[2])
                 self.updateDict(d)
         else:
-            d = PIIToTagParser.parseNameToTagDict(self._pii.name, self._pii.firstName, self._pii.givenName)
+            d = PIIToTagParser.parseNameToTagDict(name, firstName, givenName)
             self.updateDict(d)
 
-        d = PIIToTagParser.parseBirthdayToTagDict(self._pii.birthday)
+        birthday = self.filterDigit(self._pii.birthday)
+        d = PIIToTagParser.parseBirthdayToTagDict(birthday)
         self.updateDict(d)
 
         d = PIIToTagParser.parseAccountToTagDict(self._pii.account)
@@ -103,10 +132,12 @@ class PIITagContainer:
         d = PIIToTagParser.parseEmailToTagDict(self._pii.email)
         self.updateDict(d)
 
-        d = PIIToTagParser.parsePhoneNumToTagDict(self._pii.phoneNum)
+        phoneNum = self.filterDigit(self._pii.phoneNum)
+        d = PIIToTagParser.parsePhoneNumToTagDict(phoneNum)
         self.updateDict(d)
 
-        d = PIIToTagParser.parseIdCardNumToTagDict(self._pii.idcardNum)
+        idCard = self.filter(self._pii.idcardNum)
+        d = PIIToTagParser.parseIdCardNumToTagDict(idCard)
         self.updateDict(d)
 
     def _buildTagList(self):
@@ -273,21 +304,20 @@ class PIIDatagramFactory(Singleton):
         super().__init__()
         self.sectionFactory = PIISectionFactory.getInstance()
 
-    def getAllBasicPIIDatagramsDict(self)->dict[str,PIIDatagram]:
+    def getAllBasicPIIDatagramsDict(self) -> dict[str, PIIDatagram]:
         """Get pii datagrams with all pii types
         like "N1"
 
         """
-        d:dict[str,PIISection] = self.sectionFactory.getAllPIISectionDict()
-        resDict:dict[str,PIIDatagram]=dict()
-        for s,section in d.items():
-            sectionList = [section,]
-            endSection :PIISection = self.sectionFactory.getEndSection()
-            endLabel:PIILabel = PIILabel.create(endSection)
-            dg = PIIDatagram(sectionList=sectionList,label=endLabel,offsetInSegment=0,offsetInPassword=1,pwStr="")
+        d: dict[str, PIISection] = self.sectionFactory.getAllPIISectionDict()
+        resDict: dict[str, PIIDatagram] = dict()
+        for s, section in d.items():
+            sectionList = [section, ]
+            endSection: PIISection = self.sectionFactory.getEndSection()
+            endLabel: PIILabel = PIILabel.create(endSection)
+            dg = PIIDatagram(sectionList=sectionList, label=endLabel, offsetInSegment=0, offsetInPassword=1, pwStr="")
             resDict[s] = dg
         return resDict
-
 
     def tailorPIIDatagram(self, dg: PIIDatagram) -> PIIDatagram:
         """
@@ -591,7 +621,7 @@ class PIIToTagParser:
 
         """
         d = dict()
-        d[BasicTypes.PIIType.NameType.FullName] = name
+        d[BasicTypes.PIIType.NameType.FullName] = name.replace(" ","").replace("\t","")
         _l = givenName.split()
         l = [x for x in _l if len(x) > 0]
         givenNameWithoutSpace = ''.join(l)

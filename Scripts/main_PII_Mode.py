@@ -187,3 +187,20 @@ class TestPIIParsers(TestCase):
 
     def test_piitrain_vector_builder(self):
         self.fail()
+
+    def test_pii_container(self):
+        pii = BasicTypes.PII(account="yhang0607.",
+                             name=".yhangzhongjie",
+                             firstName="#yhang",
+                             givenName="%zhong jie",
+                             birthday=".a19820607",
+                             phoneNum="a@13222245678",
+                             email="3501111asd11@qq.com",
+                             idcardNum="@.1213213213")
+
+        parser:PIIFullTagParser = PIIFullTagParser(pii,nameFuzz=True)
+        parser.parseTag()
+        tagList:list[Tag]=parser.getTagContainer().getTagList()
+        for tag in tagList:
+            print(tag.__dict__)
+

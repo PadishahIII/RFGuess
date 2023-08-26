@@ -88,19 +88,20 @@ class GeneralPIITrainMain(TestCase):
         minId = transformer.getMinId()
         print(f"max:{maxId},min:{minId}")
         end = maxId + 1
-        # start = end - int((1 - TRAINSET_PROPORTION) * (maxId - minId))
-        start = end - int(0.0001 * (maxId - minId))
+        start = end - int((1 - TRAINSET_PROPORTION) * (maxId - minId))
+        # start = end - int(0.0001 * (maxId - minId))
         l: list[PIIIntermediateUnit] = transformer.getPIIIntermediateWithIdrange(start, end)
         print(f"number of test pii:{len(l)}")
 
         total = len(l)
         index = 0
         success = 0
+        saveLimit = 10  # maximum number of save files
         newlyGenerated = 0
         alreadyGenerated = 0
         successPwList = list()
         failPwList = list()
-        successRepDict = dict() # success guesses with frequency
+        successRepDict = dict()  # success guesses with frequency
 
         # PIIListLock = threading.Lock
         def searchStrInList(s: str, l: list[str]) -> bool:
@@ -110,27 +111,20 @@ class GeneralPIITrainMain(TestCase):
             else:
                 return False
 
+        def saveGuesses(l: list[str], savePath: str):
+            with open(savePath, "w") as f:
+                for s in l:
+                    f.write(f"{s}\n")
+
         for unit in l:
             h = unit.getHashBytes()
             hStr = binascii.hexlify(h).decode('utf8')
             pii, pwStr = transformer.transformIntermediateToPIIAndPw(unit)
 
-            # outputFile = filePattern.format(pwStr + "_" + unit.fullName)
-            # if os.path.exists(outputFile):
-            #     pass
-            #     # alreadyGenerated += 1
-            #     # # read already generated guesses
-            #     # with open(outputFile, "r") as f:
-            #     #     guesses = f.readlines()
-            # else:
-            #     newlyGenerated += 1
-            #     # generate guesses
-            #     generator.generateForPII(pii=pii, outputFile=outputFile, nameFuzz=True)
-            #     guesses = copy(generator.guesses)
+            outputFile = filePattern.format(pwStr + "_" + unit.fullName)
 
             generator.generateForPII(pii=pii, outputFile=None, nameFuzz=True)
             guesses = copy(generator.guesses)
-
 
             # match guesses and pwStr
             if searchStrInList(pwStr, guesses):
@@ -138,14 +132,17 @@ class GeneralPIITrainMain(TestCase):
                 successPwList.append(pwStr)
             else:
                 failPwList.append(pwStr)
+                if saveLimit > 0:
+                    saveGuesses(guesses, outputFile)
+                    saveLimit -= 1
 
             index += 1
             if index % 100 == 0:
-                print(f"Test progress: {index}/{total}, {100*(index/total):.2f}")
+                print(f"Test progress: {index}/{total}, {100 * (index / total):.2f}")
 
         print(f"Guess file newly generated:{newlyGenerated},already exists:{alreadyGenerated}")
         print(f"Test complete. success:{success}/{total}, accuracy:{success / total:.4f}")
-        print(f"successList:{successPwList}\nfail list:{failPwList}")
+        print(f"successList:{successPwList[:10]}...\nfail list:{failPwList[:10]}...")
 
     def test_output_clf(self):
         generator: GeneralPIIPatternGenerator = GeneralPIIPatternGenerator.getInstance("../../save_general.clf")
@@ -194,16 +191,20 @@ class BuildDatabase(TestCase):
         exceptionCount = 0
         for unit in datasetIter:
             pii = unit.pii
-            piiParser = GeneralPIIStructureParser(pii)
-            piiStructure = piiParser.getGeneralPIIStructure(pwStr=unit.password)
-            for rep in piiStructure.repList:
-                pr = transformer.transformParseunitToBaseunit(pwStr=unit.password, rep=rep)
-                try:
-                    transformer.Insert(pr)
-                    repCount += 1
-                except Exception as e:
-                    print(f"Exception occur: {str(e)}, pr: {str(pr)}")
-                    exceptionCount += 1
+            try:
+                piiParser = GeneralPIIStructureParser(pii)
+                piiStructure = piiParser.getGeneralPIIStructure(pwStr=unit.password)
+                for rep in piiStructure.repList:
+                    pr = transformer.transformParseunitToBaseunit(pwStr=unit.password, rep=rep)
+                    try:
+                        transformer.Insert(pr)
+                        repCount += 1
+                    except Exception as e:
+                        print(f"Exception occur: {str(e)}, pr: {str(pr)}")
+                        exceptionCount += 1
+            except Exception as e:
+                print(f"Exception occur: {str(e)}")
+                exceptionCount += 1
             i += 1
             if i % 100 == 0:
                 print(f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%)")
