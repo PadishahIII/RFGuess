@@ -137,66 +137,17 @@ class TestPIIParsers(TestCase):
         repStr = parser.representationToStr(rep)
         print(f"rep str: {repStr}")
 
-    def test_check_piiname_type(self):
-        self.fail()
-
-    def test_parse_str_to_piistructure(self):
-        self.fail()
-
-    def test_parse_all_piitag_recursive(self):
-        self.fail()
-
-    def test_convert_tag_list_to_piivector_list(self):
-        self.fail()
-
-    def test_piivector(self):
-        self.fail()
-
-    def test_piirepresentation(self):
-        self.fail()
-
-    def test_piistructure(self):
-        self.fail()
-
-    def test_tag(self):
-        self.fail()
-
-    def test_piitag_container(self):
-        self.fail()
-
-    def test_fuzzers(self):
-        self.fail()
-
-    def test_ldsstepper(self):
-        self.fail()
-
-    def test_email_parser(self):
-        self.fail()
-
-    def test_piifull_tag_parser(self):
-        self.fail()
-
-    def test_piito_tag_parser(self):
-        self.fail()
-
-    def test_piistructure_parser(self):
-        self.fail()
-
-    def test_datagram(self):
-        self.fail()
-
-    def test_piitrain_vector_builder(self):
-        self.fail()
 
     def test_pii_container(self):
-        pii = BasicTypes.PII(account="yhang0607.",
-                             name=".yhangzhongjie",
+        pii = BasicTypes.PII(account="ty763699438",
+                             name="tianyu",
                              firstName="#yhang",
                              givenName="%zhong jie",
                              birthday=".a19820607",
-                             phoneNum="a@13222245678",
-                             email="3501111asd11@qq.com",
-                             idcardNum="@.1213213213")
+                             phoneNum="15051401132",
+                             email="763699438@qq.com",
+                             idcardNum="429004199008100018")
+        pw = "qq763699438"
 
         parser:PIIFullTagParser = PIIFullTagParser(pii,nameFuzz=True)
         parser.parseTag()
@@ -204,3 +155,33 @@ class TestPIIParsers(TestCase):
         for tag in tagList:
             print(tag.__dict__)
 
+    def test_pii_structure_parser(self):
+        piiUnit:PIIUnit = PIIUnit(email="190466944@qq.com",
+                                  account="131312",
+                                  name="罗小浩",
+                                  idCard="42098419921012047X",
+                                  phoneNum="13189817093",
+                                  password="luo131312",
+                                  fullName="luo xiao hao")
+        pii,pwStr = Utils.parsePIIUnitToPIIAndPwStr(piiUnit)
+        print(pii.__dict__)
+        # pw = "qq763699438"
+        # pw = "ty333763699438"
+        # pw = "haijing0325"
+        pw = pwStr
+
+        parser:GeneralPIIStructureParser = GeneralPIIStructureParser(pii=pii)
+        struct:GeneralPIIStructure = parser.getGeneralPIIStructure(pw)
+        repParser:GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
+
+        tagParser:PIIFullTagParser = PIIFullTagParser(pii,nameFuzz=True)
+        tagParser.parseTag()
+        tagList:list[Tag] = tagParser.getTagContainer().getTagList()
+        for tag in tagList:
+            print(f"{tag.__dict__}")
+
+        print(f"Rep:")
+
+        for rep in struct.repList:
+            s = repParser.representationToStr(rep)
+            print(f"{s}")

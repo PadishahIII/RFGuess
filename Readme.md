@@ -70,6 +70,10 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 ## Journal
 ### Optimize(8.26)
 1. Comparing(7:3 train:test, 11w): model with 'gini': 566M, 0.3193; model with 'entropy': 563M, 0.3193
+2. (5:5 train:test, 11w): model with 'gini': 407M, 0.3102;
+3. Add email site as a new tag type
+4. Add FamilyName1st and GivenNameAbbr as new tag type
+5. Optimize account lds tag for all segments
 
 ### Accuracy assessment(8.25)
 1. Add basic patterns into generated patterns(like "N1","B2")

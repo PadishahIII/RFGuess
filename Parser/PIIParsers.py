@@ -572,6 +572,18 @@ class EmailParser:
             return None
         return m.group(1)
 
+    @classmethod
+    def parseEmailSite(cls, s: str) -> str:
+        """Extract email site like qq in qq.com
+        Returns:
+            site string or None
+        """
+        i = s.index("@")
+        if i == len(s) - 1:
+            return None
+        sub = s[i + 1:]
+        return sub.split('.')[0]
+
 
 # (second layer)parse a pii data into pii tags
 # nameFuzz: employ fuzz on certain pii types like birthday
@@ -621,7 +633,7 @@ class PIIToTagParser:
 
         """
         d = dict()
-        d[BasicTypes.PIIType.NameType.FullName] = name.replace(" ","").replace("\t","")
+        d[BasicTypes.PIIType.NameType.FullName] = name.replace(" ", "").replace("\t", "")
         _l = givenName.split()
         l = [x for x in _l if len(x) > 0]
         givenNameWithoutSpace = ''.join(l)
@@ -634,6 +646,15 @@ class PIIToTagParser:
 
         for k, v in d.items():
             d[k] = [v, ]
+
+        d[BasicTypes.PIIType.NameType.FamilyName1st] = [firstName[0].upper(), firstName[0].lower()]
+        givennameAbbr = ""  # zj
+        gl = givenName.split()
+        for c in gl:
+            if c is not None and len(c) > 0:
+                givennameAbbr += c[0]
+        d[BasicTypes.PIIType.NameType.GivenNameAbbr] = [givennameAbbr]
+
         return d
 
     @classmethod
@@ -665,26 +686,23 @@ class PIIToTagParser:
         segList = LDSStepper.getAllSegment(account)
         d = dict()
         d[BasicTypes.PIIType.AccountType.Full] = [account, ]
-        letterSegment = None
-        digitSegment = None
+        letterSegmentList: list[BasicTypes.LDSSegment] = list()
+        digitSegmentList: list[BasicTypes.LDSSegment] = list()
         for seg in segList:
             if seg.type == BasicTypes.PIIType.BaseTypes.L:
-                if letterSegment is None:
-                    letterSegment = seg
+                letterSegmentList.append(seg)
             elif seg.type == BasicTypes.PIIType.BaseTypes.D:
-                if digitSegment is None:
-                    digitSegment = seg
-        if letterSegment is None and digitSegment is None:
+                digitSegmentList.append(seg)
+        if len(letterSegmentList) <= 0 and len(digitSegmentList) <= 0:
             raise Exceptions.PIIParserException("parse Account error")
-        if letterSegment is not None:
-            d[BasicTypes.PIIType.AccountType.LetterSegment] = [letterSegment.s, ]
-        if digitSegment is not None:
-            d[BasicTypes.PIIType.AccountType.DigitSegment] = [digitSegment.s, ]
+        d[BasicTypes.PIIType.AccountType.LetterSegment] = list(map(lambda x: x.s, letterSegmentList))
+        d[BasicTypes.PIIType.AccountType.DigitSegment] = list(map(lambda x: x.s, digitSegmentList))
         return d
 
     @classmethod
     def parseEmailToTagDict(cls, email: str) -> typing.Dict[BasicTypes.PIIType.EmailPrefixType, list]:
         prefix = EmailParser.parseEmailPrefix(email)
+        site = EmailParser.parseEmailSite(email)
         if prefix is None:
             raise Exceptions.PIIParserException(f"Invaild email : {email}")
         d = dict()
@@ -707,6 +725,8 @@ class PIIToTagParser:
             d[BasicTypes.PIIType.EmailPrefixType.LetterSegment] = [letterSeg.s, ]
         if digitSeg is not None:
             d[BasicTypes.PIIType.EmailPrefixType.DigitSegment] = [digitSeg.s, ]
+        if site is not None and len(site) > 0:
+            d[BasicTypes.PIIType.EmailPrefixType.Site] = [site, ]
 
         return d
 

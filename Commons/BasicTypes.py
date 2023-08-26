@@ -33,6 +33,8 @@ class PIIType:
         GivenName1stPlusFamilyName = 5
         FamilyName1stPlusGivenName = 6
         FamilyNameCapitalized = 7  # Wang
+        FamilyName1st = 8 # w
+        GivenNameAbbr = 9 # zj
 
     class BirthdayType(Enum):
         FullYMD = 1  # 19820607
@@ -55,6 +57,8 @@ class PIIType:
         FullPreix = 1  # loveu1314 from loveu1314@aa.com
         LetterSegment = 2  # loveu
         DigitSegment = 3  # 1314
+        Site = 4 # qq in qq.com, 163 in 163.com
+
 
     class PhoneNumberType(Enum):
         FullNumber = 1
