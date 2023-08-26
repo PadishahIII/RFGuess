@@ -9,7 +9,7 @@ from Generators.PasswordGuessGenerator import *
 from Parser.Factory import *
 from Parser.PIIPreprocessor import *
 
-TRAINSET_PROPORTION = 0.7  # train set proportion
+TRAINSET_PROPORTION = 0.5  # train set proportion
 
 
 class GeneralPIITrainMain(TestCase):
@@ -224,10 +224,6 @@ class BuildDatabase(TestCase):
         for t in transformers:
             t.rebuild()
         print(f"Re-generate Complete")
-
-    def test_rebuild(self):
-        transformer: GeneralRepFrequencyTransformer = GeneralRepFrequencyTransformer.getInstance()
-        transformer.rebuild()
 
     def test_build_general_unique(self):
         """Build unique datatable

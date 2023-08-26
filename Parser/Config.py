@@ -18,6 +18,6 @@ class TableNames:
 
 class RFParams:
     n_estimators = 30
-    criterion = 'gini'
+    criterion = 'entrpy'
     min_samples_leaf = 10
     max_features = 0.8
