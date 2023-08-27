@@ -38,6 +38,7 @@ class GeneralPasswordGenerator(Singleton):
         return super().getInstance(patternFile)
 
     def init(self):
+        self.guesses:list[str] = list()
         self.datagramFactory: GeneralPIIDatagramFactory = GeneralPIIDatagramFactory.getInstance()
         self.sectionFactory: GeneralPIISectionFactory = GeneralPIISectionFactory.getInstance()
         print(f"Load pattern file: {self.patternFile}")
