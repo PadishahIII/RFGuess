@@ -168,17 +168,23 @@ class GeneralPIIPatternGenerator:
             sl.append(self.datagramFactory.parseGeneralPIIDatagramToStr(dg))
         return sl
 
-    def getPatternStrList(self) -> list[str]:
+    def getPatternStrList(self, limit: int = 1e4) -> list[str]:
         """Transform datagram list into str list, and add some basic patterns to list
+        Args:
+            limit (int): maximum pattern number
+
         """
-        l, pl = self.generatePattern()
+        basicL: list[str] = self.getBasicPIIPatterns()
+        l, pl = self.generatePattern(limit - len(basicL))
         sl: list[str] = [self.datagramFactory.parseGeneralPIIDatagramToStr(dg) for dg in l]
-        newSl = self.getBasicPIIPatterns() + sl
+        newSl = basicL + sl
         return newSl
 
-    def generatePattern(self) -> tuple[list[GeneralPIIDatagram], list[float]]:
+    def generatePattern(self, limit: int = 1e4) -> tuple[list[GeneralPIIDatagram], list[float]]:
         """
         Generate patterns using RF classifier
+        Args:
+            limit (int): maximum pattern number
         Returns:
             list[GeneralPIIDatagram], list[float] : patternList and probability list in descending order
 
@@ -196,12 +202,15 @@ class GeneralPIIPatternGenerator:
         probaDict[beginDg] = 1
         _num_discarded = 0
         _i = 0
+        patternNum = 0
         probaStatisticList: list[float] = list()  # for statistic
 
-        while len(prefixList) > 0:
+        while len(prefixList) > 0 and patternNum < limit:
             currentPrefix: GeneralPIIDatagram = prefixList.pop()
             pd: dict[int, float] = self.classifyMultiFromGeneralPIIDatagramToProbaDict(currentPrefix)
             for c, proba in pd.items():
+                if patternNum >= limit:
+                    break
                 if proba == 0.0:
                     continue
                 currentProba = probaDict[currentPrefix]
@@ -215,6 +224,7 @@ class GeneralPIIPatternGenerator:
                         # output
                         patternList.append(newPrefix)
                         probaList.append(currentProba)  # exclude proba of EndSymbol
+                        patternNum += 1
                         # patternProbaDict[currentPrefix] = currentProba
                     else:
                         prefixList.append(newPrefix)
@@ -226,9 +236,9 @@ class GeneralPIIPatternGenerator:
                     print(
                         f"Progress: {_i}, remain prefix: {len(prefixList)}, current prefix len: {len(prefixList[-1].sectionList)}, completed: {len(patternList)}, discarded:{_num_discarded}")
 
-        probaArray = np.array(probaStatisticList)
-        m = np.average(probaArray)
-        print(f"proba average({len(probaArray)}): {m}, min: {np.min(probaArray)}, max: {np.max(probaArray)}")
+        # probaArray = np.array(probaStatisticList)
+        # m = np.average(probaArray)
+        # print(f"proba average({len(probaArray)}): {m}, min: {np.min(probaArray)}, max: {np.max(probaArray)}")
 
         print(f"generatePattern:discarded:{_num_discarded}")
         pp = zip(patternList, probaList)
