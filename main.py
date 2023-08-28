@@ -11,7 +11,6 @@ if __name__ == '__main__':
     ui.mainWindow = MainWindow
 
     slots = Slots(ui)
-    sys.excepthook = slots.excepthook
 
     MainWindow.show()
     sys.exit(app.exec_())

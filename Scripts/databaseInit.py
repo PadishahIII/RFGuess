@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker, validates, scoped_session
 
 from Commons import pinyinUtils
 from Parser.Config import TableNames
+import Parser.Config as Config
 
 Base = declarative_base()
 emailRst = re.compile(r".+?@.+?")
@@ -22,7 +23,7 @@ logging.basicConfig()  # filename="database.log"
 logger = logging.getLogger("sqlalchemy.engine")
 logger.setLevel(logging.CRITICAL)
 
-engine = sqlalchemy.create_engine(url="mysql://root:914075@localhost/dataset12306")
+engine = sqlalchemy.create_engine(url=Config.DatabaseUrl)
 
 sessionFactory = sessionmaker(bind=engine)
 Session = scoped_session(sessionFactory)

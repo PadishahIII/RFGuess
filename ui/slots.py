@@ -55,7 +55,7 @@ class Slots:
         self.clsFile = ""
         self.patternSavePath = "patterns.txt"
         self.patternGenerateLimit = 0
-        self.patternLimitOptions = ['100', '500', '1000', '2000', '3000', '4000', '5000']
+        self.patternLimitOptions = ['100', '500', '1000', '2000']
         self.patternGenerator: GeneralPIIPatternGenerator = None
         self.patternProgressThreadExitFlag = threading.Event()
 
@@ -369,7 +369,7 @@ class Slots:
         timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
         self.mainWindow.patternTextBrowser.append(f"[{timeStr}] {s}")
 
-    def excepthook(type, value, traceback):
+    def excepthook(t, value, traceback):
         """Self-defined global exception handler
         """
         # Create a QMessageBox to display the exception details
@@ -385,4 +385,4 @@ class Slots:
         error_msg_box.exec_()
 
         # Call the default exception handler
-        sys.__excepthook__(type, value, traceback)
+        sys.__excepthook__(t, value, traceback)
