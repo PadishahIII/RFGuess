@@ -4,6 +4,7 @@ import sys
 from PyQt5.QtCore import pyqtSignal, QDate, Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
+from Generators.GeneralPIIGenerators import *
 from Generators.PasswordGuessGenerator import *
 from ui.mainWindow import *
 
@@ -12,15 +13,16 @@ class Slots:
 
     def __init__(self, mainWindow: Ui_MainWindow) -> None:
         self.patterns: list[str] = list()
-        self.limitOptions = ['500', '1000', '2000', '3000', '5000']
-        self.limit: int = 0
+        self.guessLimitOptions = ['500', '1000', '2000', '3000', '5000']
+        self.guessLimit: int = 0  # guess limit
         self.guesses: list[str] = list()
         self.outputFile = "guess_test.txt"
         self.patternFile = "patterns_general.txt"
         self.pii: PII = None
-        self.generator: GeneralPasswordGenerator = None
+        self.guessGenerator: GeneralPasswordGenerator = None
         self.progressSignal = pyqtSignal(int)
 
+        # guess generator tab
         self.mainWindow: Ui_MainWindow = mainWindow
         self.mainWindow.fileBrowserBtn.clicked.connect(self.openPatternFileSlot)
         self.mainWindow.patternFileEdit.textChanged.connect(self.patternFileEditChangedSlot)
@@ -31,6 +33,19 @@ class Slots:
         self.mainWindow.loadPIIBtn.clicked.connect(self.loadPIIJsonSlot)
         self.mainWindow.outputEdit.setText(self.outputFile)
         self.mainWindow.patternFileEdit.setText(self.patternFile)
+
+        # pattern generator tab
+        self.clsFile = ""
+        self.patternSavePath = "patterns.txt"
+        self.patternGenerateLimit = 0
+        self.patternLimitOptions = ['1000', '2000', '3000', '4000', '5000']
+        self.patternGenerator: GeneralPIIPatternGenerator = None
+
+        self.mainWindow.patternOutputEdit.setText(self.patternSavePath)
+        self.mainWindow.loadClfBtn.clicked.connect(self.loadClfSlot)
+        self.mainWindow.clfFileBrowserBtn.clicked.connect(self.openClfFileSlot)
+        self.mainWindow.patternSaveBrowserBtn.clicked.connect(self.selectPatternOutputSlot)
+        self.mainWindow.patternLimitComboBox.addItems(self.patternLimitOptions)
 
         self.buildLimitComboBox()
         self.buildUsage()
@@ -77,7 +92,7 @@ class Slots:
             return False
 
     def buildLimitComboBox(self):
-        self.mainWindow.limitComboBox.addItems(self.limitOptions)
+        self.mainWindow.limitComboBox.addItems(self.guessLimitOptions)
 
     def getPII(self) -> bool:
         idCard = self.mainWindow.idCardEdit.text()
@@ -129,58 +144,58 @@ class Slots:
         if self.outputFile == None or len(self.outputFile) <= 0:
             self.patchDialog("Please assign an output file path")
             return
-        if self.limit <= 0:
-            self.patchDialog(f"Invalid limit value: {self.limit}")
+        if self.guessLimit <= 0:
+            self.patchDialog(f"Invalid limit value: {self.guessLimit}")
             return
         if len(self.patterns) <= 0:
             self.patchDialog(f"There is no pattern loaded")
             return
-        self.printLog(f"PII Data:{self.pii.__dict__}")
-        self.printLog(f"Start generating guesses")
+        self.printGuessLog(f"PII Data:{self.pii.__dict__}")
+        self.printGuessLog(f"Start generating guesses")
         self.generateGuess()
 
     def generateGuess(self):
-        self.generator.patternFile = self.patternFile
-        self.generator.init()
-        self.printLog(f"Preparing PII tag container...")
-        self.generator.pii = self.pii
-        self.generator.outputFile = self.outputFile
-        self.generator.piiTagContainer = PIITagContainer(pii=self.generator.pii, nameFuzz=True)
-        self.generator.piiTagContainer.parse()
-        self.generator.tagDict = self.generator.piiTagContainer.getTagDict()  # specified pii type to string
+        self.guessGenerator.patternFile = self.patternFile
+        self.guessGenerator.init()
+        self.printGuessLog(f"Preparing PII tag container...")
+        self.guessGenerator.pii = self.pii
+        self.guessGenerator.outputFile = self.outputFile
+        self.guessGenerator.piiTagContainer = PIITagContainer(pii=self.guessGenerator.pii, nameFuzz=True)
+        self.guessGenerator.piiTagContainer.parse()
+        self.guessGenerator.tagDict = self.guessGenerator.piiTagContainer.getTagDict()  # specified pii type to string
 
-        self.generator.eliminatePatternDatagrams()
-        self.printLog(
-            f"Number of patterns after eliminating: {len(self.patterns)}, remove: {len(self.generator.initPatterns) - len(self.patterns)}")
+        self.guessGenerator.eliminatePatternDatagrams()
+        self.printGuessLog(
+            f"Number of patterns after eliminating: {len(self.patterns)}, remove: {len(self.guessGenerator.initPatterns) - len(self.patterns)}")
 
-        self.printLog(f"Start generating guesses...")
+        self.printGuessLog(f"Start generating guesses...")
 
-        _len = len(self.generator.patterns)
-        _max = min(_len, self.limit)
+        _len = len(self.guessGenerator.patterns)
+        _max = min(_len, self.guessLimit)
         _i = 0
         _progress = 0
-        for dg in self.generator.patterns:
-            guesses: list[str] = self.generator.generateGuessFromPatternDatagram(dg)
-            self.generator.guesses += guesses
-            if len(self.generator.guesses) >= self.limit:
+        for dg in self.guessGenerator.patterns:
+            guesses: list[str] = self.guessGenerator.generateGuessFromPatternDatagram(dg)
+            self.guessGenerator.guesses += guesses
+            if len(self.guessGenerator.guesses) >= self.guessLimit:
                 break
-            _progress = min(int(len(self.generator.guesses) / _max * 100), 100)
+            _progress = min(int(len(self.guessGenerator.guesses) / _max * 100), 100)
             self.mainWindow.progressBar.setValue(_progress)
 
-        primaryLen = len(self.generator.guesses)
-        self.guesses = self.generator.eliminateDuplicateGuess()
-        newLen = len(self.generator.guesses)
-        self.printLog(f"Generating complete, number of guesses: {primaryLen}")
-        self.printLog(f"Eliminate guesses: remove {primaryLen - newLen} duplicates, final guess number: {newLen}")
-        if self.generator.outputFile != None and len(self.generator.outputFile) > 0:
-            self.generator.save()
-        self.printLog(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n")
+        primaryLen = len(self.guessGenerator.guesses)
+        self.guesses = self.guessGenerator.eliminateDuplicateGuess()
+        newLen = len(self.guessGenerator.guesses)
+        self.printGuessLog(f"Generating complete, number of guesses: {primaryLen}")
+        self.printGuessLog(f"Eliminate guesses: remove {primaryLen - newLen} duplicates, final guess number: {newLen}")
+        if self.guessGenerator.outputFile != None and len(self.guessGenerator.outputFile) > 0:
+            self.guessGenerator.save()
+        self.printGuessLog(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n")
         self.patchDialog(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n", title="Generate Guesses Complete",
                          icon=QMessageBox.Information)
 
     def setLimitOptionSlot(self):
         limitStr = self.mainWindow.limitComboBox.currentText()
-        self.limit = int(limitStr)
+        self.guessLimit = int(limitStr)
 
     def openPatternFileSlot(self):
         self.patternFile = ""
@@ -188,15 +203,27 @@ class Slots:
         self.patternFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select pattern file")
         self.mainWindow.patternFileEdit.setText(self.patternFile)
 
+    def openClfFileSlot(self):
+        self.clsFile = ""
+        file_dialog = QFileDialog()
+        self.clsFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select clf file (.clf)")
+        self.mainWindow.clfFileEdit.setText(self.clsFile)
+
     def selectOutputFileSlot(self):
         self.outputFile = ""
         file_path, _ = QFileDialog.getSaveFileName(self.mainWindow.mainWindow, "Save File", "", "Text Files (*.txt)")
         self.outputFile = file_path
         self.mainWindow.outputEdit.setText(self.outputFile)
 
+    def selectPatternOutputSlot(self):
+        self.patternSavePath = ""
+        self.patternSavePath, _ = QFileDialog.getSaveFileName(self.mainWindow.mainWindow, "Save Pattern File", "",
+                                                              "Text Files (*.txt)")
+        self.mainWindow.patternOutputEdit.setText(self.patternSavePath)
+
     def patternFileEditChangedSlot(self):
         newContent = self.mainWindow.patternFileEdit.text()
-        self.printLog(f"pattern file: {newContent}")
+        self.printGuessLog(f"pattern file: {newContent}")
 
     def loadPatternSlot(self):
         patternFile = self.mainWindow.patternFileEdit.text()
@@ -211,8 +238,20 @@ class Slots:
             self.patchDialog(f"Empty pattern file: {patternFile}")
         else:
             self.patchDialog(f"Load patterns: {len(self.patterns)}", title="Success", icon=QMessageBox.Information)
-            self.printLog(f"Load patterns: {len(self.patterns)}")
-            self.generator: GeneralPasswordGenerator = GeneralPasswordGenerator.getInstance(self.patternFile)
+            self.printGuessLog(f"Load patterns: {len(self.patterns)}")
+            self.guessGenerator: GeneralPasswordGenerator = GeneralPasswordGenerator.getInstance(self.patternFile)
+
+    def loadClfSlot(self):
+        self.clsFile = self.mainWindow.clfFileEdit.text()
+        if not os.path.exists(self.clsFile):
+            self.patchDialog(f"Classifier file: {self.clsFile} not exists")
+        try:
+            self.patternGenerator = GeneralPIIPatternGenerator.getInstance(self.clsFile)
+            self.printPatternLog(f"Load classifier object success")
+            self.patchDialog(f"Load classifier object success", title="Success", icon=QMessageBox.Information)
+        except Exception as e:
+            self.patchDialog(f"Load classifier object failed: {e}")
+            self.patternGenerator = None
 
     def patchDialog(self, content: str, title: str = "Error", icon=QMessageBox.Critical):
         error_box = QMessageBox()
@@ -222,10 +261,15 @@ class Slots:
         error_box.setStandardButtons(QMessageBox.Ok)
         error_box.exec_()
 
-    def printLog(self, s: str):
+    def printGuessLog(self, s: str):
         cur = datetime.datetime.now()
         timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
         self.mainWindow.textBrowser.append(f"[{timeStr}] {s}")
+
+    def printPatternLog(self, s: str):
+        cur = datetime.datetime.now()
+        timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
+        self.mainWindow.patternTextBrowser.append(f"[{timeStr}] {s}")
 
     def excepthook(type, value, traceback):
         """Self-defined global exception handler
