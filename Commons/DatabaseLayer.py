@@ -2,6 +2,8 @@ from Commons.Property import *
 from Commons.Utils import Serializer
 from Parser.GeneralPIIDataTypes import *
 from Scripts.databaseInit import *
+import logging
+
 
 '''
 Property Transformers
