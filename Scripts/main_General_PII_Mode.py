@@ -40,7 +40,7 @@ class GeneralPIITrainMain(TestCase):
         print(f"\nStart Training...")
         trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
         trainner.train()
-        savePath = "../../save_full.clf"
+        savePath = "../../save_general.clf"
         joblib.dump(trainner.getClf(), savePath)
         print(f"Train finish, saved to {savePath}")
 
