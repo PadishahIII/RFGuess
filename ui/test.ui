@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1428</width>
-    <height>534</height>
+    <width>1434</width>
+    <height>618</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -563,9 +563,9 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>180</y>
+        <y>200</y>
         <width>1241</width>
-        <height>261</height>
+        <height>321</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -580,7 +580,7 @@ p, li { white-space: pre-wrap; }
             <x>0</x>
             <y>0</y>
             <width>1237</width>
-            <height>257</height>
+            <height>317</height>
            </rect>
           </property>
           <widget class="QTextBrowser" name="trainTabTextBrowser">
@@ -589,7 +589,7 @@ p, li { white-space: pre-wrap; }
              <x>0</x>
              <y>0</y>
              <width>1241</width>
-             <height>311</height>
+             <height>301</height>
             </rect>
            </property>
           </widget>
@@ -597,19 +597,6 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
       </layout>
-     </widget>
-     <widget class="QProgressBar" name="trainTabProgressBar">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>440</y>
-        <width>1241</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="value">
-       <number>0</number>
-      </property>
      </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_2">
       <property name="geometry">
@@ -664,45 +651,6 @@ p, li { white-space: pre-wrap; }
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="initDatabaseBtn">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>130</y>
-        <width>131</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Init Database</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="loadPIIDataBtn">
-      <property name="geometry">
-       <rect>
-        <x>190</x>
-        <y>130</y>
-        <width>151</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Load PII Data</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="analyzePIIBtn">
-      <property name="geometry">
-       <rect>
-        <x>380</x>
-        <y>130</y>
-        <width>151</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Analyze PII Data</string>
-      </property>
-     </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_3">
       <property name="geometry">
        <rect>
@@ -739,149 +687,6 @@ p, li { white-space: pre-wrap; }
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="trainModelBtn">
-      <property name="geometry">
-       <rect>
-        <x>580</x>
-        <y>130</y>
-        <width>151</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Train Model</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="assessBtn">
-      <property name="geometry">
-       <rect>
-        <x>790</x>
-        <y>130</y>
-        <width>151</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Assess Accuracy</string>
-      </property>
-     </widget>
-     <widget class="QCommandLinkButton" name="commandLinkButton">
-      <property name="geometry">
-       <rect>
-        <x>160</x>
-        <y>120</y>
-        <width>31</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-     <widget class="QCommandLinkButton" name="commandLinkButton_2">
-      <property name="geometry">
-       <rect>
-        <x>330</x>
-        <y>120</y>
-        <width>31</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-     <widget class="QCommandLinkButton" name="commandLinkButton_3">
-      <property name="geometry">
-       <rect>
-        <x>530</x>
-        <y>120</y>
-        <width>31</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-     <widget class="QCommandLinkButton" name="commandLinkButton_4">
-      <property name="geometry">
-       <rect>
-        <x>730</x>
-        <y>120</y>
-        <width>31</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-     <widget class="QLabel" name="initDatabaseStatusLabel">
-      <property name="geometry">
-       <rect>
-        <x>70</x>
-        <y>160</y>
-        <width>54</width>
-        <height>12</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Pass</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="loadPIIDataStatusLabel">
-      <property name="geometry">
-       <rect>
-        <x>250</x>
-        <y>160</y>
-        <width>54</width>
-        <height>12</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Pass</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="analyzePIIStatusLabel">
-      <property name="geometry">
-       <rect>
-        <x>440</x>
-        <y>160</y>
-        <width>54</width>
-        <height>12</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Pass</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="trainModelStatusLabel">
-      <property name="geometry">
-       <rect>
-        <x>640</x>
-        <y>160</y>
-        <width>54</width>
-        <height>12</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Pass</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="assessStatusLabel">
-      <property name="geometry">
-       <rect>
-        <x>850</x>
-        <y>160</y>
-        <width>54</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Fail</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="checkStatusBtn">
       <property name="geometry">
        <rect>
@@ -894,6 +699,103 @@ p, li { white-space: pre-wrap; }
       <property name="text">
        <string>Update Status</string>
       </property>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>140</y>
+        <width>1061</width>
+        <height>59</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="1">
+        <widget class="QPushButton" name="loadPIIDataBtn">
+         <property name="text">
+          <string>Load PII Data</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QPushButton" name="initDatabaseBtn">
+         <property name="text">
+          <string>Init Database</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QPushButton" name="trainModelBtn">
+         <property name="text">
+          <string>Train Model</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="analyzePIIBtn">
+         <property name="text">
+          <string>Analyze PII Data</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="QLabel" name="assessStatusLabel">
+         <property name="text">
+          <string>Fail</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QLabel" name="trainModelStatusLabel">
+         <property name="text">
+          <string>Pass</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QPushButton" name="assessBtn">
+         <property name="text">
+          <string>Assess Accuracy</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QLabel" name="analyzePIIStatusLabel">
+         <property name="text">
+          <string>Fail</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="loadPIIDataStatusLabel">
+         <property name="text">
+          <string>Fail</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="initDatabaseStatusLabel">
+         <property name="text">
+          <string>Fail</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </widget>
@@ -915,13 +817,26 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;http://www.baidu.com&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;train your own model&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
+   <widget class="QProgressBar" name="trainTabProgressBar">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>550</y>
+      <width>1241</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="value">
+     <number>0</number>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1428</width>
+     <width>1434</width>
      <height>22</height>
     </rect>
    </property>

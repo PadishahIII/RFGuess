@@ -137,6 +137,7 @@ class Slots:
         self.engine = None  # database engine
         self.logFormater = logging.Formatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
         self.loadPIIDataProgressExitFlag = threading.Event()
+        self.analyzePIIDataProgressExitFlag = threading.Event()
 
         self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
         self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
@@ -152,7 +153,6 @@ class Slots:
         self.mainWindow.trainModelBtn.adjustSize()
         self.mainWindow.checkStatusBtn.clicked.connect(self.checkDbStatusBtnSlot)
         self.mainWindow.checkStatusBtn.adjustSize()
-
 
         self.initAllStatus()
         self.redirect_logger()
@@ -635,9 +635,21 @@ class Slots:
             self.patchDialog(f"Pii file not exists: {self.piiFile}")
             return
 
+        def startLoadPIIDataProgressTracking():
+            while not self.loadPIIDataProgressExitFlag.is_set():
+                progress = databaseInit.ProgressTracker.load_pii_data_progress
+                limit = databaseInit.ProgressTracker.load_pii_data_limit
+                proportion = int(progress / limit * 100)
+                self.mainWindow.trainTabProgressBar.setValue(proportion)
+                time.sleep(0.5)
+            self.mainWindow.trainTabProgressBar.setValue(100)
+
+        progress_thread = threading.Thread(target=startLoadPIIDataProgressTracking)
+        progress_thread.start()
+
         def run():
             try:
-                databaseInit.LoadDataset(self.piiFile, start=0, limit=1000, clear=True, update=False)
+                databaseInit.LoadDataset(self.piiFile, start=0, limit=500, clear=True, update=False)
                 self.setPhasePassed(self.loadPIIDataStatus)
                 self.printTrainLog(f"Load pii data finished !")
                 # self.patchInfoDialog(f"Load pii data success from {self.piiFile}")
@@ -653,17 +665,6 @@ class Slots:
         thread.start()
         self.printTrainLog(f"Reading PII Data... Please Wait")
 
-        def startLoadPIIDataProgressTracking():
-            while not self.loadPIIDataProgressExitFlag.is_set():
-                progress = databaseInit.load_pii_data_progress
-                limit = databaseInit.load_pii_data_limit
-                proportion = int(progress / limit * 100)
-                self.mainWindow.trainTabProgressBar.setValue(proportion)
-            self.mainWindow.trainTabProgressBar.setValue(100)
-
-        progress_thread = threading.Thread(target=startLoadPIIDataProgressTracking)
-        progress_thread.start()
-
     def analyzePIIDataBtnSlot(self):
         """Build all datatables
         """
@@ -672,17 +673,34 @@ class Slots:
                 pass
             else:
                 return
-        try:
-            buildDbObj = BuildDatabase()
-            buildDbObj.test_rebuild()
-            self.setPhasePassed(self.analyzePIIDataStatus)
-            self.printTrainLog(f"Analyze PII Data and build datatables finished !")
-            self.patchInfoDialog(f"Analyze PII Data and build datatables finished")
-        except Exception as e:
-            self.printTrainLog(
-                f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}")
-            self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
-            return
+
+        def startAnalyzePIIDataProgressTrack():
+            while not self.analyzePIIDataProgressExitFlag.is_set():
+                progress = main_General_PII_Mode.ProgressTracker.progress
+                limit = main_General_PII_Mode.ProgressTracker.limit
+                proportion = int(progress / limit * 100)
+                self.mainWindow.trainTabProgressBar.setValue(proportion)
+            self.mainWindow.trainTabProgressBar.setValue(100)
+
+        progress_thread = threading.Thread(target=startAnalyzePIIDataProgressTrack)
+        progress_thread.start()
+
+        def run():
+            try:
+                buildDbObj = BuildDatabase()
+                buildDbObj.test_rebuild()
+                self.setPhasePassed(self.analyzePIIDataStatus)
+                self.printTrainLog(f"Analyze PII Data and build datatables finished !")
+                # self.patchInfoDialog(f"Analyze PII Data and build datatables finished")
+            except Exception as e:
+                self.printTrainLog(
+                    f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}")
+                # self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
+                return
+
+        thread = threading.Thread(target=run)
+        thread.start()
+        self.printTrainLog(f"Analyzing PII Data... Please Wait")
 
     def trainModelBtnSlot(self):
         """Train model
