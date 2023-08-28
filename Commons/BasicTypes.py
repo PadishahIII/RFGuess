@@ -1,3 +1,4 @@
+import datetime
 import typing
 from enum import Enum
 
@@ -33,8 +34,8 @@ class PIIType:
         GivenName1stPlusFamilyName = 5
         FamilyName1stPlusGivenName = 6
         FamilyNameCapitalized = 7  # Wang
-        FamilyName1st = 8 # w
-        GivenNameAbbr = 9 # zj
+        FamilyName1st = 8  # w
+        GivenNameAbbr = 9  # zj
 
     class BirthdayType(Enum):
         FullYMD = 1  # 19820607
@@ -57,8 +58,7 @@ class PIIType:
         FullPreix = 1  # loveu1314 from loveu1314@aa.com
         LetterSegment = 2  # loveu
         DigitSegment = 3  # 1314
-        Site = 4 # qq in qq.com, 163 in 163.com
-
+        Site = 4  # qq in qq.com, 163 in 163.com
 
     class PhoneNumberType(Enum):
         FullNumber = 1
@@ -139,6 +139,48 @@ class PII:
 
     def __str__(self):
         return str(self.__dict__)
+
+    @classmethod
+    def create(cls, idCard, email, account, fullname, phoneNum):
+        def getFirstName(name: str):
+            if len(name) <= 0:
+                return ""
+            l = name.split()
+            n = l[0]
+            return n.strip()
+
+        def getGivenName(name: str):
+            if len(name) <= 0:
+                return ""
+            l = name.partition(" ")
+            n = l[2]
+            if len(n) <= 0:
+                n = l[1]
+            return n.strip()
+
+        def getBirthday(idCard: str):
+            if len(idCard) < 12:
+                return ""
+            try:
+                date_obj = datetime.datetime.strptime(birthday, "%Y%m%d")
+            except:
+                return ""
+            return idCard[-12:-4]
+
+        d = dict()
+        d['email'] = email
+        d['account'] = account
+        d['name'] = fullname
+        firstname = getFirstName(fullname)
+        d['firstName'] = firstname
+        givenname = getGivenName(fullname)
+        d['givenName'] = givenname
+        birthday = getBirthday(idCard)
+        d['birthday'] = birthday
+        d['phoneNum'] = phoneNum
+        d['idcardNum'] = idCard
+        pii = PII(**d)
+        return pii
 
 
 DefaultPII = PII(account="account",

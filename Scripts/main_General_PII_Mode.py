@@ -383,3 +383,19 @@ class TestGeneralPIIStructureParser(TestCase):
         for rep in struct.repList[:10]:
             s = repParser.representationToStr(rep)
             print(f"{s}")
+
+    def test_pii_tag_container(self):
+        pii = BasicTypes.PII(account="",
+                             name="",
+                             firstName="yhang",
+                             givenName="zhong jie",
+                             birthday="",
+                             phoneNum="13222245678",
+                             email="",
+                             idcardNum="")
+        parser: PIIFullTagParser = PIIFullTagParser(pii, nameFuzz=True)
+        parser.parseTag()
+        d: dict = parser.getTagContainer().getTagDict()
+        print(len(d))
+        for k, v in d.items():
+            print(f"{k}:{v}")

@@ -107,12 +107,12 @@ class PIITagContainer:
         name = self.filter(self._pii.name)
         firstName = self.filter(self._pii.firstName)
         givenName = self.filter(self._pii.givenName)
-        if len(name) < 1:
-            name = BasicTypes.DefaultPII.name
-        if len(firstName) < 1:
-            firstName = BasicTypes.DefaultPII.firstName
-        if len(givenName) < 1:
-            givenName = BasicTypes.DefaultPII.givenName
+        # if len(name) < 1:
+        #     name = BasicTypes.DefaultPII.name
+        # if len(firstName) < 1:
+        #     firstName = BasicTypes.DefaultPII.firstName
+        # if len(givenName) < 1:
+        #     givenName = BasicTypes.DefaultPII.givenName
 
         if self._nameFuzz is True:
             for tu in Fuzzers.fuzzName(name, firstName, givenName):
@@ -508,6 +508,8 @@ class Fuzzers:
 
     @classmethod
     def fuzzName(cls, name: str, firstName: str, givenName: str) -> typing.List[tuple]:
+        if len(name) <=0 or len(firstName) <=0 or len(givenName) <=0:
+            return list()
         l = list()
         l.append((name, firstName, givenName))
 
@@ -633,6 +635,8 @@ class PIIToTagParser:
 
         """
         d = dict()
+        if len(name) <= 0 or len(firstName) <= 0 or len(givenName) <= 0:
+            return d
         d[BasicTypes.PIIType.NameType.FullName] = name.replace(" ", "").replace("\t", "")
         _l = givenName.split()
         l = [x for x in _l if len(x) > 0]
@@ -660,8 +664,10 @@ class PIIToTagParser:
     @classmethod
     def parseBirthdayToTagDict(cls, birthday: str) -> typing.Dict[BasicTypes.PIIType.BirthdayType, list]:
         try:
-            date_obj = datetime.datetime.strptime(birthday, "%Y%m%d")
             d = dict()
+            if len(birthday) <= 0:
+                return d
+            date_obj = datetime.datetime.strptime(birthday, "%Y%m%d")
             last2digitsofyear = str(date_obj.year)[-2:]
             d[BasicTypes.PIIType.BirthdayType.FullYMD] = [datetime.datetime.strftime(date_obj, "%Y%m%d"), ]
             d[BasicTypes.PIIType.BirthdayType.FullMDY] = [datetime.datetime.strftime(date_obj, "%m%d%Y"), ]
@@ -683,8 +689,10 @@ class PIIToTagParser:
 
     @classmethod
     def parseAccountToTagDict(cls, account: str) -> typing.Dict[BasicTypes.PIIType.AccountType, list]:
-        segList = LDSStepper.getAllSegment(account)
         d = dict()
+        if len(account) <= 0:
+            return d
+        segList = LDSStepper.getAllSegment(account)
         d[BasicTypes.PIIType.AccountType.Full] = [account, ]
         letterSegmentList: list[BasicTypes.LDSSegment] = list()
         digitSegmentList: list[BasicTypes.LDSSegment] = list()
@@ -697,7 +705,7 @@ class PIIToTagParser:
             raise Exceptions.PIIParserException("parse Account error")
         letterSegStrList = list(map(lambda x: x.s, letterSegmentList))
         digitSegStrList = list(map(lambda x: x.s, digitSegmentList))
-        letterSegStrSet = set(letterSegStrList) # remove duplicate
+        letterSegStrSet = set(letterSegStrList)  # remove duplicate
         digitSegStrSet = set(digitSegStrList)
 
         d[BasicTypes.PIIType.AccountType.LetterSegment] = list(letterSegStrSet)
@@ -706,6 +714,9 @@ class PIIToTagParser:
 
     @classmethod
     def parseEmailToTagDict(cls, email: str) -> typing.Dict[BasicTypes.PIIType.EmailPrefixType, list]:
+        d = dict()
+        if len(email) <= 0:
+            return d
         prefix = EmailParser.parseEmailPrefix(email)
         site = EmailParser.parseEmailSite(email)
         if prefix is None:
@@ -737,6 +748,8 @@ class PIIToTagParser:
 
     @classmethod
     def parsePhoneNumToTagDict(cls, phoneNum: str) -> typing.Dict[BasicTypes.PIIType.BaseTypes.PhoneNumber, list]:
+        if len(phoneNum) <= 0:
+            return dict()
         if not phoneNum.isdigit():
             raise Exceptions.PIIParserException(f"Invaild phone nubmer: {phoneNum}")
         d = dict()
@@ -749,6 +762,8 @@ class PIIToTagParser:
     @classmethod
     def parseIdCardNumToTagDict(cls, idCardNum: str) -> typing.Dict[BasicTypes.PIIType.IdCardNumberType, list]:
         d = dict()
+        if len(idCardNum) <= 0:
+            return d
         d[BasicTypes.PIIType.IdCardNumberType.Last4Digits] = [idCardNum[-4:], ]
         d[BasicTypes.PIIType.IdCardNumberType.First3Digits] = [idCardNum[:3], ]
         d[BasicTypes.PIIType.IdCardNumberType.First6Digits] = [idCardNum[:6], ]

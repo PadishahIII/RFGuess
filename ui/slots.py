@@ -1,5 +1,6 @@
 import json
-import  sys
+import sys
+
 from PyQt5.QtCore import pyqtSignal, QDate, Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
@@ -15,7 +16,7 @@ class Slots:
         self.limit: int = 0
         self.guesses: list[str] = list()
         self.outputFile = "guess_test.txt"
-        self.patternFile = ""
+        self.patternFile = "patterns_general.txt"
         self.pii: PII = None
         self.generator: GeneralPasswordGenerator = None
         self.progressSignal = pyqtSignal(int)
@@ -29,6 +30,7 @@ class Slots:
         self.mainWindow.generateBtn.clicked.connect(self.generateBtnSlot)
         self.mainWindow.loadPIIBtn.clicked.connect(self.loadPIIJsonSlot)
         self.mainWindow.outputEdit.setText(self.outputFile)
+        self.mainWindow.patternFileEdit.setText(self.patternFile)
 
         self.buildLimitComboBox()
         self.buildUsage()
@@ -55,14 +57,11 @@ class Slots:
             with open(self.piijsonFile, "r", encoding='utf8', errors='ignore') as f:
                 self.piijson = json.load(f)
 
-            piiUnit: PIIUnit = PIIUnit(email=self.piijson['email'],
-                                       name=self.piijson['name'],
-                                       phoneNum=self.piijson['phoneNum'],
-                                       password="password",
-                                       fullName=pinyinUtils.getFullName(self.piijson['name']),
-                                       idCard=self.piijson['idCard'],
-                                       account=self.piijson['account'])
-            self.pii, _ = Utils.parsePIIUnitToPIIAndPwStr(piiUnit)
+            self.pii = PII.create(idCard=self.piijson['idCard'],
+                                  email=self.piijson['email'],
+                                  phoneNum=self.piijson['phoneNum'],
+                                  account=self.piijson['account'],
+                                  fullname=self.piijson['name'])
 
             self.mainWindow.idCardEdit.setText(self.pii.idcardNum)
             self.mainWindow.emailEdit.setText(self.pii.email)
@@ -83,34 +82,42 @@ class Slots:
     def getPII(self) -> bool:
         idCard = self.mainWindow.idCardEdit.text()
         if idCard is None or len(idCard) <= 0:
-            self.patchDialog("IdCard cannot be empty")
-            return False
+            pass
+            # self.patchDialog("IdCard cannot be empty")
+            # return False
         email = self.mainWindow.emailEdit.text()
         if email is None or len(email) <= 0:
-            self.patchDialog("Email cannot be empty")
-            return False
+            pass
+            # self.patchDialog("Email cannot be empty")
+            # return False
         account = self.mainWindow.accountEdit.text()
         if account is None or len(account) <= 0:
-            self.patchDialog("Account cannot be empty")
-            return False
+            pass
+            # self.patchDialog("Account cannot be empty")
+            # return False
         name = self.mainWindow.fullNameEdit.text()
         if name is None or len(name) <= 0:
-            self.patchDialog("fullname cannot be empty")
-            return False
+            pass
+            # self.patchDialog("fullname cannot be empty")
+            # return False
         phoneNum = self.mainWindow.phoneEdit.text()
         if phoneNum is None or len(phoneNum) <= 0:
-            self.patchDialog("phoneNum cannot be empty")
-            return False
+            pass
+            # self.patchDialog("phoneNum cannot be empty")
+            # return False
         birthday = self.mainWindow.dateEdit.text()
         if birthday is None or len(birthday) <= 0:
-            self.patchDialog("birthday cannot be empty")
-            return False
+            pass
+            # self.patchDialog("birthday cannot be empty")
+            # return False
 
         fullname = pinyinUtils.getFullName(name)
-        piiUnit = PIIUnit(email=email, account=account, name=name, idCard=idCard, phoneNum=phoneNum,
-                          password="password",
-                          fullName=fullname)
-        self.pii, _ = Utils.parsePIIUnitToPIIAndPwStr(piiUnit)
+        self.pii = PII.create(idCard=idCard,
+                              email=email,
+                              phoneNum=phoneNum,
+                              account=account,
+                              fullname=fullname)
+        self.pii.birthday = birthday.replace("/", "")
         return True
 
     def generateBtnSlot(self):
@@ -157,8 +164,7 @@ class Slots:
             self.generator.guesses += guesses
             if len(self.generator.guesses) >= self.limit:
                 break
-            _i += 1
-            _progress = min(int(_i / _max * 100), 100)
+            _progress = min(int(len(self.generator.guesses) / _max * 100), 100)
             self.mainWindow.progressBar.setValue(_progress)
 
         primaryLen = len(self.generator.guesses)
