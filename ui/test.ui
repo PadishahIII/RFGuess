@@ -638,6 +638,23 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QLabel" name="label_14">
+         <property name="text">
+          <string>   Save model to:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="clfSaveEdit"/>
+       </item>
+       <item>
+        <widget class="QToolButton" name="clfSaveBtn">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QPushButton" name="initDatabaseBtn">

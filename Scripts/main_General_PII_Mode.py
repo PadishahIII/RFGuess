@@ -35,6 +35,22 @@ class GeneralPIITrainMain(TestCase):
         time.sleep(1)
         self.test_accuracy_assessment()
 
+    def train_generate_assess(self,savePath):
+        """(For Api use)Train, generate pattern and assess accuracy
+        """
+        logger.info(f"[Train] procession start")
+        time.sleep(1)
+        self.train_general(savePath)
+        logger.info(f"[Generate Pattern] procession start")
+        time.sleep(1)
+        # self.test_generate_pattern()
+        # logger.info(f"[Clean Guess dir]")
+        # time.sleep(1)
+        # self.test_clean_guesses_dir()
+        # logger.info(f"[Assessment] procession start")
+        # time.sleep(1)
+        # self.test_accuracy_assessment()
+
     def test_train_general(self):
         piiFactory = GeneralPIIFactory.getInstance(proportion=TRAINSET_PROPORTION)
         piiFactory.process()
@@ -44,6 +60,20 @@ class GeneralPIITrainMain(TestCase):
         trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
         trainner.train()
         savePath = "../../save_general.clf"
+        joblib.dump(trainner.getClf(), savePath)
+        logger.info(f"Train finish, saved to {savePath}")
+
+    def train_general(self,savePath):
+        """(For Api use) train general model
+        """
+        piiFactory = GeneralPIIFactory.getInstance(proportion=TRAINSET_PROPORTION)
+        piiFactory.process()
+        logger.info(
+            f"Train data build Finished.\nSize of featureList:{len(piiFactory.getFeatureList())} LabelList:{len(piiFactory.getLabelList())}")
+        logger.info(f"\nStart Training...")
+        trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
+        trainner.train()
+        # savePath = "../../save_general.clf"
         joblib.dump(trainner.getClf(), savePath)
         logger.info(f"Train finish, saved to {savePath}")
 

@@ -1,50 +1,53 @@
 import json
-import sys
+import os.path
 import threading
 import time
 from logging import LogRecord
+from queue import Queue
 
 from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QWidget, QLabel
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 
 from Generators.GeneralPIIGenerators import *
 from Generators.PasswordGuessGenerator import *
-from ui.mainWindow import *
-from queue import  Queue
-from sqlalchemy import create_engine
-from sqlalchemy.exc import OperationalError
 from Parser import Config
-from Scripts import databaseInit
-from Scripts.main_General_PII_Mode import BuildDatabase
-
+from Scripts import databaseInit, main_General_PII_Mode
+from Scripts.main_General_PII_Mode import BuildDatabase, GeneralPIITrainMain
+from ui.mainWindow import *
 
 
 class Consumer(threading.Thread):
-    def __init__(self, queue: Queue, handler:typing.Callable):
+    def __init__(self, queue: Queue, handler: typing.Callable):
         super().__init__()
         self.queue = queue
-        self.handler = handler # function
+        self.handler = handler  # function
 
     def run(self) -> None:
         while True:
-            s:str = self.queue.get()
+            s: str = self.queue.get()
             self.handler(s)
             time.sleep(0.5)
+
 
 class TextBrowserHandler(logging.Handler):
     """Bind a certain logger into a certain textbrowser
 
     """
+
     def __init__(self, textbrowser):
         super().__init__()
         self.textbrowser = textbrowser
+
     def emit(self, record: LogRecord) -> None:
         msg = self.format(record)
         self.textbrowser.append(msg)
 
+
 class TrainModelStatus:
-    def __init__(self,label:QLabel):
-        self.label:QLabel = label
+    def __init__(self, label: QLabel):
+        self.label: QLabel = label
         self.passed = False
 
     def setPass(self):
@@ -57,8 +60,9 @@ class TrainModelStatus:
         self.label.setText("Fail")
         self.passed = False
 
-    def getStatus(self)->bool:
+    def getStatus(self) -> bool:
         return self.passed
+
 
 class Slots:
 
@@ -96,16 +100,15 @@ class Slots:
         self.patternGenerator: GeneralPIIPatternGenerator = None
         self.patternProgressThreadExitFlag = threading.Event()
 
-        self.print_log_queue:Queue = Queue(100)
-        self.error_dialog_queue:Queue = Queue(100)
-        self.info_dialog_queue:Queue = Queue(100)
-        self.print_log_consumer = Consumer(self.print_log_queue,self.handle_print_log_signal)
-        self.error_dialog_consumer = Consumer(self.error_dialog_queue,self.handle_error_signal)
-        self.info_dialog_consumer = Consumer(self.info_dialog_queue,self.handle_info_signal)
+        self.print_log_queue: Queue = Queue(100)
+        self.error_dialog_queue: Queue = Queue(100)
+        self.info_dialog_queue: Queue = Queue(100)
+        self.print_log_consumer = Consumer(self.print_log_queue, self.handle_print_log_signal)
+        self.error_dialog_consumer = Consumer(self.error_dialog_queue, self.handle_error_signal)
+        self.info_dialog_consumer = Consumer(self.info_dialog_queue, self.handle_info_signal)
         self.print_log_consumer.start()
         self.error_dialog_consumer.start()
         self.info_dialog_consumer.start()
-
 
         self.mainWindow.patternOutputEdit.setText(self.patternSavePath)
         self.mainWindow.loadClfBtn.clicked.connect(self.loadClfSlot)
@@ -116,26 +119,28 @@ class Slots:
 
         # train model tab
 
-
-
         self.databaseUrl = ""
         self.sqlFile = ""
         self.piiFile = ""
+        self.clfSavePath = ""
         self.initDatabaseStatus = TrainModelStatus(self.mainWindow.initDatabaseStatusLabel)
         self.loadPIIDataStatus = TrainModelStatus(self.mainWindow.loadPIIDataStatusLabel)
         self.analyzePIIDataStatus = TrainModelStatus(self.mainWindow.analyzePIIStatusLabel)
         self.trainModelStatus = TrainModelStatus(self.mainWindow.trainModelStatusLabel)
         self.assessStatus = TrainModelStatus(self.mainWindow.assessStatusLabel)
-        self.trainStatusList = [self.initDatabaseStatus,self.loadPIIDataStatus,self.analyzePIIDataStatus
-                                ,self.trainModelStatus,self.assessStatus]
-        self.engine = None # database engine
+        self.trainStatusList = [self.initDatabaseStatus, self.loadPIIDataStatus, self.analyzePIIDataStatus
+            , self.trainModelStatus, self.assessStatus]
+        self.engine = None  # database engine
         self.logFormater = logging.Formatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
 
         self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
         self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
         self.mainWindow.piiFileBrowser.clicked.connect(self.piiFileBrowserBtnSlot)
+        self.mainWindow.clfSaveBtn.clicked.connect(self.clfSaveBrowserBtnSlot)
         self.mainWindow.initDatabaseBtn.clicked.connect(self.initDatabaseBtnSlot)
         self.mainWindow.loadPIIDataBtn.clicked.connect(self.loadPIIDataBtnSlot)
+        self.mainWindow.analyzePIIBtn.clicked.connect(self.analyzePIIDataBtnSlot)
+        self.mainWindow.trainModelBtn.clicked.connect(self.trainModelBtnSlot)
 
         self.initAllStatus()
         self.redirect_logger()
@@ -146,6 +151,7 @@ class Slots:
         handler = TextBrowserHandler(self.mainWindow.trainTabTextBrowser)
         handler.setFormatter(self.logFormater)
         databaseInit.logger.addHandler(handler)
+        main_General_PII_Mode.logger.addHandler(handler)
 
     def handle_error_signal(self, msg):
         self.patchDialog(msg)
@@ -160,6 +166,7 @@ class Slots:
     '''
     Guess generation tab
     '''
+
     def buildUsage(self):
         usage = \
             '''
@@ -303,7 +310,6 @@ class Slots:
         self.patchDialog(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n", title="Generate Guesses Complete",
                          icon=QMessageBox.Information)
 
-
     def setLimitOptionSlot(self):
         limitStr = self.mainWindow.limitComboBox.currentText()
         self.guessLimit = int(limitStr)
@@ -314,14 +320,11 @@ class Slots:
         self.patternFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select pattern file")
         self.mainWindow.patternFileEdit.setText(self.patternFile)
 
-
     def selectOutputFileSlot(self):
         self.outputFile = ""
         file_path, _ = QFileDialog.getSaveFileName(self.mainWindow.mainWindow, "Save File", "", "Text Files (*.txt)")
         self.outputFile = file_path
         self.mainWindow.outputEdit.setText(self.outputFile)
-
-
 
     def patchDialog(self, content: str, title: str = "Error", icon=QMessageBox.Critical):
         """Patch an error dialog
@@ -333,14 +336,14 @@ class Slots:
         error_box.setStandardButtons(QMessageBox.Ok)
         error_box.exec_()
 
-    def questionDialog(self,content:str,title:str="Confirmation")->bool:
+    def questionDialog(self, content: str, title: str = "Confirmation") -> bool:
         """Patch a question dialog and get Y/N
         """
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Question)
         msg_box.setText(content)
         msg_box.setWindowTitle(title)
-        msg_box.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         msg_box.setDefaultButton(QMessageBox.No)
         result = msg_box.exec_()
         if result == QMessageBox.Yes:
@@ -348,9 +351,8 @@ class Slots:
         else:
             return False
 
-
-    def patchInfoDialog(self, content:str):
-        self.patchDialog(content,title="Success",icon=QMessageBox.Information)
+    def patchInfoDialog(self, content: str):
+        self.patchDialog(content, title="Success", icon=QMessageBox.Information)
 
     def printGuessLog(self, s: str):
         """Log output for Guess generation tab
@@ -358,8 +360,6 @@ class Slots:
         cur = datetime.datetime.now()
         timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
         self.mainWindow.textBrowser.append(f"[{timeStr}] {s}")
-
-
 
     def excepthook(t, value, traceback):
         """Self-defined global exception handler
@@ -379,10 +379,10 @@ class Slots:
         # Call the default exception handler
         sys.__excepthook__(t, value, traceback)
 
-
     '''
     Pattern generation tab
     '''
+
     def printPatternLog(self, s: str):
         """Log output for Pattern generation tab
         """
@@ -454,7 +454,6 @@ class Slots:
         self.clsFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select clf file (.clf)")
         self.mainWindow.clfFileEdit.setText(self.clsFile)
 
-
     def selectPatternOutputSlot(self):
         self.patternSavePath = ""
         self.patternSavePath, _ = QFileDialog.getSaveFileName(self.mainWindow.mainWindow, "Save Pattern File", "",
@@ -493,7 +492,6 @@ class Slots:
             self.patchDialog(f"Load classifier object failed: {e}")
             self.patternGenerator = None
 
-
     '''
     Train model tab
     '''
@@ -505,34 +503,33 @@ class Slots:
         timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
         self.mainWindow.trainTabTextBrowser.append(f"[{timeStr}] {s}")
 
-    def setPhasePassed(self, status:TrainModelStatus):
+    def setPhasePassed(self, status: TrainModelStatus):
         """Set status and phases before to Passed
         """
         i = self.trainStatusList.index(status)
         if i < 0:
             self.printTrainLog(f"Error when setPhasePassed: {status} not in list")
             return
-        for _i in range(i+1):
+        for _i in range(i + 1):
             self.trainStatusList[_i].setPass()
 
-    def checkPhasePassed(self, status:TrainModelStatus)->bool:
+    def checkPhasePassed(self, status: TrainModelStatus) -> bool:
         """Check whether phase of status and before phases all Passed
         """
         i = self.trainStatusList.index(status)
         if i < 0:
             self.printTrainLog(f"Error when setPhasePassed: {status} not in list")
             return
-        for _i in range(i+1):
+        for _i in range(i + 1):
             if not self.trainStatusList[_i].getStatus():
                 return False
         return True
-
 
     def checkDbConnBtnSlot(self):
         """Check database connection
         """
         self.databaseUrl = self.mainWindow.databaseUrlEdit.text()
-        if len(self.databaseUrl) <=0:
+        if len(self.databaseUrl) <= 0:
             self.patchDialog(f"Please input a valid database URL")
             return
         try:
@@ -540,7 +537,7 @@ class Slots:
             self.engine = engine
             conn = engine.connect()
             conn.close()
-            self.patchDialog(f"Connect to database successfully",title="Success",icon=QMessageBox.Information)
+            self.patchDialog(f"Connect to database successfully", title="Success", icon=QMessageBox.Information)
             Config.DatabaseUrl = self.databaseUrl
             return
         except OperationalError:
@@ -560,9 +557,17 @@ class Slots:
         """
         self.piiFile = ""
         file_dialog = QFileDialog()
-        self.piiFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow,"Select pii dataset(.txt)")
-        if __name__ == '__main__':
-            self.mainWindow.piiFileEdit.setText(self.piiFile)
+        self.piiFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select pii dataset(.txt)")
+        self.mainWindow.piiFileEdit.setText(self.piiFile)
+
+    def clfSaveBrowserBtnSlot(self):
+        """Clf file save path
+        """
+        self.clfSavePath = ""
+        file_dialog = QFileDialog()
+        self.clfSavePath, _ = QFileDialog.getSaveFileName(self.mainWindow.mainWindow, "Save clf model(.clf)", "",
+                                                          "Clf Files (*.clf)")
+        self.mainWindow.clfSaveEdit.setText(self.clfSavePath)
 
     def initAllStatus(self):
         """init all status
@@ -573,7 +578,7 @@ class Slots:
     def initDatabaseBtnSlot(self):
         """Import sql structure
         """
-        if self.sqlFile is None or len(self.sqlFile) <=0:
+        if self.sqlFile is None or len(self.sqlFile) <= 0:
             self.patchDialog(f"Please assign a sql structure file (.sql)")
             return
         if not os.path.exists(self.sqlFile):
@@ -582,7 +587,7 @@ class Slots:
         if self.engine is None:
             self.patchDialog(f"Please connect to database first!")
             return
-        with open(self.sqlFile,"r",encoding="utf8",errors="ignore") as f:
+        with open(self.sqlFile, "r", encoding="utf8", errors="ignore") as f:
             sql_statements = f.read()
         try:
             with self.engine.connect() as conn:
@@ -590,7 +595,7 @@ class Slots:
         except Exception as e:
             self.patchDialog(f"Exception occur when import sql file to {self.databaseUrl}, {e}")
             return
-        self.patchDialog(f"Database initialized",title="Success",icon=QMessageBox.Information)
+        self.patchDialog(f"Database initialized", title="Success", icon=QMessageBox.Information)
         self.setPhasePassed(self.initDatabaseStatus)
 
     def loadPIIDataBtnSlot(self):
@@ -601,19 +606,20 @@ class Slots:
                 pass
             else:
                 return
-        if self.piiFile is None or len(self.piiFile) <=0:
+        if self.piiFile is None or len(self.piiFile) <= 0:
             self.patchDialog(f"Please assign pii file(.txt) first")
             return
         if not os.path.exists(self.piiFile):
             self.patchDialog(f"Pii file not exists: {self.piiFile}")
             return
         try:
-            databaseInit.LoadDataset(self.piiFile,start=0,limit=-1,clear=True,update=False)
+            databaseInit.LoadDataset(self.piiFile, start=0, limit=-1, clear=True, update=False)
             self.setPhasePassed(self.loadPIIDataStatus)
             self.printTrainLog(f"Load pii data finished !")
             self.patchInfoDialog(f"Load pii data success")
         except Exception as e:
-            self.printTrainLog(f"Exception occurs when load pii data into database({self.databaseUrl}), Original Exception: {e}")
+            self.printTrainLog(
+                f"Exception occurs when load pii data into database({self.databaseUrl}), Original Exception: {e}")
             self.patchDialog(f"Load pii data failed, check exception log for more details")
             return
 
@@ -632,20 +638,30 @@ class Slots:
             self.printTrainLog(f"Analyze PII Data and build datatables finished !")
             self.patchInfoDialog(f"Analyze PII Data and build datatables finished")
         except Exception as e:
-            self.printTrainLog(f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}")
+            self.printTrainLog(
+                f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}")
             self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
             return
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def trainModelBtnSlot(self):
+        """Train model
+        """
+        if not self.checkPhasePassed(self.trainModelStatus):
+            if self.questionDialog("There is at least one phase before not passed, are you sure to proceed?"):
+                pass
+            else:
+                return
+        if self.clfSavePath is None or len(self.clfSavePath) <= 0:
+            self.patchDialog(f"Please assign model save path(.clf) first")
+            return
+        try:
+            api = GeneralPIITrainMain()
+            api.train_general(self.clfSavePath)
+            self.setPhasePassed(self.trainModelStatus)
+            self.printTrainLog(f"Train Model finished !")
+            self.patchInfoDialog(f"Train Model finished")
+        except Exception as e:
+            self.printTrainLog(
+                f"Exception occur when Training Model, Original Exception is {e}")
+            self.patchDialog(f"Train Model failed, check exception log for more details")
+            return
