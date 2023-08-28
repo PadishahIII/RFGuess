@@ -2,14 +2,20 @@ import json
 import sys
 import threading
 import time
+from logging import LogRecord
 
 from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QWidget
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QWidget, QLabel
 
 from Generators.GeneralPIIGenerators import *
 from Generators.PasswordGuessGenerator import *
 from ui.mainWindow import *
 from queue import  Queue
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
+from Parser import Config
+from Scripts import databaseInit
+from Scripts.main_General_PII_Mode import BuildDatabase
 
 
 
@@ -25,6 +31,34 @@ class Consumer(threading.Thread):
             self.handler(s)
             time.sleep(0.5)
 
+class TextBrowserHandler(logging.Handler):
+    """Bind a certain logger into a certain textbrowser
+
+    """
+    def __init__(self, textbrowser):
+        super().__init__()
+        self.textbrowser = textbrowser
+    def emit(self, record: LogRecord) -> None:
+        msg = self.format(record)
+        self.textbrowser.append(msg)
+
+class TrainModelStatus:
+    def __init__(self,label:QLabel):
+        self.label:QLabel = label
+        self.passed = False
+
+    def setPass(self):
+        self.label.setStyleSheet("color: green")
+        self.label.setText("Pass")
+        self.passed = True
+
+    def setFail(self):
+        self.label.setStyleSheet("color: red")
+        self.label.setText("Fail")
+        self.passed = False
+
+    def getStatus(self)->bool:
+        return self.passed
 
 class Slots:
 
@@ -50,6 +84,9 @@ class Slots:
         self.mainWindow.loadPIIBtn.clicked.connect(self.loadPIIJsonSlot)
         self.mainWindow.outputEdit.setText(self.outputFile)
         self.mainWindow.patternFileEdit.setText(self.patternFile)
+
+        self.buildLimitComboBox()
+        self.buildUsage()
 
         # pattern generator tab
         self.clsFile = ""
@@ -77,8 +114,38 @@ class Slots:
         self.mainWindow.patternLimitComboBox.addItems(self.patternLimitOptions)
         self.mainWindow.patternGenerateBtn.clicked.connect(self.generatePatternBtnSlot)
 
-        self.buildLimitComboBox()
-        self.buildUsage()
+        # train model tab
+
+
+
+        self.databaseUrl = ""
+        self.sqlFile = ""
+        self.piiFile = ""
+        self.initDatabaseStatus = TrainModelStatus(self.mainWindow.initDatabaseStatusLabel)
+        self.loadPIIDataStatus = TrainModelStatus(self.mainWindow.loadPIIDataStatusLabel)
+        self.analyzePIIDataStatus = TrainModelStatus(self.mainWindow.analyzePIIStatusLabel)
+        self.trainModelStatus = TrainModelStatus(self.mainWindow.trainModelStatusLabel)
+        self.assessStatus = TrainModelStatus(self.mainWindow.assessStatusLabel)
+        self.trainStatusList = [self.initDatabaseStatus,self.loadPIIDataStatus,self.analyzePIIDataStatus
+                                ,self.trainModelStatus,self.assessStatus]
+        self.engine = None # database engine
+        self.logFormater = logging.Formatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
+
+        self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
+        self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
+        self.mainWindow.piiFileBrowser.clicked.connect(self.piiFileBrowserBtnSlot)
+        self.mainWindow.initDatabaseBtn.clicked.connect(self.initDatabaseBtnSlot)
+        self.mainWindow.loadPIIDataBtn.clicked.connect(self.loadPIIDataBtnSlot)
+
+        self.initAllStatus()
+        self.redirect_logger()
+
+    def redirect_logger(self):
+        """Redirect and format loggers into textbrowser
+        """
+        handler = TextBrowserHandler(self.mainWindow.trainTabTextBrowser)
+        handler.setFormatter(self.logFormater)
+        databaseInit.logger.addHandler(handler)
 
     def handle_error_signal(self, msg):
         self.patchDialog(msg)
@@ -90,6 +157,9 @@ class Slots:
         self.patchDialog(msg, title="Success",
                          icon=QMessageBox.Information)
 
+    '''
+    Guess generation tab
+    '''
     def buildUsage(self):
         usage = \
             '''
@@ -233,6 +303,93 @@ class Slots:
         self.patchDialog(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n", title="Generate Guesses Complete",
                          icon=QMessageBox.Information)
 
+
+    def setLimitOptionSlot(self):
+        limitStr = self.mainWindow.limitComboBox.currentText()
+        self.guessLimit = int(limitStr)
+
+    def openPatternFileSlot(self):
+        self.patternFile = ""
+        file_dialog = QFileDialog()
+        self.patternFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select pattern file")
+        self.mainWindow.patternFileEdit.setText(self.patternFile)
+
+
+    def selectOutputFileSlot(self):
+        self.outputFile = ""
+        file_path, _ = QFileDialog.getSaveFileName(self.mainWindow.mainWindow, "Save File", "", "Text Files (*.txt)")
+        self.outputFile = file_path
+        self.mainWindow.outputEdit.setText(self.outputFile)
+
+
+
+    def patchDialog(self, content: str, title: str = "Error", icon=QMessageBox.Critical):
+        """Patch an error dialog
+        """
+        error_box = QMessageBox()
+        error_box.setIcon(icon)
+        error_box.setText(content)
+        error_box.setWindowTitle(title)
+        error_box.setStandardButtons(QMessageBox.Ok)
+        error_box.exec_()
+
+    def questionDialog(self,content:str,title:str="Confirmation")->bool:
+        """Patch a question dialog and get Y/N
+        """
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setText(content)
+        msg_box.setWindowTitle(title)
+        msg_box.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.No)
+        result = msg_box.exec_()
+        if result == QMessageBox.Yes:
+            return True
+        else:
+            return False
+
+
+    def patchInfoDialog(self, content:str):
+        self.patchDialog(content,title="Success",icon=QMessageBox.Information)
+
+    def printGuessLog(self, s: str):
+        """Log output for Guess generation tab
+        """
+        cur = datetime.datetime.now()
+        timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
+        self.mainWindow.textBrowser.append(f"[{timeStr}] {s}")
+
+
+
+    def excepthook(t, value, traceback):
+        """Self-defined global exception handler
+        """
+        # Create a QMessageBox to display the exception details
+        error_msg_box = QMessageBox()
+        error_msg_box.setIcon(QMessageBox.Warning)
+        error_msg_box.setWindowTitle("Exception")
+        error_msg_box.setText("An exception occurred:")
+        error_msg_box.setInformativeText(str(value))
+        error_msg_box.setDetailedText(traceback)
+        error_msg_box.setStandardButtons(QMessageBox.Ok)
+        error_msg_box.setDefaultButton(QMessageBox.Ok)
+        error_msg_box.setWindowFlag(Qt.WindowStaysOnTopHint)
+        error_msg_box.exec_()
+
+        # Call the default exception handler
+        sys.__excepthook__(t, value, traceback)
+
+
+    '''
+    Pattern generation tab
+    '''
+    def printPatternLog(self, s: str):
+        """Log output for Pattern generation tab
+        """
+        cur = datetime.datetime.now()
+        timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
+        self.mainWindow.patternTextBrowser.append(f"[{timeStr}] {s}")
+
     class generatePatternWorker(QThread):
         def __init__(self, obj):
             super().__init__()
@@ -291,27 +448,12 @@ class Slots:
     def endPatternProgressTracking(self):
         self.patternProgressThreadExitFlag.set()
 
-    def setLimitOptionSlot(self):
-        limitStr = self.mainWindow.limitComboBox.currentText()
-        self.guessLimit = int(limitStr)
-
-    def openPatternFileSlot(self):
-        self.patternFile = ""
-        file_dialog = QFileDialog()
-        self.patternFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select pattern file")
-        self.mainWindow.patternFileEdit.setText(self.patternFile)
-
     def openClfFileSlot(self):
         self.clsFile = ""
         file_dialog = QFileDialog()
         self.clsFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select clf file (.clf)")
         self.mainWindow.clfFileEdit.setText(self.clsFile)
 
-    def selectOutputFileSlot(self):
-        self.outputFile = ""
-        file_path, _ = QFileDialog.getSaveFileName(self.mainWindow.mainWindow, "Save File", "", "Text Files (*.txt)")
-        self.outputFile = file_path
-        self.mainWindow.outputEdit.setText(self.outputFile)
 
     def selectPatternOutputSlot(self):
         self.patternSavePath = ""
@@ -351,38 +493,159 @@ class Slots:
             self.patchDialog(f"Load classifier object failed: {e}")
             self.patternGenerator = None
 
-    def patchDialog(self, content: str, title: str = "Error", icon=QMessageBox.Critical):
-        error_box = QMessageBox()
-        error_box.setIcon(icon)
-        error_box.setText(content)
-        error_box.setWindowTitle(title)
-        error_box.setStandardButtons(QMessageBox.Ok)
-        error_box.exec_()
 
-    def printGuessLog(self, s: str):
-        cur = datetime.datetime.now()
-        timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
-        self.mainWindow.textBrowser.append(f"[{timeStr}] {s}")
+    '''
+    Train model tab
+    '''
 
-    def printPatternLog(self, s: str):
-        cur = datetime.datetime.now()
-        timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
-        self.mainWindow.patternTextBrowser.append(f"[{timeStr}] {s}")
-
-    def excepthook(t, value, traceback):
-        """Self-defined global exception handler
+    def printTrainLog(self, s: str):
+        """Log output for Train model tab
         """
-        # Create a QMessageBox to display the exception details
-        error_msg_box = QMessageBox()
-        error_msg_box.setIcon(QMessageBox.Warning)
-        error_msg_box.setWindowTitle("Exception")
-        error_msg_box.setText("An exception occurred:")
-        error_msg_box.setInformativeText(str(value))
-        error_msg_box.setDetailedText(traceback)
-        error_msg_box.setStandardButtons(QMessageBox.Ok)
-        error_msg_box.setDefaultButton(QMessageBox.Ok)
-        error_msg_box.setWindowFlag(Qt.WindowStaysOnTopHint)
-        error_msg_box.exec_()
+        cur = datetime.datetime.now()
+        timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
+        self.mainWindow.trainTabTextBrowser.append(f"[{timeStr}] {s}")
 
-        # Call the default exception handler
-        sys.__excepthook__(t, value, traceback)
+    def setPhasePassed(self, status:TrainModelStatus):
+        """Set status and phases before to Passed
+        """
+        i = self.trainStatusList.index(status)
+        if i < 0:
+            self.printTrainLog(f"Error when setPhasePassed: {status} not in list")
+            return
+        for _i in range(i+1):
+            self.trainStatusList[_i].setPass()
+
+    def checkPhasePassed(self, status:TrainModelStatus)->bool:
+        """Check whether phase of status and before phases all Passed
+        """
+        i = self.trainStatusList.index(status)
+        if i < 0:
+            self.printTrainLog(f"Error when setPhasePassed: {status} not in list")
+            return
+        for _i in range(i+1):
+            if not self.trainStatusList[_i].getStatus():
+                return False
+        return True
+
+
+    def checkDbConnBtnSlot(self):
+        """Check database connection
+        """
+        self.databaseUrl = self.mainWindow.databaseUrlEdit.text()
+        if len(self.databaseUrl) <=0:
+            self.patchDialog(f"Please input a valid database URL")
+            return
+        try:
+            engine = create_engine(self.databaseUrl)
+            self.engine = engine
+            conn = engine.connect()
+            conn.close()
+            self.patchDialog(f"Connect to database successfully",title="Success",icon=QMessageBox.Information)
+            Config.DatabaseUrl = self.databaseUrl
+            return
+        except OperationalError:
+            self.patchDialog(f"Fail to connect to database")
+            return
+
+    def sqlFileBrowserBtnSlot(self):
+        """Assign sql file
+        """
+        self.sqlFile = ""
+        file_dialog = QFileDialog()
+        self.sqlFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select sql file(.sql)")
+        self.mainWindow.sqlFileEdit.setText(self.sqlFile)
+
+    def piiFileBrowserBtnSlot(self):
+        """Assign pii data file
+        """
+        self.piiFile = ""
+        file_dialog = QFileDialog()
+        self.piiFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow,"Select pii dataset(.txt)")
+        if __name__ == '__main__':
+            self.mainWindow.piiFileEdit.setText(self.piiFile)
+
+    def initAllStatus(self):
+        """init all status
+        """
+        for s in self.trainStatusList:
+            s.setFail()
+
+    def initDatabaseBtnSlot(self):
+        """Import sql structure
+        """
+        if self.sqlFile is None or len(self.sqlFile) <=0:
+            self.patchDialog(f"Please assign a sql structure file (.sql)")
+            return
+        if not os.path.exists(self.sqlFile):
+            self.patchDialog(f"Sql file not exists: {self.sqlFile}")
+            return
+        if self.engine is None:
+            self.patchDialog(f"Please connect to database first!")
+            return
+        with open(self.sqlFile,"r",encoding="utf8",errors="ignore") as f:
+            sql_statements = f.read()
+        try:
+            with self.engine.connect() as conn:
+                conn.execute(sql_statements)
+        except Exception as e:
+            self.patchDialog(f"Exception occur when import sql file to {self.databaseUrl}, {e}")
+            return
+        self.patchDialog(f"Database initialized",title="Success",icon=QMessageBox.Information)
+        self.setPhasePassed(self.initDatabaseStatus)
+
+    def loadPIIDataBtnSlot(self):
+        """Load pii txt file into database
+        """
+        if not self.checkPhasePassed():
+            if self.questionDialog(f"There is at least one phase before not passed, are you sure to proceed?"):
+                pass
+            else:
+                return
+        if self.piiFile is None or len(self.piiFile) <=0:
+            self.patchDialog(f"Please assign pii file(.txt) first")
+            return
+        if not os.path.exists(self.piiFile):
+            self.patchDialog(f"Pii file not exists: {self.piiFile}")
+            return
+        try:
+            databaseInit.LoadDataset(self.piiFile,start=0,limit=-1,clear=True,update=False)
+            self.setPhasePassed(self.loadPIIDataStatus)
+            self.printTrainLog(f"Load pii data finished !")
+            self.patchInfoDialog(f"Load pii data success")
+        except Exception as e:
+            self.printTrainLog(f"Exception occurs when load pii data into database({self.databaseUrl}), Original Exception: {e}")
+            self.patchDialog(f"Load pii data failed, check exception log for more details")
+            return
+
+    def analyzePIIDataBtnSlot(self):
+        """Build all datatables
+        """
+        if not self.checkPhasePassed(self.loadPIIDataStatus):
+            if self.questionDialog("There is at least one phase before not passed, are you sure to proceed?"):
+                pass
+            else:
+                return
+        try:
+            buildDbObj = BuildDatabase()
+            buildDbObj.test_rebuild()
+            self.setPhasePassed(self.analyzePIIDataStatus)
+            self.printTrainLog(f"Analyze PII Data and build datatables finished !")
+            self.patchInfoDialog(f"Analyze PII Data and build datatables finished")
+        except Exception as e:
+            self.printTrainLog(f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}")
+            self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
+            return
+
+
+
+
+
+
+
+
+
+
+
+
+
+

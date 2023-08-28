@@ -20,8 +20,8 @@ lineRst = re.compile(
     r"(?P<email>.+?@.+?)-{3,10}(?P<account>.+?)-{3,10}(?P<name>.+?)-{3,10}(?P<idCard>.+?)-{3,10}(?P<password>.+?)-{3,10}(?P<phoneNum>.+?)-{3,10}.*")
 
 logging.basicConfig()  # filename="database.log"
-logger = logging.getLogger("sqlalchemy.engine")
-logger.setLevel(logging.CRITICAL)
+logger = logging.getLogger("databaseInit")
+logger.setLevel(logging.INFO)
 
 engine = sqlalchemy.create_engine(url=Config.DatabaseUrl)
 
