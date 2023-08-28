@@ -66,16 +66,21 @@ class GeneralPIITrainMain(TestCase):
     def train_general(self,savePath):
         """(For Api use) train general model
         """
+        ProgressTracker.progress = 0
+        ProgressTracker.limit = 2
+        logger.info(f"Build feature and label... Please Wait")
         piiFactory = GeneralPIIFactory.getInstance(proportion=TRAINSET_PROPORTION)
         piiFactory.process()
         logger.info(
             f"Train data build Finished.\nSize of featureList:{len(piiFactory.getFeatureList())} LabelList:{len(piiFactory.getLabelList())}")
+        ProgressTracker.progress = 1
         logger.info(f"\nStart Training...")
         trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
         trainner.train()
         # savePath = "../../save_general.clf"
         joblib.dump(trainner.getClf(), savePath)
         logger.info(f"Train finish, saved to {savePath}")
+        ProgressTracker.progress = 2
 
     def test_generate_pattern(self):
         generator: GeneralPIIPatternGenerator = GeneralPIIPatternGenerator.getInstance("../../save_general.clf")
@@ -126,14 +131,19 @@ class GeneralPIITrainMain(TestCase):
                 os.remove(filePath)
 
     def test_accuracy_assessment(self):
-        """Assess the accuracy of generated guesses
+        self.accuracy_assessment("../patterns.txt")
+
+    def accuracy_assessment(self,patternFile):
+        """(for Api use) Assess the accuracy of generated guesses
         Get every PII and generate a guesses dictionary, if any guess match the true password, that'll be called by success
 
         """
+        ProgressTracker.progress  = 0
+
         filePattern = '../guesses/passwords_{0}.txt'
         transformer: PIIUnitTransformer = PIIUnitTransformer.getInstance()
         generator: GeneralPasswordGenerator = GeneralPasswordGenerator.getInstance(
-            patternFile="../patterns.txt",
+            patternFile=patternFile,
         )
         generator.init()
         maxId = transformer.getMaxId()
@@ -148,7 +158,7 @@ class GeneralPIITrainMain(TestCase):
         total = len(l)
         index = 0
         success = 0
-        saveLimit = 10  # maximum number of save files
+        saveLimit = 0  # maximum number of save files
         newlyGenerated = 0
         alreadyGenerated = 0
         successPwList = list()
@@ -191,6 +201,8 @@ class GeneralPIITrainMain(TestCase):
             index += 1
             if index % 100 == 0:
                 logger.info(f"Test progress: {index}/{total}, {100 * (index / total):.2f}")
+            ProgressTracker.progress = index
+            ProgressTracker.limit = total
 
         logger.info(f"Guess file newly generated:{newlyGenerated},already exists:{alreadyGenerated}")
         logger.info(f"Test complete. success:{success}/{total}, accuracy:{success / total:.4f}")
@@ -228,6 +240,8 @@ class BuildDatabase(TestCase):
         Build `pwrepresentation_general` table based on `pii` dataset.
         Parse all representations of password and store in `pwrepresentation_general` datatable.
         """
+        ProgressTracker.progress = 0
+
         processor = PIIPreprocessor(initDataset=PIIDataTypes.PIIDataSet(), start=0, limit=-1)
         processor.preprocess()
         dataset = processor.getDataSet()
@@ -307,6 +321,8 @@ class BuildDatabase(TestCase):
     def test_generate_frequency_tables(self):
         """Generate three datatable: `representation_frequency_base_general`, `pwrepresentation_frequency_general`, `representation_frequency_general`
         """
+        ProgressTracker.progress = 0
+
         transformers = list()
         transformers.append(GeneralRepFrequencyBaseTransformer.getInstance())
         ProgressTracker.progress = 1
@@ -322,6 +338,8 @@ class BuildDatabase(TestCase):
     def test_build_general_unique(self):
         """Build unique datatable
         """
+        ProgressTracker.progress = 0
+
         resolver: GeneralPIIRepresentationResolver = GeneralPIIRepresentationResolver.getInstance()
         transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
 

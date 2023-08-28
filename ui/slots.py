@@ -124,7 +124,8 @@ class Slots:
         self.databaseUrl = ""
         self.sqlFile = ""
         self.piiFile = ""
-        self.clfSavePath = ""
+        self.clfSavePath = "save_test.clf"
+        self.assessPatternFile = "patterns.txt"
         self.connectDatabaseStatus = TrainModelStatus(self.mainWindow.connectDatabaseLabel)
         self.initDatabaseStatus = TrainModelStatus(self.mainWindow.initDatabaseStatusLabel)
         self.loadPIIDataStatus = TrainModelStatus(self.mainWindow.loadPIIDataStatusLabel)
@@ -138,11 +139,16 @@ class Slots:
         self.logFormater = logging.Formatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
         self.loadPIIDataProgressExitFlag = threading.Event()
         self.analyzePIIDataProgressExitFlag = threading.Event()
+        self.trainModelProgressExitFlag = threading.Event()
+        self.assessProgressExitFlag = threading.Event()
 
         self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
         self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
         self.mainWindow.piiFileBrowser.clicked.connect(self.piiFileBrowserBtnSlot)
         self.mainWindow.clfSaveBtn.clicked.connect(self.clfSaveBrowserBtnSlot)
+        self.mainWindow.clfSaveEdit.setText(self.clfSavePath)
+        self.mainWindow.assessPatternFileEdit.setText(self.assessPatternFile)
+        self.mainWindow.assessPatternFileBrowserBtn.clicked.connect(self.assessPatternFileBrowserBtnSlot)
         self.mainWindow.initDatabaseBtn.clicked.connect(self.initDatabaseBtnSlot)
         self.mainWindow.initDatabaseBtn.adjustSize()
         self.mainWindow.loadPIIDataBtn.clicked.connect(self.loadPIIDataBtnSlot)
@@ -151,6 +157,8 @@ class Slots:
         self.mainWindow.analyzePIIBtn.adjustSize()
         self.mainWindow.trainModelBtn.clicked.connect(self.trainModelBtnSlot)
         self.mainWindow.trainModelBtn.adjustSize()
+        self.mainWindow.assessBtn.clicked.connect(self.assessAccuracyStatusBtnSlot)
+        self.mainWindow.assessBtn.adjustSize()
         self.mainWindow.checkStatusBtn.clicked.connect(self.checkDbStatusBtnSlot)
         self.mainWindow.checkStatusBtn.adjustSize()
 
@@ -578,9 +586,18 @@ class Slots:
         """
         self.clfSavePath = ""
         file_dialog = QFileDialog()
-        self.clfSavePath, _ = QFileDialog.getSaveFileName(self.mainWindow.mainWindow, "Save clf model(.clf)", "",
+        self.clfSavePath, _ = file_dialog.getSaveFileName(self.mainWindow.mainWindow, "Save clf model(.clf)", "",
                                                           "Clf Files (*.clf)")
         self.mainWindow.clfSaveEdit.setText(self.clfSavePath)
+
+    def assessPatternFileBrowserBtnSlot(self):
+        """Browser pattern file to assess
+        """
+        self.assessPatternFile = ""
+        file_dialog = QFileDialog()
+        self.assessPatternFile, _ = file_dialog.getOpenFileName(self.mainWindow.mainWindow, "Select pattern file(.txt)",
+                                                                "", "Text Files (*.txt)")
+        self.mainWindow.assessPatternFileEdit.setText(self.assessPatternFile)
 
     def initAllStatus(self):
         """init all status
@@ -636,6 +653,7 @@ class Slots:
             return
 
         def startLoadPIIDataProgressTracking():
+            self.loadPIIDataProgressExitFlag.clear()
             while not self.loadPIIDataProgressExitFlag.is_set():
                 progress = databaseInit.ProgressTracker.load_pii_data_progress
                 limit = databaseInit.ProgressTracker.load_pii_data_limit
@@ -649,7 +667,7 @@ class Slots:
 
         def run():
             try:
-                databaseInit.LoadDataset(self.piiFile, start=0, limit=500, clear=True, update=False)
+                databaseInit.LoadDataset(self.piiFile, start=0, limit=-1, clear=True, update=False)
                 self.setPhasePassed(self.loadPIIDataStatus)
                 self.printTrainLog(f"Load pii data finished !")
                 # self.patchInfoDialog(f"Load pii data success from {self.piiFile}")
@@ -675,11 +693,13 @@ class Slots:
                 return
 
         def startAnalyzePIIDataProgressTrack():
+            self.analyzePIIDataProgressExitFlag.clear()
             while not self.analyzePIIDataProgressExitFlag.is_set():
                 progress = main_General_PII_Mode.ProgressTracker.progress
                 limit = main_General_PII_Mode.ProgressTracker.limit
                 proportion = int(progress / limit * 100)
                 self.mainWindow.trainTabProgressBar.setValue(proportion)
+                time.sleep(0.5)
             self.mainWindow.trainTabProgressBar.setValue(100)
 
         progress_thread = threading.Thread(target=startAnalyzePIIDataProgressTrack)
@@ -697,6 +717,8 @@ class Slots:
                     f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}")
                 # self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
                 return
+            finally:
+                self.analyzePIIDataProgressExitFlag.set()
 
         thread = threading.Thread(target=run)
         thread.start()
@@ -713,17 +735,77 @@ class Slots:
         if self.clfSavePath is None or len(self.clfSavePath) <= 0:
             self.patchDialog(f"Please assign model save path(.clf) first")
             return
-        try:
-            api = GeneralPIITrainMain()
-            api.train_general(self.clfSavePath)
-            self.setPhasePassed(self.trainModelStatus)
-            self.printTrainLog(f"Train Model finished !")
-            self.patchInfoDialog(f"Train Model finished")
-        except Exception as e:
-            self.printTrainLog(
-                f"Exception occur when Training Model, Original Exception is {e}")
-            self.patchDialog(f"Train Model failed, check exception log for more details")
+
+        def startTrainModelProgressTrack():
+            self.trainModelProgressExitFlag.clear()
+            while not self.trainModelProgressExitFlag.is_set():
+                progress = main_General_PII_Mode.ProgressTracker.progress
+                limit = main_General_PII_Mode.ProgressTracker.limit
+                proportion = int(progress / limit * 100)
+                self.mainWindow.trainTabProgressBar.setValue(proportion)
+                time.sleep(0.5)
+            self.mainWindow.trainTabProgressBar.setValue(100)
+
+        progress_thread = threading.Thread(target=startTrainModelProgressTrack)
+        progress_thread.start()
+
+        def run():
+            try:
+                api = GeneralPIITrainMain()
+                api.train_general(self.clfSavePath)
+                self.setPhasePassed(self.trainModelStatus)
+                self.printTrainLog(f"Train Model finished !")
+                # self.patchInfoDialog(f"Train Model finished")
+            except Exception as e:
+                self.printTrainLog(
+                    f"Exception occur when Training Model, Original Exception is {e}")
+                # self.patchDialog(f"Train Model failed, check exception log for more details")
+                return
+            finally:
+                self.trainModelProgressExitFlag.set()
+
+        thread = threading.Thread(target=run)
+        thread.start()
+
+    def assessAccuracyStatusBtnSlot(self):
+        """Assess accuracy for assigned pattern file
+        Do not need previous status to be completed
+        """
+        if self.assessPatternFile is None or len(self.assessPatternFile) <= 0:
+            self.patchDialog(f"Please assign a pattern file to assess !")
             return
+        if not os.path.exists(self.assessPatternFile):
+            self.patchDialog(f"Error: {self.assessPatternFile} not exists")
+            return
+
+        def startAssessProgressTrack():
+            self.assessProgressExitFlag.clear()
+            while not self.trainModelProgressExitFlag.is_set():
+                progress = main_General_PII_Mode.ProgressTracker.progress
+                limit = main_General_PII_Mode.ProgressTracker.limit
+                proportion = int(progress / limit * 100)
+                self.mainWindow.trainTabProgressBar.setValue(proportion)
+                time.sleep(0.5)
+            self.mainWindow.trainTabProgressBar.setValue(100)
+
+        progress_thread = threading.Thread(target=startAssessProgressTrack)
+        progress_thread.start()
+
+        def run():
+            try:
+                api = GeneralPIITrainMain()
+                api.accuracy_assessment(self.assessPatternFile)
+                self.setPhasePassed(self.assessStatus)
+                self.printTrainLog(f"Accuracy Assessment finished !")
+            except Exception as e:
+                self.printTrainLog(
+                    f"Exception occur when Assessing accuracy, Original Exception is {e}")
+                return
+            finally:
+                self.assessProgressExitFlag.set()
+
+        thread = threading.Thread(target=run)
+        thread.start()
 
     def checkDbStatusBtnSlot(self):
         """Check database structure, datatable capability
@@ -750,7 +832,7 @@ class Slots:
             self.printTrainLog(''.join(logList))
             self.loadPIIDataStatus.setFail()
             return
-        logList.append(f"Load PII Data: Passed.\nPII table size: {pii_table_size}")
+        logList.append(f"Load PII Data: Passed.\nPII table size: {pii_table_size}\n")
         self.setPhasePassed(self.loadPIIDataStatus)
 
         # check analyze PII data status
@@ -761,7 +843,7 @@ class Slots:
             self.printTrainLog(''.join(logList))
             self.analyzePIIDataStatus.setFail()
             return
-        logList.append(f"Analyze PII Data: Passed.\npwrepresentation_general table size: {rep_unique_table_size}")
+        logList.append(f"Analyze PII Data: Passed.\npwrepresentation_general table size: {rep_unique_table_size}\n")
         self.setPhasePassed(self.analyzePIIDataStatus)
 
         self.printTrainLog(''.join(logList))

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1434</width>
-    <height>618</height>
+    <height>675</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,8 +59,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1131</width>
-            <height>177</height>
+            <width>98</width>
+            <height>28</height>
            </rect>
           </property>
           <widget class="QTextBrowser" name="textBrowser">
@@ -323,8 +323,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>558</width>
-                <height>97</height>
+                <width>98</width>
+                <height>28</height>
                </rect>
               </property>
               <widget class="QTextBrowser" name="usageTextBrowser">
@@ -433,8 +433,8 @@ p, li { white-space: pre-wrap; }
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1237</width>
-            <height>317</height>
+            <width>98</width>
+            <height>28</height>
            </rect>
           </property>
           <widget class="QTextBrowser" name="patternTextBrowser">
@@ -562,8 +562,8 @@ p, li { white-space: pre-wrap; }
      <widget class="QWidget" name="verticalLayoutWidget_4">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>200</y>
+        <x>0</x>
+        <y>250</y>
         <width>1241</width>
         <height>321</height>
        </rect>
@@ -589,7 +589,7 @@ p, li { white-space: pre-wrap; }
              <x>0</x>
              <y>0</y>
              <width>1241</width>
-             <height>301</height>
+             <height>251</height>
             </rect>
            </property>
           </widget>
@@ -690,10 +690,10 @@ p, li { white-space: pre-wrap; }
      <widget class="QPushButton" name="checkStatusBtn">
       <property name="geometry">
        <rect>
-        <x>1090</x>
-        <y>140</y>
-        <width>91</width>
-        <height>31</height>
+        <x>1080</x>
+        <y>180</y>
+        <width>171</width>
+        <height>71</height>
        </rect>
       </property>
       <property name="text">
@@ -703,43 +703,15 @@ p, li { white-space: pre-wrap; }
      <widget class="QWidget" name="gridLayoutWidget">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>140</y>
+        <x>0</x>
+        <y>180</y>
         <width>1061</width>
-        <height>59</height>
+        <height>70</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="1">
-        <widget class="QPushButton" name="loadPIIDataBtn">
-         <property name="text">
-          <string>Load PII Data</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QPushButton" name="initDatabaseBtn">
-         <property name="text">
-          <string>Init Database</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QPushButton" name="trainModelBtn">
-         <property name="text">
-          <string>Train Model</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QPushButton" name="analyzePIIBtn">
-         <property name="text">
-          <string>Analyze PII Data</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="4">
-        <widget class="QLabel" name="assessStatusLabel">
+       <item row="1" column="2">
+        <widget class="QLabel" name="analyzePIIStatusLabel">
          <property name="text">
           <string>Fail</string>
          </property>
@@ -765,13 +737,34 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="1" column="2">
-        <widget class="QLabel" name="analyzePIIStatusLabel">
+       <item row="0" column="0">
+        <widget class="QPushButton" name="initDatabaseBtn">
+         <property name="text">
+          <string>Init Database</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="loadPIIDataBtn">
+         <property name="text">
+          <string>Load PII Data</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="QLabel" name="assessStatusLabel">
          <property name="text">
           <string>Fail</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="analyzePIIBtn">
+         <property name="text">
+          <string>Analyze PII Data</string>
          </property>
         </widget>
        </item>
@@ -792,6 +785,49 @@ p, li { white-space: pre-wrap; }
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QPushButton" name="trainModelBtn">
+         <property name="text">
+          <string>Train Model</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget_4">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>140</y>
+        <width>1261</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_23">
+       <item>
+        <widget class="QLabel" name="label_16">
+         <property name="text">
+          <string>Pattern File(for assess, .txt)</string>
+         </property>
+         <property name="indent">
+          <number>4</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="assessPatternFileEdit">
+         <property name="placeholderText">
+          <string>pattern file to be assessed, please use Pattern Generator to generate</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="assessPatternFileBrowserBtn">
+         <property name="text">
+          <string>...</string>
          </property>
         </widget>
        </item>
@@ -821,7 +857,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>550</y>
+      <y>600</y>
       <width>1241</width>
       <height>23</height>
      </rect>
