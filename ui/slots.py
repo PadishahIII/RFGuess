@@ -1,5 +1,6 @@
 import json
 import os.path
+import sys
 import threading
 import time
 from logging import LogRecord
@@ -8,6 +9,7 @@ from queue import Queue
 from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel
 from sqlalchemy import create_engine
+from sqlalchemy.engine import reflection
 from sqlalchemy.exc import OperationalError
 
 from Generators.GeneralPIIGenerators import *
@@ -123,24 +125,34 @@ class Slots:
         self.sqlFile = ""
         self.piiFile = ""
         self.clfSavePath = ""
+        self.connectDatabaseStatus = TrainModelStatus(self.mainWindow.connectDatabaseLabel)
         self.initDatabaseStatus = TrainModelStatus(self.mainWindow.initDatabaseStatusLabel)
         self.loadPIIDataStatus = TrainModelStatus(self.mainWindow.loadPIIDataStatusLabel)
         self.analyzePIIDataStatus = TrainModelStatus(self.mainWindow.analyzePIIStatusLabel)
         self.trainModelStatus = TrainModelStatus(self.mainWindow.trainModelStatusLabel)
         self.assessStatus = TrainModelStatus(self.mainWindow.assessStatusLabel)
-        self.trainStatusList = [self.initDatabaseStatus, self.loadPIIDataStatus, self.analyzePIIDataStatus
+        self.trainStatusList = [self.connectDatabaseStatus, self.initDatabaseStatus, self.loadPIIDataStatus,
+                                self.analyzePIIDataStatus
             , self.trainModelStatus, self.assessStatus]
         self.engine = None  # database engine
         self.logFormater = logging.Formatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
+        self.loadPIIDataProgressExitFlag = threading.Event()
 
         self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
         self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
         self.mainWindow.piiFileBrowser.clicked.connect(self.piiFileBrowserBtnSlot)
         self.mainWindow.clfSaveBtn.clicked.connect(self.clfSaveBrowserBtnSlot)
         self.mainWindow.initDatabaseBtn.clicked.connect(self.initDatabaseBtnSlot)
+        self.mainWindow.initDatabaseBtn.adjustSize()
         self.mainWindow.loadPIIDataBtn.clicked.connect(self.loadPIIDataBtnSlot)
+        self.mainWindow.loadPIIDataBtn.adjustSize()
         self.mainWindow.analyzePIIBtn.clicked.connect(self.analyzePIIDataBtnSlot)
+        self.mainWindow.analyzePIIBtn.adjustSize()
         self.mainWindow.trainModelBtn.clicked.connect(self.trainModelBtnSlot)
+        self.mainWindow.trainModelBtn.adjustSize()
+        self.mainWindow.checkStatusBtn.clicked.connect(self.checkDbStatusBtnSlot)
+        self.mainWindow.checkStatusBtn.adjustSize()
+
 
         self.initAllStatus()
         self.redirect_logger()
@@ -539,6 +551,7 @@ class Slots:
             conn.close()
             self.patchDialog(f"Connect to database successfully", title="Success", icon=QMessageBox.Information)
             Config.DatabaseUrl = self.databaseUrl
+            self.setPhasePassed(self.connectDatabaseStatus)
             return
         except OperationalError:
             self.patchDialog(f"Fail to connect to database")
@@ -578,9 +591,15 @@ class Slots:
     def initDatabaseBtnSlot(self):
         """Import sql structure
         """
+        if not self.checkPhasePassed(self.connectDatabaseStatus):
+            if self.questionDialog(f"There is at least one phase before not passed, are you sure to proceed?"):
+                pass
+            else:
+                return
         if self.sqlFile is None or len(self.sqlFile) <= 0:
             self.patchDialog(f"Please assign a sql structure file (.sql)")
             return
+        self.sqlFile = self.mainWindow.sqlFileEdit.text()
         if not os.path.exists(self.sqlFile):
             self.patchDialog(f"Sql file not exists: {self.sqlFile}")
             return
@@ -591,37 +610,59 @@ class Slots:
             sql_statements = f.read()
         try:
             with self.engine.connect() as conn:
-                conn.execute(sql_statements)
+                conn.execute(text(sql_statements))
         except Exception as e:
             self.patchDialog(f"Exception occur when import sql file to {self.databaseUrl}, {e}")
+            self.printTrainLog(f"Exception occur when import sql file to {self.databaseUrl}, {e}")
             return
         self.patchDialog(f"Database initialized", title="Success", icon=QMessageBox.Information)
+        self.printTrainLog(f"Database initialized from {self.sqlFile}")
         self.setPhasePassed(self.initDatabaseStatus)
 
     def loadPIIDataBtnSlot(self):
         """Load pii txt file into database
         """
-        if not self.checkPhasePassed():
+        if not self.checkPhasePassed(self.initDatabaseStatus):
             if self.questionDialog(f"There is at least one phase before not passed, are you sure to proceed?"):
                 pass
             else:
                 return
+        self.piiFile = self.mainWindow.piiFileEdit.text()
         if self.piiFile is None or len(self.piiFile) <= 0:
             self.patchDialog(f"Please assign pii file(.txt) first")
             return
         if not os.path.exists(self.piiFile):
             self.patchDialog(f"Pii file not exists: {self.piiFile}")
             return
-        try:
-            databaseInit.LoadDataset(self.piiFile, start=0, limit=-1, clear=True, update=False)
-            self.setPhasePassed(self.loadPIIDataStatus)
-            self.printTrainLog(f"Load pii data finished !")
-            self.patchInfoDialog(f"Load pii data success")
-        except Exception as e:
-            self.printTrainLog(
-                f"Exception occurs when load pii data into database({self.databaseUrl}), Original Exception: {e}")
-            self.patchDialog(f"Load pii data failed, check exception log for more details")
-            return
+
+        def run():
+            try:
+                databaseInit.LoadDataset(self.piiFile, start=0, limit=1000, clear=True, update=False)
+                self.setPhasePassed(self.loadPIIDataStatus)
+                self.printTrainLog(f"Load pii data finished !")
+                # self.patchInfoDialog(f"Load pii data success from {self.piiFile}")
+            except Exception as e:
+                self.printTrainLog(
+                    f"Exception occurs when load pii data into database({self.databaseUrl}), Original Exception: {e}")
+                # self.patchDialog(f"Load pii data failed, check exception log for more details")
+                return
+            finally:
+                self.loadPIIDataProgressExitFlag.set()
+
+        thread = threading.Thread(target=run)
+        thread.start()
+        self.printTrainLog(f"Reading PII Data... Please Wait")
+
+        def startLoadPIIDataProgressTracking():
+            while not self.loadPIIDataProgressExitFlag.is_set():
+                progress = databaseInit.load_pii_data_progress
+                limit = databaseInit.load_pii_data_limit
+                proportion = int(progress / limit * 100)
+                self.mainWindow.trainTabProgressBar.setValue(proportion)
+            self.mainWindow.trainTabProgressBar.setValue(100)
+
+        progress_thread = threading.Thread(target=startLoadPIIDataProgressTracking)
+        progress_thread.start()
 
     def analyzePIIDataBtnSlot(self):
         """Build all datatables
@@ -665,3 +706,76 @@ class Slots:
                 f"Exception occur when Training Model, Original Exception is {e}")
             self.patchDialog(f"Train Model failed, check exception log for more details")
             return
+
+    def checkDbStatusBtnSlot(self):
+        """Check database structure, datatable capability
+        """
+        if not self.connectDatabaseStatus.getStatus() or self.engine is None:
+            self.patchDialog(f"Please check database connection again")
+            return
+        logList = ["\nUpdate Status Result:\n", ]
+
+        # check database structure
+        not_exist_tables = self.checkInitDatabaseStatus()
+        if len(not_exist_tables) >= 1:
+            logList.append(f"Init Database: Failed\nMissing datatables: {not_exist_tables}\n")
+            self.printTrainLog(''.join(logList))
+            self.initDatabaseStatus.setFail()
+            return
+        logList.append(f"Init Database: Passed\n")
+        self.setPhasePassed(self.initDatabaseStatus)
+
+        # check PII datatable
+        pii_table_size = self.checkLoadPIIDataStatus()
+        if pii_table_size <= 0:
+            logList.append(f"Load PII Data: Failed.\n Empty PII datatable in database {self.databaseUrl}\n")
+            self.printTrainLog(''.join(logList))
+            self.loadPIIDataStatus.setFail()
+            return
+        logList.append(f"Load PII Data: Passed.\nPII table size: {pii_table_size}")
+        self.setPhasePassed(self.loadPIIDataStatus)
+
+        # check analyze PII data status
+        rep_unique_table_size = self.checkAnalyzePIIDataStatus()
+        if rep_unique_table_size <= 0:
+            logList.append(
+                f"Analyze PII Data: Failed.\nEmpty pwrepresentation_general datatable in database {self.databaseUrl}")
+            self.printTrainLog(''.join(logList))
+            self.analyzePIIDataStatus.setFail()
+            return
+        logList.append(f"Analyze PII Data: Passed.\npwrepresentation_general table size: {rep_unique_table_size}")
+        self.setPhasePassed(self.analyzePIIDataStatus)
+
+        self.printTrainLog(''.join(logList))
+
+    def checkInitDatabaseStatus(self) -> list[str]:
+        """Check for missing datatables
+
+        Returns:
+            list: list of missing table names
+        """
+        self.tablenames = Config.TableNames.generalTables
+        self.inspector = reflection.Inspector.from_engine(self.engine)
+
+        not_exist_tables = list()
+        for tb in self.tablenames:
+            if not self.inspector.has_table(tb):
+                not_exist_tables.append(tb)
+        return not_exist_tables
+
+    def checkLoadPIIDataStatus(self) -> int:
+        """Inspect PII datatable
+        Returns:
+            int: pii datatable size
+        """
+        queryMethods = databaseInit.PIIUnitQueryMethods()
+        return queryMethods.QuerySize()
+
+    def checkAnalyzePIIDataStatus(self) -> int:
+        """Inspect pwrepresentation_unique_general datatable
+
+        Returns:
+            int: pwrepresentation_unique_general datatable size
+        """
+        queryMethods = databaseInit.GeneralPwRepUniqueMethods()
+        return queryMethods.QuerySize()
