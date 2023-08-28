@@ -30,6 +30,9 @@ class GeneralPIIPatternGenerator:
         self.datagramFactory: GeneralPIIDatagramFactory = GeneralPIIDatagramFactory.getInstance()
         self.clf: PIIRFTrainner = model
 
+        self.patternGenerateLimit:int = 100 # for outer track
+        self.patternGenerateProgress:int = 0 # for outer progress track
+
     @classmethod
     def getInstance(cls, clfPath):
         t = PIIRFTrainner.loadFromFile(clfPath)
@@ -189,6 +192,9 @@ class GeneralPIIPatternGenerator:
             list[GeneralPIIDatagram], list[float] : patternList and probability list in descending order
 
         """
+        self.patternGenerateProgress:int = 0 # for outer progress tracking
+        self.patternGenerateLimit:int = limit # progress max limit
+
         # charset:PIICharacterSet = PIICharacterSet.getInstance()
         patternList: list[GeneralPIIDatagram] = list()  # output
         probaList: list[float] = list()  # output
@@ -225,6 +231,7 @@ class GeneralPIIPatternGenerator:
                         patternList.append(newPrefix)
                         probaList.append(currentProba)  # exclude proba of EndSymbol
                         patternNum += 1
+                        self.patternGenerateProgress = patternNum
                         # patternProbaDict[currentPrefix] = currentProba
                     else:
                         prefixList.append(newPrefix)

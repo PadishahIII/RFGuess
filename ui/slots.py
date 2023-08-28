@@ -1,12 +1,29 @@
 import json
 import sys
+import threading
+import time
 
-from PyQt5.QtCore import pyqtSignal, QDate, Qt
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QWidget
 
 from Generators.GeneralPIIGenerators import *
 from Generators.PasswordGuessGenerator import *
 from ui.mainWindow import *
+from queue import  Queue
+
+
+
+class Consumer(threading.Thread):
+    def __init__(self, queue: Queue, handler:typing.Callable):
+        super().__init__()
+        self.queue = queue
+        self.handler = handler # function
+
+    def run(self) -> None:
+        while True:
+            s:str = self.queue.get()
+            self.handler(s)
+            time.sleep(0.5)
 
 
 class Slots:
@@ -38,17 +55,40 @@ class Slots:
         self.clsFile = ""
         self.patternSavePath = "patterns.txt"
         self.patternGenerateLimit = 0
-        self.patternLimitOptions = ['1000', '2000', '3000', '4000', '5000']
+        self.patternLimitOptions = ['100', '500', '1000', '2000', '3000', '4000', '5000']
         self.patternGenerator: GeneralPIIPatternGenerator = None
+        self.patternProgressThreadExitFlag = threading.Event()
+
+        self.print_log_queue:Queue = Queue(100)
+        self.error_dialog_queue:Queue = Queue(100)
+        self.info_dialog_queue:Queue = Queue(100)
+        self.print_log_consumer = Consumer(self.print_log_queue,self.handle_print_log_signal)
+        self.error_dialog_consumer = Consumer(self.error_dialog_queue,self.handle_error_signal)
+        self.info_dialog_consumer = Consumer(self.info_dialog_queue,self.handle_info_signal)
+        self.print_log_consumer.start()
+        self.error_dialog_consumer.start()
+        self.info_dialog_consumer.start()
+
 
         self.mainWindow.patternOutputEdit.setText(self.patternSavePath)
         self.mainWindow.loadClfBtn.clicked.connect(self.loadClfSlot)
         self.mainWindow.clfFileBrowserBtn.clicked.connect(self.openClfFileSlot)
         self.mainWindow.patternSaveBrowserBtn.clicked.connect(self.selectPatternOutputSlot)
         self.mainWindow.patternLimitComboBox.addItems(self.patternLimitOptions)
+        self.mainWindow.patternGenerateBtn.clicked.connect(self.generatePatternBtnSlot)
 
         self.buildLimitComboBox()
         self.buildUsage()
+
+    def handle_error_signal(self, msg):
+        self.patchDialog(msg)
+
+    def handle_print_log_signal(self, msg):
+        self.printPatternLog(msg)
+
+    def handle_info_signal(self, msg):
+        self.patchDialog(msg, title="Success",
+                         icon=QMessageBox.Information)
 
     def buildUsage(self):
         usage = \
@@ -192,6 +232,64 @@ class Slots:
         self.printGuessLog(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n")
         self.patchDialog(f"Complete!\nCount:{newLen}\nSaved to {self.outputFile}\n", title="Generate Guesses Complete",
                          icon=QMessageBox.Information)
+
+    class generatePatternWorker(QThread):
+        def __init__(self, obj):
+            super().__init__()
+            self.obj = obj
+
+        def run(self) -> None:
+            try:
+                self.obj.generatePattern()
+            except Exception as e:
+                return
+                # self.obj.error_dialog_queue.put(f"Exception occur: {e}")
+            finally:
+                self.obj.endPatternProgressTracking()
+
+    def generatePatternBtnSlot(self):
+        if self.patternGenerator is None:
+            self.patchDialog(f"Classifier not loaded")
+            return
+        if self.patternSavePath is None or len(self.patternSavePath) <= 0:
+            self.patchDialog(f"Please assign a pattern save file")
+            return
+        self.patternGenerateLimit = int(self.mainWindow.patternLimitComboBox.currentText())
+        self.startPatternProgressTracking()
+        self.patternWorker = self.generatePatternWorker(self)
+        self.patternWorker.start()
+
+    def generatePattern(self):
+        l = list()
+        l = self.patternGenerator.getPatternStrList(limit=self.patternGenerateLimit)
+        with open(self.patternSavePath, "w", encoding="utf8", errors='ignore') as f:
+            for i in range(len(l)):
+                f.write(f"{l[i]}\n")
+        self.print_log_queue.put(f"Pattern generation complete: {len(l)}, saved to {self.patternSavePath}")
+        # self.info_dialog_queue.put(f"Pattern generation complete: {len(l)}, saved to {self.patternSavePath}")
+
+    def startPatternProgressTracking(self):
+        """Track pattern generating progress
+        """
+
+        def trackProgress():
+            while not self.patternProgressThreadExitFlag.is_set():
+                limit = self.patternGenerator.patternGenerateLimit
+                progress = self.patternGenerator.patternGenerateProgress
+                proportion = min(int(progress / limit * 100), 100)
+                self.mainWindow.patternProgressBar.setValue((proportion))
+                time.sleep(0.5)
+            limit = self.patternGenerator.patternGenerateLimit
+            progress = self.patternGenerator.patternGenerateProgress
+            proportion = min(int(progress / limit * 100), 100)
+            self.mainWindow.patternProgressBar.setValue((proportion))
+
+        self.patternProgressThreadExitFlag.clear()
+        self.patternProgressThread = threading.Thread(target=trackProgress)
+        self.patternProgressThread.start()
+
+    def endPatternProgressTracking(self):
+        self.patternProgressThreadExitFlag.set()
 
     def setLimitOptionSlot(self):
         limitStr = self.mainWindow.limitComboBox.currentText()

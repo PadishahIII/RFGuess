@@ -261,7 +261,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_18.addWidget(self.patternGenerateBtn)
         self.patternProgressBar = QtWidgets.QProgressBar(self.tab_2)
         self.patternProgressBar.setGeometry(QtCore.QRect(10, 450, 1241, 23))
-        self.patternProgressBar.setProperty("value", 24)
+        self.patternProgressBar.setProperty("value", 0)
         self.patternProgressBar.setObjectName("patternProgressBar")
         self.tabWidget.addTab(self.tab_2, "")
         MainWindow.setCentralWidget(self.centralwidget)
@@ -279,7 +279,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "RFGuess"))
         self.label_2.setText(_translate("MainWindow", "Output path:"))
         self.outputBrowser.setText(_translate("MainWindow", "..."))
         self.label_15.setText(_translate("MainWindow", "Limit:"))
@@ -313,5 +313,4 @@ class Ui_MainWindow(object):
         self.label_10.setText(_translate("MainWindow", "Limit:"))
         self.patternGenerateBtn.setText(_translate("MainWindow", "Generate"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Pattern Generator"))
-
 
