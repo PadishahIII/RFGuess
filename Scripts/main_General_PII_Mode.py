@@ -203,7 +203,9 @@ class GeneralPIITrainMain(TestCase):
         text = tree.export_text(generator.clf.getClf().estimators_[0])
         with open("../Tests/tree_text.txt", "w") as f:
             f.write(text)
-
+class ProgressTracker:
+    progress = 0
+    limit = 100
 
 class BuildDatabase(TestCase):
     def test_rebuild(self):
@@ -292,9 +294,11 @@ class BuildDatabase(TestCase):
                 logger.info(
                     f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%), remain time:{int(remainSec) // 60}m{int(remainSec) % 60}s")
                 oldTime = time.time()
+            ProgressTracker.progress = i
+            ProgressTracker.limit = dataset.row
 
         logger.info(
-            f"Completed! Total password:{i}, total item;{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
+            f"Completed! Total password:{i}, total item:{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
         threadpool.shutdown()
 
     def test_build(self):
@@ -305,8 +309,12 @@ class BuildDatabase(TestCase):
         """
         transformers = list()
         transformers.append(GeneralRepFrequencyBaseTransformer.getInstance())
+        ProgressTracker.progress = 1
+        ProgressTracker.limit = 3
         transformers.append(GeneralRepFrequencyTransformer.getInstance())
+        ProgressTracker.progress +=1
         transformers.append(GeneralPwRepFrequencyTransformer.getInstance())
+        ProgressTracker.progress +=1
         for t in transformers:
             t.rebuild()
         logger.info(f"Re-generate Complete")
@@ -344,7 +352,8 @@ class BuildDatabase(TestCase):
         for pwStr, repUnit in pwRepDict.items():
             futureList.append(executor.submit(insertUnit, pwStr, repUnit))
             i += 1
-            logger.info(f"Submit progress:{i}/{_len}({(i / _len) * 100:.2f})")
+            if i % 100 == 0:
+                logger.info(f"Submit progress:{i}/{_len}({(i / _len) * 100:.2f})")
 
         i = 0
         for future in concurrent.futures.as_completed(futureList):
@@ -353,6 +362,8 @@ class BuildDatabase(TestCase):
             i += 1
             if i % 100 == 0:
                 logger.info(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
+            ProgressTracker.progress = i
+            ProgressTracker.limit = _len
 
         logger.info(f"Completed! Total:{i}, total exception:{exceptionCount}")
         executor.shutdown()

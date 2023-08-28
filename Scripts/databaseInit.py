@@ -173,9 +173,10 @@ class BasicManipulateMethods(metaclass=ABCMeta):
 
     def DeleteAll(self, ):
         with Session() as session:
-            units = self.QueryAll()
-            for unit in units:
-                session.delete(unit)
+            session.query(self.entityCls).delete()
+            # units = self.QueryAll()
+            # for unit in units:
+            #     session.delete(unit)
             session.commit()
 
     def SmartInsert(self, unit: Base, update: bool = False) -> bool:
@@ -306,9 +307,9 @@ class ParseLineException(Exception):
 '''
 Main logics
 '''
-
-load_pii_data_progress = 0  # for outer progress tracking
-load_pii_data_limit = 100
+class ProgressTracker:
+    load_pii_data_progress = 0  # for outer progress tracking
+    load_pii_data_limit = 100
 
 
 def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
@@ -377,8 +378,8 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
                 line = f.readline()
                 if len(line) > 5:
                     count += 1
-                    load_pii_data_progress = count
-                    load_pii_data_limit = limit
+                    ProgressTracker.load_pii_data_progress = count
+                    ProgressTracker.load_pii_data_limit = limit
                     u = insertline(line, count, directInsert)
                     if u:
                         updateCount += 1
@@ -388,8 +389,8 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
             while line:
                 if len(line) > 5:
                     count += 1
-                    load_pii_data_progress = count
-                    load_pii_data_limit = line_count
+                    ProgressTracker.load_pii_data_progress = count
+                    ProgressTracker.load_pii_data_limit = line_count
                     u = insertline(line, count, directInsert)
                     if u:
                         updateCount += 1
