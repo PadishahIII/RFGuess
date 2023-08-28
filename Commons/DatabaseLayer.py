@@ -4,6 +4,8 @@ from Parser.GeneralPIIDataTypes import *
 from Scripts.databaseInit import *
 import logging
 
+logger = logging.getLogger("DatabaseLayer")
+logger.setLevel(logging.INFO)
 
 '''
 Property Transformers
