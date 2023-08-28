@@ -4,6 +4,7 @@ general_generator_threshold = 1.2e-8
 
 DatabaseUrl = "mysql://root:914075@localhost/dataset12306_test"
 
+
 class TableNames:
     PII = "PII"
     pwrepresentation = "pwrepresentation"
@@ -15,6 +16,13 @@ class TableNames:
     representation_frequency_general = f"{representation_frequency}_general"
     pwrepresentation_frequency_general = f"{pwrepresentation_frequency}_general"
     pwrepresentation_unique_general = f"{pwrepresentation_unique}_general"
+
+    generalTables = [PII,
+                     pwrepresentation_general,
+                     pwrepresentation_frequency_general,
+                     representation_frequency_general,
+                     representation_frequency_base_general,
+                     pwrepresentation_unique_general]
 
 
 class RFParams:

@@ -10,9 +10,9 @@ from sqlalchemy import Column, Integer, String, text, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, validates, scoped_session
 
+import Parser.Config as Config
 from Commons import pinyinUtils
 from Parser.Config import TableNames
-import Parser.Config as Config
 
 Base = declarative_base()
 emailRst = re.compile(r".+?@.+?")
@@ -153,6 +153,13 @@ class BasicManipulateMethods(metaclass=ABCMeta):
         with Session() as session:
             session.add(obj)
             session.commit()
+
+    def QuerySize(self) -> int:
+        """Get number of data items
+        """
+        with Session() as session:
+            num = session.query(self.entityCls).count()
+            return num
 
     def QueryAll(self) -> list[Base]:
         with Session() as session:
@@ -300,6 +307,9 @@ class ParseLineException(Exception):
 Main logics
 '''
 
+load_pii_data_progress = 0  # for outer progress tracking
+load_pii_data_limit = 100
+
 
 def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
     """
@@ -336,12 +346,12 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
                 u = queryMethods.SmartInsert(unit, update)
                 updated = u
         except Exception as e:
-            logger.critical(f"Exception occured. Restart at {count} to continue the process.")
+            logger.info(f"Exception occured. Restart at {count} to continue the process.")
             invalidLines.append(line)
             exceptionList.append(e)
             return updated
         if count % 100 == 0:
-            logger.critical(f"Completed: {count}")
+            logger.info(f"Completed: {count}")
         return updated
 
     if not os.path.exists(file):
@@ -349,17 +359,26 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
 
     # clear table
     if clear:
+        logger.info(f"Clearing original data, which has size:{queryMethods.QuerySize()}")
         queryMethods.DeleteAll()
+        logger.info(f"Clear PII data finish, start write new data")
     directInsert = clear
 
     with open(file, encoding='gbk', errors="replace") as f:
-        for i in range(start):
+        firstLine = f.readline()
+        file_size = os.stat(file).st_size
+        line_length = len(firstLine) if len(firstLine) > 0 else 50
+        line_count = file_size // line_length
+
+        for i in range(start - 1):
             f.readline()
         if limit > 0:
             for i in range(limit):
                 line = f.readline()
                 if len(line) > 5:
                     count += 1
+                    load_pii_data_progress = count
+                    load_pii_data_limit = limit
                     u = insertline(line, count, directInsert)
                     if u:
                         updateCount += 1
@@ -369,13 +388,16 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
             while line:
                 if len(line) > 5:
                     count += 1
+                    load_pii_data_progress = count
+                    load_pii_data_limit = line_count
                     u = insertline(line, count, directInsert)
                     if u:
                         updateCount += 1
                 line = f.readline()
-    logger.critical(f"number of data unit: {count}")
-    logger.critical(f"Have insert {count} PII data, updated: {updateCount}")
-    logger.critical(f"Invalid Lines ({len(invalidLines)}):")
+
+    logger.info(f"number of data unit: {count}")
+    logger.info(f"Have insert {count} PII data, updated: {updateCount}")
+    logger.info(f"Invalid Lines ({len(invalidLines)}):")
 
     for i in range(len(invalidLines)):
         line = invalidLines[i]
