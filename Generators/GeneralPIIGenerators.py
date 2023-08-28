@@ -241,7 +241,7 @@ class GeneralPIIPatternGenerator:
                 _i += 1
                 if _i % 1000 == 0:
                     print(
-                        f"Progress: {_i}, remain prefix: {len(prefixList)}, current prefix len: {len(prefixList[-1].sectionList)}, completed: {len(patternList)}, discarded:{_num_discarded}")
+                        f"Progress: {_i}, remain prefix: {len(prefixList)}, completed: {len(patternList)}, discarded:{_num_discarded}")
 
         # probaArray = np.array(probaStatisticList)
         # m = np.average(probaArray)
@@ -252,6 +252,8 @@ class GeneralPIIPatternGenerator:
         pp_sorted = sorted(pp, key=lambda x: x[1], reverse=True)
         newPatternList = list(map(lambda x: x[0], pp_sorted))
         newProbaList = list(map(lambda x: x[1], pp_sorted))
+
+        self.patternGenerateLimit = len(newPatternList)
         return newPatternList, newProbaList
 
 

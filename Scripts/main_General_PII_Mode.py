@@ -40,16 +40,16 @@ class GeneralPIITrainMain(TestCase):
         print(f"\nStart Training...")
         trainner = PIIRFTrainner(piiFactory.getFeatureList(), piiFactory.getLabelList())
         trainner.train()
-        savePath = "../../save_general.clf"
+        savePath = "../../save_full.clf"
         joblib.dump(trainner.getClf(), savePath)
         print(f"Train finish, saved to {savePath}")
 
     def test_generate_pattern(self):
         generator: GeneralPIIPatternGenerator = GeneralPIIPatternGenerator.getInstance("../../save_general.clf")
-        l = generator.getPatternStrList()
+        l = generator.getPatternStrList(limit=5000)
         print(f"Generate complete: {len(l)}")
 
-        with open("../patterns_general.txt", "w") as f:
+        with open("../patterns.txt", "w") as f:
             for i in range(len(l)):
                 f.write(f"{l[i]}\n")
 
@@ -100,7 +100,7 @@ class GeneralPIITrainMain(TestCase):
         filePattern = '../guesses/passwords_{0}.txt'
         transformer: PIIUnitTransformer = PIIUnitTransformer.getInstance()
         generator: GeneralPasswordGenerator = GeneralPasswordGenerator.getInstance(
-            patternFile="../patterns_general.txt",
+            patternFile="../patterns.txt",
         )
         generator.init()
         maxId = transformer.getMaxId()
