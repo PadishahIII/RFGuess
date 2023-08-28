@@ -2,7 +2,7 @@ pii_order = 6
 generator_threshold = 1.2e-8
 general_generator_threshold = 1.2e-8
 
-DatabaseUrl = "mysql://root:914075@localhost/dataset12306"
+DatabaseUrl = "mysql://root:914075@localhost/dataset12306_test"
 
 class TableNames:
     PII = "PII"
