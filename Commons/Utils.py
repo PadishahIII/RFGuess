@@ -179,7 +179,6 @@ class TranslationException(Exception):
 from Scripts.databaseInit import PIIUnit
 from Commons.BasicTypes import PII
 
-
 def parsePIIUnitToPIIAndPwStr(unit: PIIUnit) -> (PII, str):
     """
     Convert PIIUnit into PII and password string

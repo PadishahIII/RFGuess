@@ -68,6 +68,9 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+### GUI and github doc(8.28)
+1. Enable PIITagContainer to support empty fields 
+
 ### Optimize(8.26)
 1. (5:5 train:test, 11w): model with 'gini': 452M, 0.3396; model with 'entropy': 451M, 0.3045
 3. Add email site as a new tag type
