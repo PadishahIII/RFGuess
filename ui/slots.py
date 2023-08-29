@@ -8,8 +8,9 @@ import traceback
 from logging import LogRecord
 from queue import Queue
 
-from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel, QTextBrowser
+from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread, QObject
+from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel
 from sqlalchemy import create_engine
 from sqlalchemy.engine import reflection
 from sqlalchemy.exc import OperationalError
@@ -102,6 +103,30 @@ def release_current_task_record_func(f):
         return result
 
     return wrapper
+
+
+class TrainTabProgressBarWorker(QObject):
+    trainTabProgressBarChanged = pyqtSignal(int)
+
+    def __init__(self, progressBarObj: QProgressBar):
+        super().__init__()
+        self.progressBar: QProgressBar = progressBarObj
+        self.trainTabProgressBarChanged.connect(self.progressBar.setValue)
+
+    def updateValue(self, value):
+        self.trainTabProgressBarChanged.emit(value)
+
+
+class PatternGenerateProgressBarWorker(QObject):
+    patternGenerateProgressBarChanged = pyqtSignal(int)
+
+    def __init__(self, progressBarObj: QProgressBar):
+        super().__init__()
+        self.progressBar: QProgressBar = progressBarObj
+        self.patternGenerateProgressBarChanged.connect(self.progressBar.setValue)
+
+    def updateValue(self, value):
+        self.patternGenerateProgressBarChanged.emit(value)
 
 
 class Slots:
@@ -215,6 +240,9 @@ class Slots:
             functools.partial(self.auto_scroll_textbrowser, self.mainWindow.trainTabTextBrowser))
 
         self.mainWindow.trainTabTextBrowser.ensureCursorVisible()
+
+        self.trainTabProgressBarWorker = TrainTabProgressBarWorker(self.mainWindow.trainTabProgressBar)
+        self.patternGenerateProgressBarWorker = PatternGenerateProgressBarWorker(self.mainWindow.patternProgressBar)
 
         self.initAllStatus()
         self.redirect_logger()
@@ -470,7 +498,8 @@ class Slots:
     '''
 
     def updatePatternProgressBar(self, value):
-        self.mainWindow.patternProgressBar.valueChanged.emit(value)
+        # self.mainWindow.patternProgressBar.valueChanged.emit(value)
+        self.patternGenerateProgressBarWorker.updateValue(value)
 
     def printPatternLog(self, s: str):
         """Log output for Pattern generation tab
@@ -685,7 +714,8 @@ class Slots:
             s.setFail()
 
     def updateTrainTabProgressBar(self, value):
-        self.mainWindow.trainTabProgressBar.valueChanged.emit(value)
+        # self.mainWindow.trainTabProgressBar.valueChanged.emit(value)
+        self.trainTabProgressBarWorker.updateValue(value)
 
     def initDatabaseBtnSlot(self):
         """Import sql structure
