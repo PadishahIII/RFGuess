@@ -20,7 +20,7 @@
       <x>0</x>
       <y>0</y>
       <width>1271</width>
-      <height>641</height>
+      <height>651</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -35,8 +35,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1151</width>
-        <height>471</height>
+        <width>1261</width>
+        <height>631</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
@@ -59,8 +59,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1131</width>
-            <height>177</height>
+            <width>1241</width>
+            <height>270</height>
            </rect>
           </property>
           <widget class="QTextBrowser" name="guessTabTextBrowser">
@@ -68,99 +68,26 @@
             <rect>
              <x>-5</x>
              <y>1</y>
-             <width>1141</width>
-             <height>201</height>
+             <width>1241</width>
+             <height>221</height>
             </rect>
+           </property>
+          </widget>
+          <widget class="QProgressBar" name="progressBar">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>230</y>
+             <width>1241</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="value">
+            <number>0</number>
            </property>
           </widget>
          </widget>
         </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QProgressBar" name="progressBar">
-         <property name="value">
-          <number>0</number>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Output path:</string>
-           </property>
-           <property name="indent">
-            <number>4</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="outputEdit">
-           <property name="clearButtonEnabled">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="outputBrowser">
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_15">
-           <property name="text">
-            <string>Limit:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="limitComboBox"/>
-         </item>
-         <item>
-          <widget class="QPushButton" name="generateBtn">
-           <property name="text">
-            <string>Generate</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_15"/>
-         </item>
-         <item>
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Pattern file:</string>
-           </property>
-           <property name="indent">
-            <number>4</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="patternFileEdit"/>
-         </item>
-         <item>
-          <widget class="QToolButton" name="fileBrowserBtn">
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="loadBtn">
-           <property name="text">
-            <string>Load</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </item>
        <item row="2" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_16">
@@ -308,12 +235,6 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_9"/>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_10"/>
-           </item>
-           <item>
             <widget class="QScrollArea" name="scrollArea_2">
              <property name="widgetResizable">
               <bool>true</bool>
@@ -323,8 +244,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>558</width>
-                <height>97</height>
+                <width>613</width>
+                <height>238</height>
                </rect>
               </property>
               <widget class="QTextBrowser" name="usageTextBrowser">
@@ -332,8 +253,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>561</width>
-                 <height>101</height>
+                 <width>611</width>
+                 <height>241</height>
                 </rect>
                </property>
                <property name="html">
@@ -348,25 +269,92 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_11"/>
-           </item>
-           <item>
             <widget class="QPushButton" name="loadPIIBtn">
              <property name="text">
               <string>Load PII from Json</string>
              </property>
             </widget>
            </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_12"/>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_13"/>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_14"/>
-           </item>
           </layout>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Output path:</string>
+           </property>
+           <property name="indent">
+            <number>4</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="outputEdit">
+           <property name="clearButtonEnabled">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="outputBrowser">
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_15">
+           <property name="text">
+            <string>Limit:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="limitComboBox"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="generateBtn">
+           <property name="text">
+            <string>Generate</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="0" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_15"/>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Pattern file:</string>
+           </property>
+           <property name="indent">
+            <number>4</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="patternFileEdit"/>
+         </item>
+         <item>
+          <widget class="QToolButton" name="fileBrowserBtn">
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="loadBtn">
+           <property name="text">
+            <string>Load</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -419,7 +407,7 @@ p, li { white-space: pre-wrap; }
         <x>9</x>
         <y>120</y>
         <width>1241</width>
-        <height>321</height>
+        <height>511</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -434,7 +422,7 @@ p, li { white-space: pre-wrap; }
             <x>0</x>
             <y>0</y>
             <width>1237</width>
-            <height>317</height>
+            <height>507</height>
            </rect>
           </property>
           <widget class="QTextBrowser" name="patternTextBrowser">
@@ -443,8 +431,21 @@ p, li { white-space: pre-wrap; }
              <x>0</x>
              <y>0</y>
              <width>1241</width>
-             <height>311</height>
+             <height>431</height>
             </rect>
+           </property>
+          </widget>
+          <widget class="QProgressBar" name="patternProgressBar">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>440</y>
+             <width>1241</width>
+             <height>23</height>
+            </rect>
+           </property>
+           <property name="value">
+            <number>0</number>
            </property>
           </widget>
          </widget>
@@ -497,19 +498,6 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
       </layout>
-     </widget>
-     <widget class="QProgressBar" name="patternProgressBar">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>450</y>
-        <width>1241</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="value">
-       <number>0</number>
-      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_3">
@@ -565,7 +553,7 @@ p, li { white-space: pre-wrap; }
         <x>0</x>
         <y>250</y>
         <width>1241</width>
-        <height>321</height>
+        <height>371</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -580,7 +568,7 @@ p, li { white-space: pre-wrap; }
             <x>0</x>
             <y>0</y>
             <width>1237</width>
-            <height>317</height>
+            <height>367</height>
            </rect>
           </property>
           <widget class="QTextBrowser" name="trainTabTextBrowser">
@@ -589,16 +577,16 @@ p, li { white-space: pre-wrap; }
              <x>0</x>
              <y>0</y>
              <width>1241</width>
-             <height>251</height>
+             <height>311</height>
             </rect>
            </property>
           </widget>
           <widget class="QProgressBar" name="trainTabProgressBar">
            <property name="geometry">
             <rect>
-             <x>0</x>
-             <y>260</y>
-             <width>1239</width>
+             <x>-20</x>
+             <y>320</y>
+             <width>1261</width>
              <height>20</height>
             </rect>
            </property>
@@ -854,7 +842,7 @@ p, li { white-space: pre-wrap; }
       <x>1270</x>
       <y>20</y>
       <width>151</width>
-      <height>461</height>
+      <height>611</height>
      </rect>
     </property>
     <property name="html">
@@ -863,7 +851,7 @@ p, li { white-space: pre-wrap; }
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;For help:&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;http://www.baidu.com&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;train your own model&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://github.com/PadishahIII/RFGuess/tree/master&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Github&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
   </widget>
