@@ -1,3 +1,4 @@
+import functools
 import json
 import os.path
 import sys
@@ -7,7 +8,7 @@ from logging import LogRecord
 from queue import Queue
 
 from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel, QTextBrowser
 from sqlalchemy import create_engine
 from sqlalchemy.engine import reflection
 from sqlalchemy.exc import OperationalError
@@ -162,8 +163,16 @@ class Slots:
         self.mainWindow.checkStatusBtn.clicked.connect(self.checkDbStatusBtnSlot)
         self.mainWindow.checkStatusBtn.adjustSize()
 
+        self.mainWindow.trainTabTextBrowser.textChanged.connect(
+            functools.partial(self.auto_scroll_textbrowser, self.mainWindow.trainTabTextBrowser))
+
+        self.mainWindow.trainTabTextBrowser.ensureCursorVisible()
+
         self.initAllStatus()
         self.redirect_logger()
+
+    def auto_scroll_textbrowser(self, textbrowser: QTextBrowser):
+        textbrowser.verticalScrollBar().setValue(textbrowser.verticalScrollBar().maximum())
 
     def redirect_logger(self):
         """Redirect and format loggers into textbrowser
@@ -714,7 +723,7 @@ class Slots:
                 # self.patchInfoDialog(f"Analyze PII Data and build datatables finished")
             except Exception as e:
                 self.printTrainLog(
-                    f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}")
+                    f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}\nTraceback:{e.__traceback__}\n")
                 # self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
                 return
             finally:
@@ -758,7 +767,7 @@ class Slots:
                 # self.patchInfoDialog(f"Train Model finished")
             except Exception as e:
                 self.printTrainLog(
-                    f"Exception occur when Training Model, Original Exception is {e}")
+                    f"Exception occur when Training Model, Original Exception is {e}\nTraceback:{e.__traceback__}\n")
                 # self.patchDialog(f"Train Model failed, check exception log for more details")
                 return
             finally:
@@ -799,7 +808,7 @@ class Slots:
                 self.printTrainLog(f"Accuracy Assessment finished !")
             except Exception as e:
                 self.printTrainLog(
-                    f"Exception occur when Assessing accuracy, Original Exception is {e}")
+                    f"Exception occur when Assessing accuracy, Original Exception is {e}\nTraceback:{e.__traceback__}\n")
                 return
             finally:
                 self.assessProgressExitFlag.set()

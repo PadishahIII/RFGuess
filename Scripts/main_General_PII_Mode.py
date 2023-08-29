@@ -1,8 +1,6 @@
 import concurrent.futures
-import logging
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from unittest import TestCase
 
 import joblib
@@ -17,6 +15,7 @@ TRAINSET_PROPORTION = 0.5  # train set proportion
 
 logger = logging.getLogger("main_General_PII_Mode")
 logger.setLevel(logging.INFO)
+
 
 class GeneralPIITrainMain(TestCase):
     def test_train_generate_assess(self):
@@ -35,7 +34,7 @@ class GeneralPIITrainMain(TestCase):
         time.sleep(1)
         self.test_accuracy_assessment()
 
-    def train_generate_assess(self,savePath):
+    def train_generate_assess(self, savePath):
         """(For Api use)Train, generate pattern and assess accuracy
         """
         logger.info(f"[Train] procession start")
@@ -63,7 +62,7 @@ class GeneralPIITrainMain(TestCase):
         joblib.dump(trainner.getClf(), savePath)
         logger.info(f"Train finish, saved to {savePath}")
 
-    def train_general(self,savePath):
+    def train_general(self, savePath):
         """(For Api use) train general model
         """
         ProgressTracker.progress = 0
@@ -133,12 +132,12 @@ class GeneralPIITrainMain(TestCase):
     def test_accuracy_assessment(self):
         self.accuracy_assessment("../patterns.txt")
 
-    def accuracy_assessment(self,patternFile):
+    def accuracy_assessment(self, patternFile):
         """(for Api use) Assess the accuracy of generated guesses
         Get every PII and generate a guesses dictionary, if any guess match the true password, that'll be called by success
 
         """
-        ProgressTracker.progress  = 0
+        ProgressTracker.progress = 0
 
         filePattern = '../guesses/passwords_{0}.txt'
         transformer: PIIUnitTransformer = PIIUnitTransformer.getInstance()
@@ -215,14 +214,24 @@ class GeneralPIITrainMain(TestCase):
         text = tree.export_text(generator.clf.getClf().estimators_[0])
         with open("../Tests/tree_text.txt", "w") as f:
             f.write(text)
+
+
 class ProgressTracker:
     progress = 0
     limit = 100
+
+    @classmethod
+    def updateProgress(cls, current, total, proportion: float, base: float):
+        cls.progress = current / total * proportion * cls.limit + base * cls.limit
+
 
 class BuildDatabase(TestCase):
     def test_rebuild(self):
         """Rebuild all datatables
         """
+        ProgressTracker.progress = 0
+        ProgressTracker.limit = 100
+
         logger.info(f"Start addressing dataset...")
         self.test_build()
         logger.info(f"Finish addressing dataset")
@@ -259,7 +268,7 @@ class BuildDatabase(TestCase):
         exceptionCount = 0
         timeUseList: list[float] = list()
 
-        threadpool = ThreadPoolExecutor()
+        threadpool = ThreadPoolExecutor(max_workers=10)
         countLock = threading.Lock()
         futureList = list()
 
@@ -302,14 +311,13 @@ class BuildDatabase(TestCase):
             exceptionCount += exceptionCountAdd
             i += 1
             if i % 500 == 0:
-                timeUse = 1000 * (time.time() - oldTime)
+                timeUse = (time.time() - oldTime)
                 timeUseList.append(timeUse)
                 remainSec = (dataset.row - i) / 500 * (sum(timeUseList) / len(timeUseList))
                 logger.info(
                     f"Progress:{i}/{dataset.row} ({(i / dataset.row * 100):.2f}%), remain time:{int(remainSec) // 60}m{int(remainSec) % 60}s")
                 oldTime = time.time()
-            ProgressTracker.progress = i
-            ProgressTracker.limit = dataset.row
+            ProgressTracker.updateProgress(i, dataset.row, 0.3, 0)
 
         logger.info(
             f"Completed! Total password:{i}, total item:{repCount}, update item:{updateCount}, total exception:{exceptionCount}")
@@ -321,16 +329,13 @@ class BuildDatabase(TestCase):
     def test_generate_frequency_tables(self):
         """Generate three datatable: `representation_frequency_base_general`, `pwrepresentation_frequency_general`, `representation_frequency_general`
         """
-        ProgressTracker.progress = 0
-
         transformers = list()
         transformers.append(GeneralRepFrequencyBaseTransformer.getInstance())
-        ProgressTracker.progress = 1
-        ProgressTracker.limit = 3
+        ProgressTracker.updateProgress(1, 3, 0.3, 0.3)
         transformers.append(GeneralRepFrequencyTransformer.getInstance())
-        ProgressTracker.progress +=1
+        ProgressTracker.progress += 1
         transformers.append(GeneralPwRepFrequencyTransformer.getInstance())
-        ProgressTracker.progress +=1
+        ProgressTracker.progress += 1
         for t in transformers:
             t.rebuild()
         logger.info(f"Re-generate Complete")
@@ -338,8 +343,6 @@ class BuildDatabase(TestCase):
     def test_build_general_unique(self):
         """Build unique datatable
         """
-        ProgressTracker.progress = 0
-
         resolver: GeneralPIIRepresentationResolver = GeneralPIIRepresentationResolver.getInstance()
         transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
 
@@ -380,8 +383,7 @@ class BuildDatabase(TestCase):
             i += 1
             if i % 100 == 0:
                 logger.info(f"Progress:{i}/{_len} ({(i / _len * 100):.2f}%)")
-            ProgressTracker.progress = i
-            ProgressTracker.limit = _len
+            ProgressTracker.updateProgress(i, _len, 0.3, 0.6)
 
         logger.info(f"Completed! Total:{i}, total exception:{exceptionCount}")
         executor.shutdown()

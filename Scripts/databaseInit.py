@@ -1,9 +1,11 @@
 import binascii
+import concurrent.futures
 import hashlib
 import logging
 import os
 import re
 from abc import ABCMeta, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 
 import sqlalchemy
 from sqlalchemy import Column, Integer, String, text, func
@@ -307,6 +309,8 @@ class ParseLineException(Exception):
 '''
 Main logics
 '''
+
+
 class ProgressTracker:
     load_pii_data_progress = 0  # for outer progress tracking
     load_pii_data_limit = 100
@@ -365,6 +369,9 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
         logger.info(f"Clear PII data finish, start write new data")
     directInsert = clear
 
+    threadpool = ThreadPoolExecutor()
+    futureList = list()
+
     with open(file, encoding='gbk', errors="replace") as f:
         firstLine = f.readline()
         file_size = os.stat(file).st_size
@@ -380,9 +387,10 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
                     count += 1
                     ProgressTracker.load_pii_data_progress = count
                     ProgressTracker.load_pii_data_limit = limit
-                    u = insertline(line, count, directInsert)
-                    if u:
-                        updateCount += 1
+                    futureList.append(threadpool.submit(insertline, line, count, directInsert))
+                    # u = insertline(line, count, directInsert)
+                    # if u:
+                    #     updateCount += 1
         else:
             # no limit
             line = f.readline()
@@ -391,14 +399,24 @@ def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
                     count += 1
                     ProgressTracker.load_pii_data_progress = count
                     ProgressTracker.load_pii_data_limit = line_count
-                    u = insertline(line, count, directInsert)
-                    if u:
-                        updateCount += 1
+                    futureList.append(threadpool.submit(insertline, line, count, directInsert))
+                    # u = insertline(line, count, directInsert)
+                    # if u:
+                    #     updateCount += 1
                 line = f.readline()
+        task_number = len(futureList)
+        i = 0
+        for future in concurrent.futures.as_completed(futureList):
+            future.result()
+            i += 1
+            ProgressTracker.load_pii_data_progress = i
+            ProgressTracker.load_pii_data_limit = task_number
 
+    threadpool.shutdown()
     logger.info(f"number of data unit: {count}")
     logger.info(f"Have insert {count} PII data, updated: {updateCount}")
     logger.info(f"Invalid Lines ({len(invalidLines)}):")
+
 
     for i in range(len(invalidLines)):
         line = invalidLines[i]
