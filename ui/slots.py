@@ -91,16 +91,16 @@ def release_current_task_record_func(f):
     return wrapper
 
 
-class TrainTabProgressBarWorker(QObject):
-    trainTabProgressBarChanged = pyqtSignal(int)
+class ProgressBarWorker(QObject):
+    changed = pyqtSignal(int)
 
     def __init__(self, progressBarObj: QProgressBar):
         super().__init__()
         self.progressBar: QProgressBar = progressBarObj
-        self.trainTabProgressBarChanged.connect(self.progressBar.setValue)
+        self.changed.connect(self.progressBar.setValue)
 
     def updateValue(self, value):
-        self.trainTabProgressBarChanged.emit(value)
+        self.changed.emit(value)
 
 
 class PatternGenerateProgressBarWorker(QObject):
@@ -117,27 +117,42 @@ class PatternGenerateProgressBarWorker(QObject):
 
 class TextBrowserWorker(QObject):
     appendSignal = pyqtSignal(str)
+    clearSignal = pyqtSignal()
+    # MaxContentLen = 5000  # max character of textbrowser
+    MaxLineNum = 200
 
     def __init__(self, textbrowser: QTextBrowser):
         super().__init__()
         self.textbrowser: QTextBrowser = textbrowser
+        # self.content_length = 0
+        self.lineNum = 0
         self.appendSignal.connect(self.update_text_browser)
+        self.clearSignal.connect(self.clean_text_browser)
 
     @pyqtSlot(str)
     def update_text_browser(self, s: str):
         self.textbrowser.append(s)
 
+    @pyqtSlot()
+    def clean_text_browser(self):
+        self.textbrowser.clear()
+
+    def clear(self):
+        self.clearSignal.emit()
+
     def append(self, text: str):
         self.appendSignal.emit(text)
+        self.lineNum += 1
+        if self.lineNum > TextBrowserWorker.MaxLineNum:
+            self.clear()
+            self.lineNum = 0
 
 
 class TextBrowserHandler(logging.Handler):
     """Bind a certain logger into a certain textbrowser
 
     """
-    MaxTotalSize = 5000  # max character of textbrowser
-    MaxSingalSize = 500  # max character per append request
-    MaxLineNum = 200
+    MaxSingalSize = 300  # max character per append request
 
     def __init__(self, textbrowserWorker: TextBrowserWorker):
         super().__init__()
@@ -146,7 +161,7 @@ class TextBrowserHandler(logging.Handler):
 
     def emit(self, record: LogRecord) -> None:
         msg = self.format(record)
-        msg = msg[:TextBrowserHandler.MaxSingalSize] + "......"
+        msg = msg[:TextBrowserHandler.MaxSingalSize] + "......" if len(msg) > TextBrowserHandler.MaxSingalSize else msg
         self.textbrowserWorker.append(msg)
         # self.lineNum += 1
         # if self.lineNum > TextBrowserHandler.MaxLineNum:
@@ -241,7 +256,6 @@ class Slots:
                 self.patchInfoDialog(f"[{task_name}] finished!")
 
         self.on_task_finished = on_task_finished
-        self.trainTabTextbrowserWorker = TextBrowserWorker(self.mainWindow.trainTabTextBrowser)
 
         self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
         self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
@@ -269,8 +283,13 @@ class Slots:
 
         self.mainWindow.trainTabTextBrowser.ensureCursorVisible()
 
-        self.trainTabProgressBarWorker = TrainTabProgressBarWorker(self.mainWindow.trainTabProgressBar)
-        self.patternGenerateProgressBarWorker = PatternGenerateProgressBarWorker(self.mainWindow.patternProgressBar)
+        self.trainTabTextbrowserWorker = TextBrowserWorker(self.mainWindow.trainTabTextBrowser)
+        self.patternTabTextbrowserWorker = TextBrowserWorker(self.mainWindow.patternTextBrowser)
+        self.guessTabTextbrowserWorker = TextBrowserWorker(self.mainWindow.guessTabTextBrowser)
+
+        self.trainTabProgressBarWorker = ProgressBarWorker(self.mainWindow.trainTabProgressBar)
+        self.patternGenerateProgressBarWorker = ProgressBarWorker(self.mainWindow.patternProgressBar)
+        self.guessGenerateProgressBarWorker = ProgressBarWorker(self.mainWindow.progressBar)
 
         self.initAllStatus()
         self.redirect_logger()
@@ -290,8 +309,8 @@ class Slots:
     def redirect_logger(self):
         """Redirect and format loggers into textbrowser
         """
-        handler = TextBrowserHandler(self.mainWindow.trainTabTextBrowser)
-        self.logHandler = handler
+        handler = TextBrowserHandler(self.trainTabTextbrowserWorker)
+        self.trainTabLogHandler = handler
         handler.setFormatter(self.logFormater)
         databaseInit.logger.addHandler(handler)
         main_General_PII_Mode.logger.addHandler(handler)
@@ -395,6 +414,10 @@ class Slots:
         self.pii.birthday = birthday.replace("/", "")
         return True
 
+    def updateGuessGenerateProgressBar(self, value):
+        self.guessGenerateProgressBarWorker.updateValue(value)
+
+
     def generateBtnSlot(self):
         if not self.getPII():
             return
@@ -440,7 +463,8 @@ class Slots:
             if len(self.guessGenerator.guesses) >= self.guessLimit:
                 break
             _progress = min(int(len(self.guessGenerator.guesses) / _max * 100), 100)
-            self.mainWindow.progressBar.setValue(_progress)
+            # self.mainWindow.progressBar.setValue(_progress)
+            self.updateGuessGenerateProgressBar(_progress)
 
         primaryLen = len(self.guessGenerator.guesses)
         self.guesses = self.guessGenerator.eliminateDuplicateGuess()
@@ -502,7 +526,8 @@ class Slots:
         """
         cur = datetime.datetime.now()
         timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
-        self.mainWindow.textBrowser.append(f"[{timeStr}] {s}")
+        # self.mainWindow.textBrowser.append(f"[{timeStr}] {s}")
+        self.guessTabTextbrowserWorker.append(f"[{timeStr}] {s}")
 
     def excepthook(t, value, traceback):
         """Self-defined global exception handler
@@ -535,7 +560,8 @@ class Slots:
         """
         cur = datetime.datetime.now()
         timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
-        self.mainWindow.patternTextBrowser.append(f"[{timeStr}] {s}")
+        # self.mainWindow.patternTextBrowser.append(f"[{timeStr}] {s}")
+        self.patternTabTextbrowserWorker.append(f"[{timeStr}] {s}")
 
     class generatePatternWorker(QThread):
         def __init__(self, obj):
@@ -569,6 +595,7 @@ class Slots:
         # def on_task_finished():
         #     self.patchInfoDialog(f"Generate Pattern finish!")
 
+        self.printPatternLog(f"Start generating patterns to {self.patternSavePath}... Please wait")
         self.currentTask.set_task("Generate Pattern")
         self.patternWorker.finished.connect(self.on_task_finished)
         self.patternWorker.start()
@@ -619,7 +646,6 @@ class Slots:
 
     def patternFileEditChangedSlot(self):
         newContent = self.mainWindow.patternFileEdit.text()
-        self.printGuessLog(f"pattern file: {newContent}")
 
     def loadPatternSlot(self):
         patternFile = self.mainWindow.patternFileEdit.text()
@@ -968,6 +994,11 @@ class Slots:
         """
         if self.exist_current_task():
             return False
+        if not self.checkPhasePassed(self.assessStatus):
+            if self.questionDialog("There is at least one phase before not passed, are you sure to proceed?"):
+                pass
+            else:
+                return
         if self.assessPatternFile is None or len(self.assessPatternFile) <= 0:
             self.patchDialog(f"Please assign a pattern file to assess !")
             return

@@ -40,9 +40,9 @@ class Ui_MainWindow(object):
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
         self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1131, 177))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
-        self.textBrowser = QtWidgets.QTextBrowser(self.scrollAreaWidgetContents)
-        self.textBrowser.setGeometry(QtCore.QRect(-5, 1, 1141, 201))
-        self.textBrowser.setObjectName("textBrowser")
+        self.guessTabTextBrowser = QtWidgets.QTextBrowser(self.scrollAreaWidgetContents)
+        self.guessTabTextBrowser.setGeometry(QtCore.QRect(-5, 1, 1141, 201))
+        self.guessTabTextBrowser.setObjectName("guessTabTextBrowser")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.gridLayout.addWidget(self.scrollArea, 3, 0, 1, 1)
         self.progressBar = QtWidgets.QProgressBar(self.gridWidget)
@@ -228,7 +228,7 @@ class Ui_MainWindow(object):
         self.scrollArea_3.setWidgetResizable(True)
         self.scrollArea_3.setObjectName("scrollArea_3")
         self.scrollAreaWidgetContents_3 = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents_3.setGeometry(QtCore.QRect(0, 0, 1237, 317))
+        self.scrollAreaWidgetContents_3.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.scrollAreaWidgetContents_3.setObjectName("scrollAreaWidgetContents_3")
         self.patternTextBrowser = QtWidgets.QTextBrowser(self.scrollAreaWidgetContents_3)
         self.patternTextBrowser.setGeometry(QtCore.QRect(0, 0, 1241, 311))
@@ -495,3 +495,11 @@ class Ui_MainWindow(object):
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"http://www.baidu.com\"><span style=\" text-decoration: underline; color:#0000ff;\">train your own model</span></a></p></body></html>"))
 
 
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
