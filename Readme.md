@@ -1,14 +1,14 @@
 <div align='center'>
 
-<h1>password guessing</h1>
-<p>Reproduction of RFGuess</p>
+<h1>RFGuess(Random Forest Password Guessing model)</h1>
+<p>Reproduction of [RFGuess](https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing)</p>
 
 <h4> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/blob/master/README.md"> Documentation </a> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/issues"> Report Bug </a> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/issues"> Request Feature </a> </h4>
 
 
 </div>
 
-# :notebook_with_decorative_cover: Table of Contents
+# Table of Contents
 
 - [About the Project](#star2-about-the-project)
 - [License](#warning-license)
@@ -16,15 +16,20 @@
 - [Acknowledgements](#gem-acknowledgements)
 
 
-## :star2: About the Project
+## Overview
 
-### :dart: Features
-- Generate password patterns using machine learning
+### Features
+- **Targeted password guessing based on PII**(crack the password of a given user)
+- A pre-trained model(TODO:clf file link) ready to use which is trained on 11w dataset
+- Generate password patterns based on PII dataset
+- Generate password guesses for given personal infomation
+- Train specified model for self-defined datasets
+- Assess the accuracy of model-generated guesses
 
 
-## :toolbox: Getting Started
+## Getting Started
 
-### :bangbang: Prerequisites
+### Prerequisites
 
 - Python3
 - Sklearn<a href="https://scikit-learn.org/stable/install.html"> Here</a>
@@ -32,7 +37,7 @@
 - PyQt5<a href="https://pypi.org/project/PyQt5/"> Here</a>
 
 
-### :gear: Installation
+### Installation
 
 TODO
 ```bash
@@ -40,31 +45,35 @@ TODO
 ```
 
 
-### :running: Run Locally
+### Usage
+(Functions here)
+#### Generate password dictionary
 
-Clone the project
+#### Generate pattern 
 
-```bash
-https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model
-```
-TODO
-```bash
-TODO
-```
+#### Train your own model
 
 
-## :warning: License
+
+### Build doc
+tutorials, how-to...
+for dev references...
+
+
+
+
+## License
 
 Distributed under the no License. See LICENSE.txt for more information.
 
-## :handshake: Contact
+## Contact
 
 - - 350717997@qq.com
+  
 
 Project Link: [https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model](https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model)
 
-## :gem: Acknowledgements
-
-Use this section to mention useful resources and libraries that you have used in your projects.
+## Acknowledgements
 
 - [Password Guessing using Random Forest](https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing)
+- [TarGuess]
