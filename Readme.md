@@ -73,6 +73,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 2. If a field is missing in PII data given, then all the patterns that need this field would be excluded
 3. *(Solved)* TextBrowser.append is not thread-safe, define a worker to emit signal and connect to append-slot
 4. Add content limitation to TextBrowser
+5. Complete GUI optimize
 
 ### GUI and github doc(8.28)
 1. Enable PIITagContainer to support empty fields 

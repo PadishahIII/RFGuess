@@ -433,8 +433,8 @@ p, li { white-space: pre-wrap; }
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>28</height>
+            <width>1237</width>
+            <height>317</height>
            </rect>
           </property>
           <widget class="QTextBrowser" name="patternTextBrowser">
