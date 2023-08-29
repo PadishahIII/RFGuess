@@ -1,9 +1,9 @@
 <div align='center'>
 
-<h1>Password Guessing</h1>
-<p>Password guessing using random forest</p>
+<h1>password guessing</h1>
+<p>Reproduction of RFGuess</p>
 
-<h4> <span> · </span> <a href="https://github.com/Padishah/RFGuess/blob/master/README.md"> Documentation </a> <span> · </span> <a href="https://github.com/Padishah/RFGuess/issues"> Report Bug </a> <span> · </span> <a href="https://github.com/Padishah/RFGuess/issues"> Request Feature </a> </h4>
+<h4> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/blob/master/README.md"> Documentation </a> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/issues"> Report Bug </a> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/issues"> Request Feature </a> </h4>
 
 
 </div>
@@ -11,9 +11,6 @@
 # :notebook_with_decorative_cover: Table of Contents
 
 - [About the Project](#star2-about-the-project)
-- [Roadmap](#compass-roadmap)
-- [Contributing](#wave-contributing)
-- [FAQ](#grey_question-faq)
 - [License](#warning-license)
 - [Contact](#handshake-contact)
 - [Acknowledgements](#gem-acknowledgements)
@@ -22,43 +19,24 @@
 ## :star2: About the Project
 
 ### :dart: Features
-- Reproduction
-- random forest
+- Generate password patterns using machine learning
 
-
-### :art: Color Reference
-| Color | Hex |
-| --------------- | ---------------------------------------------------------------- |
-| Primary Color | ![#2a303a](https://via.placeholder.com/10/2a303a?text=+) #2a303a |
-| Secondary Color | ![#393E46](https://via.placeholder.com/10/393E46?text=+) #393E46 |
-| Accent Color | ![#00ADB5](https://via.placeholder.com/10/00ADB5?text=+) #00ADB5 |
-| Text Color | ![#EEEEEE](https://via.placeholder.com/10/EEEEEE?text=+) #EEEEEE |
 
 ## :toolbox: Getting Started
 
 ### :bangbang: Prerequisites
 
-
-```bash
-pip install -r requirement.txt
-```
-- python 3.8
+- Python3
+- Sklearn<a href="https://scikit-learn.org/stable/install.html"> Here</a>
+- Mkdocs(Optional for doc build)<a href="https://www.mkdocs.org/user-guide/installation/"> Here</a>
+- PyQt5<a href="https://pypi.org/project/PyQt5/"> Here</a>
 
 
 ### :gear: Installation
 
-
+TODO
 ```bash
-pip install -r requirement.txt
-```
-aaaa
-
-
-### :test_tube: Running Tests
-
-Build database
-```bash
-py Tests/main.py
+TODO
 ```
 
 
@@ -69,32 +47,10 @@ Clone the project
 ```bash
 https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model
 ```
-start gui
+TODO
 ```bash
-py gui.py
+TODO
 ```
-
-
-## :compass: Roadmap
-
-* [x] aa
-* [ ] train your own dataset
-
-
-## :wave: Contributing
-
-<a href="https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model/graphs/contributors"> <img src="https://contrib.rocks/image?repo=Louis3797/awesome-readme-template" /> </a>
-
-Contributions are always welcome!
-
-see `contributing.md` for ways to get started
-
-## :grey_question: FAQ
-
-- aaa
-- aaa
-- how to train
-- `py train.py`
 
 
 ## :warning: License
@@ -103,7 +59,7 @@ Distributed under the no License. See LICENSE.txt for more information.
 
 ## :handshake: Contact
 
-Jason Harris - - 350717997@qq.com
+- - 350717997@qq.com
 
 Project Link: [https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model](https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model)
 
@@ -111,4 +67,4 @@ Project Link: [https://github.com/PadishahIII/Random-Forest-Password-Guessing-Mo
 
 Use this section to mention useful resources and libraries that you have used in your projects.
 
-- [RFGuess](https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing)
+- [Password Guessing using Random Forest](https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing)
