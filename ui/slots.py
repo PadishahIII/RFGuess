@@ -40,14 +40,24 @@ class TextBrowserHandler(logging.Handler):
     """Bind a certain logger into a certain textbrowser
 
     """
+    MaxTotalSize = 5000  # max character of textbrowser
+    MaxSignalSize = 500  # max character per append request
+    MaxLineNum = 200
 
     def __init__(self, textbrowser):
         super().__init__()
-        self.textbrowser = textbrowser
+        self.textbrowser: QTextBrowser = textbrowser
+        self.lineNum = 0
 
     def emit(self, record: LogRecord) -> None:
         msg = self.format(record)
+        msg = msg[:TextBrowserHandler.MaxSignalSize] + "......"
         self.textbrowser.append(msg)
+        self.lineNum += 1
+        if self.lineNum > TextBrowserHandler.MaxLineNum:
+            t = self.textbrowser.toPlainText()
+            self.textbrowser.setPlainText(t[-TextBrowserHandler.MaxTotalSize:])
+            self.lineNum = 0
 
 
 class TrainModelStatus:
@@ -238,6 +248,7 @@ class Slots:
 
         self.mainWindow.trainTabTextBrowser.textChanged.connect(
             functools.partial(self.auto_scroll_textbrowser, self.mainWindow.trainTabTextBrowser))
+        # self.mainWindow.trainTabTextBrowser.setMaximumBlockCount(5000)
 
         self.mainWindow.trainTabTextBrowser.ensureCursorVisible()
 
@@ -263,6 +274,7 @@ class Slots:
         """Redirect and format loggers into textbrowser
         """
         handler = TextBrowserHandler(self.mainWindow.trainTabTextBrowser)
+        self.logHandler = handler
         handler.setFormatter(self.logFormater)
         databaseInit.logger.addHandler(handler)
         main_General_PII_Mode.logger.addHandler(handler)
@@ -790,7 +802,7 @@ class Slots:
         def run():
             try:
                 self.currentTask.set_task("Load PII Data")
-                databaseInit.LoadDataset(self.piiFile, start=0, limit=1000, clear=True, update=False)
+                databaseInit.LoadDataset(self.piiFile, start=0, limit=-1, clear=True, update=False)
                 self.setPhasePassed(self.loadPIIDataStatus)
                 self.printTrainLog(f"Load pii data finished !")
                 # self.patchInfoDialog(f"Load pii data success from {self.piiFile}")
@@ -801,7 +813,7 @@ class Slots:
                 return
             finally:
                 self.loadPIIDataProgressExitFlag.set()
-                thread.finished.emit()
+                thread.finished.emit()  # must set
 
         # @Slots.Task
         # def on_task_finished():
@@ -845,6 +857,14 @@ class Slots:
 
         def run():
             try:
+                for i in range(10000):
+                    main_General_PII_Mode.logger.info("A" * 1000)
+                    main_General_PII_Mode.logger.info(
+                        str(len(self.mainWindow.trainTabTextBrowser.toPlainText())) + ":" + str(
+                            self.logHandler.lineNum))
+                    time.sleep(0.05)
+
+                return
                 self.currentTask.set_task("Analyze PII Data")
                 buildDbObj = BuildDatabase()
                 buildDbObj.test_rebuild()
