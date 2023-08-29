@@ -8,7 +8,7 @@ import traceback
 from logging import LogRecord
 from queue import Queue
 
-from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread, QObject
+from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread, QObject, pyqtSlot
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel
 from sqlalchemy import create_engine
@@ -34,30 +34,6 @@ class Consumer(threading.Thread):
             s: str = self.queue.get()
             self.handler(s)
             time.sleep(0.5)
-
-
-class TextBrowserHandler(logging.Handler):
-    """Bind a certain logger into a certain textbrowser
-
-    """
-    MaxTotalSize = 5000  # max character of textbrowser
-    MaxSignalSize = 500  # max character per append request
-    MaxLineNum = 200
-
-    def __init__(self, textbrowser):
-        super().__init__()
-        self.textbrowser: QTextBrowser = textbrowser
-        self.lineNum = 0
-
-    def emit(self, record: LogRecord) -> None:
-        msg = self.format(record)
-        msg = msg[:TextBrowserHandler.MaxSignalSize] + "......"
-        self.textbrowser.append(msg)
-        self.lineNum += 1
-        if self.lineNum > TextBrowserHandler.MaxLineNum:
-            t = self.textbrowser.toPlainText()
-            self.textbrowser.setPlainText(t[-TextBrowserHandler.MaxTotalSize:])
-            self.lineNum = 0
 
 
 class TrainModelStatus:
@@ -137,6 +113,46 @@ class PatternGenerateProgressBarWorker(QObject):
 
     def updateValue(self, value):
         self.patternGenerateProgressBarChanged.emit(value)
+
+
+class TextBrowserWorker(QObject):
+    appendSignal = pyqtSignal(str)
+
+    def __init__(self, textbrowser: QTextBrowser):
+        super().__init__()
+        self.textbrowser: QTextBrowser = textbrowser
+        self.appendSignal.connect(self.update_text_browser)
+
+    @pyqtSlot(str)
+    def update_text_browser(self, s: str):
+        self.textbrowser.append(s)
+
+    def append(self, text: str):
+        self.appendSignal.emit(text)
+
+
+class TextBrowserHandler(logging.Handler):
+    """Bind a certain logger into a certain textbrowser
+
+    """
+    MaxTotalSize = 5000  # max character of textbrowser
+    MaxSingalSize = 500  # max character per append request
+    MaxLineNum = 200
+
+    def __init__(self, textbrowserWorker: TextBrowserWorker):
+        super().__init__()
+        self.textbrowserWorker: TextBrowserWorker = textbrowserWorker
+        self.lineNum = 0
+
+    def emit(self, record: LogRecord) -> None:
+        msg = self.format(record)
+        msg = msg[:TextBrowserHandler.MaxSingalSize] + "......"
+        self.textbrowserWorker.append(msg)
+        # self.lineNum += 1
+        # if self.lineNum > TextBrowserHandler.MaxLineNum:
+        #     t = self.textbrowser.toPlainText()
+        #     self.textbrowser.setPlainText(t[-TextBrowserHandler.MaxTotalSize:])
+        #     self.lineNum = 0
 
 
 class Slots:
@@ -225,6 +241,7 @@ class Slots:
                 self.patchInfoDialog(f"[{task_name}] finished!")
 
         self.on_task_finished = on_task_finished
+        self.trainTabTextbrowserWorker = TextBrowserWorker(self.mainWindow.trainTabTextBrowser)
 
         self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
         self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
@@ -641,7 +658,8 @@ class Slots:
         """
         cur = datetime.datetime.now()
         timeStr = datetime.datetime.strftime(cur, "%Y-%m-%d %H:%M:%S")
-        self.mainWindow.trainTabTextBrowser.append(f"[{timeStr}] {s}")
+        # self.mainWindow.trainTabTextBrowser.append(f"[{timeStr}] {s}")
+        self.trainTabTextbrowserWorker.append(f"[{timeStr}] {s}")
 
     def setPhasePassed(self, status: TrainModelStatus):
         """Set status and phases before to Passed
@@ -857,14 +875,14 @@ class Slots:
 
         def run():
             try:
-                for i in range(10000):
-                    main_General_PII_Mode.logger.info("A" * 1000)
-                    main_General_PII_Mode.logger.info(
-                        str(len(self.mainWindow.trainTabTextBrowser.toPlainText())) + ":" + str(
-                            self.logHandler.lineNum))
-                    time.sleep(0.05)
-
-                return
+                # for i in range(10000):
+                #     main_General_PII_Mode.logger.info("A" * 1000)
+                #     main_General_PII_Mode.logger.info(
+                #         str(len(self.mainWindow.trainTabTextBrowser.toPlainText())) + ":" + str(
+                #             self.logHandler.lineNum))
+                #     time.sleep(0.05)
+                #
+                # return
                 self.currentTask.set_task("Analyze PII Data")
                 buildDbObj = BuildDatabase()
                 buildDbObj.test_rebuild()
