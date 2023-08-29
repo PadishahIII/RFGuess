@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -63,7 +63,7 @@
             <height>177</height>
            </rect>
           </property>
-          <widget class="QTextBrowser" name="textBrowser">
+          <widget class="QTextBrowser" name="guessTabTextBrowser">
            <property name="geometry">
             <rect>
              <x>-5</x>
@@ -433,8 +433,8 @@ p, li { white-space: pre-wrap; }
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1237</width>
-            <height>317</height>
+            <width>98</width>
+            <height>28</height>
            </rect>
           </property>
           <widget class="QTextBrowser" name="patternTextBrowser">

@@ -364,7 +364,7 @@ class BuildDatabase(TestCase):
                 unit: PwRepUniqueUnit = DatabaseUtils.getGeneralIntermediateFromRepUnit(pwStr, repUnit)
                 transformer.Insert(unit)
             except Exception as e:
-                logger.info(f"Exception occur: {str(e)}, pwStr: {pwStr}, RepUnit:{str(repUnit)}")
+                # logger.info(f"Exception occur: {str(e)}, pwStr: {pwStr}, RepUnit:{str(repUnit)}")
                 exceptionCount += 1
             finally:
                 return exceptionCount
