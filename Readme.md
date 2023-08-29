@@ -68,11 +68,14 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 
 
 ## Journal
+### GUI optimize(8.29)
+1. 
+
 ### GUI and github doc(8.28)
 1. Enable PIITagContainer to support empty fields 
 2. Cannot patch dialog in QThread(even when use consumer thread to patch dialog)
 3. Implement all main functions! Need tests
-4. *(TODO)* Add multi-thread to PII data processing
+4. *(Solved)* Add multi-thread to PII data processing
 
 ### Optimize(8.26)
 1. (5:5 train:test, 11w): model with 'gini': 452M, 0.3396; model with 'entropy': 451M, 0.3045

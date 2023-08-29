@@ -273,7 +273,7 @@ class GeneralPIIRepresentationResolver(Singleton):
         Returns:
 
         """
-        matchSet: list[RepUnit] = self.repPriorityList
+        matchSet: list[RepUnit] = copy(self.repPriorityList)
         _len = len(matchSet)
         item: RepUnit = matchSet.pop(0)
         while len(matchSet) > 0:

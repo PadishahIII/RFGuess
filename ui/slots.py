@@ -4,6 +4,7 @@ import os.path
 import sys
 import threading
 import time
+import traceback
 from logging import LogRecord
 from queue import Queue
 
@@ -67,7 +68,45 @@ class TrainModelStatus:
         return self.passed
 
 
+class TaskRecorder:
+    def __init__(self):
+        self.task = None
+        self.lock = threading.Lock()
+
+    def get_task(self):
+        return self.task
+
+    def set_task(self, task: str):
+        with self.lock:
+            self.task = task
+
+    def set_empty(self):
+        with self.lock:
+            self.task = ""
+
+    def is_empty(self) -> bool:
+        if self.task is None or len(self.get_task()) <= 0:
+            return True
+        else:
+            return False
+
+
+def release_current_task_record_func(f):
+    def wrapper(*args, **kwargs):
+        result = None
+        try:
+            result = f(*args, **kwargs)
+        finally:
+            if result is not False:  # return False to avoid set empty
+                Slots.currentTask.set_empty()
+        return result
+
+    return wrapper
+
+
 class Slots:
+    currentTask = TaskRecorder()  # record current running task name
+    Task = release_current_task_record_func  # release current task
 
     def __init__(self, mainWindow: Ui_MainWindow) -> None:
         self.patterns: list[str] = list()
@@ -143,6 +182,15 @@ class Slots:
         self.trainModelProgressExitFlag = threading.Event()
         self.assessProgressExitFlag = threading.Event()
 
+        @Slots.Task
+        def on_task_finished():
+            if not self.currentTask.is_empty():
+                task_name = self.currentTask.get_task()
+                self.currentTask.set_empty()
+                self.patchInfoDialog(f"[{task_name}] finished!")
+
+        self.on_task_finished = on_task_finished
+
         self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
         self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
         self.mainWindow.piiFileBrowser.clicked.connect(self.piiFileBrowserBtnSlot)
@@ -170,6 +218,15 @@ class Slots:
 
         self.initAllStatus()
         self.redirect_logger()
+
+    def exist_current_task(self) -> bool:
+        """Check if there is current task running, patch dialog
+        """
+        if self.currentTask.is_empty():
+            return False
+        else:
+            self.patchInfoDialog(f"Task [{self.currentTask.get_task()}] is running, please wait")
+            return True
 
     def auto_scroll_textbrowser(self, textbrowser: QTextBrowser):
         textbrowser.verticalScrollBar().setValue(textbrowser.verticalScrollBar().maximum())
@@ -412,6 +469,9 @@ class Slots:
     Pattern generation tab
     '''
 
+    def updatePatternProgressBar(self, value):
+        self.mainWindow.patternProgressBar.valueChanged.emit(value)
+
     def printPatternLog(self, s: str):
         """Log output for Pattern generation tab
         """
@@ -432,8 +492,11 @@ class Slots:
                 # self.obj.error_dialog_queue.put(f"Exception occur: {e}")
             finally:
                 self.obj.endPatternProgressTracking()
+                # self.finished.emit()
 
     def generatePatternBtnSlot(self):
+        if self.exist_current_task():
+            return False
         if self.patternGenerator is None:
             self.patchDialog(f"Classifier not loaded")
             return
@@ -443,6 +506,13 @@ class Slots:
         self.patternGenerateLimit = int(self.mainWindow.patternLimitComboBox.currentText())
         self.startPatternProgressTracking()
         self.patternWorker = self.generatePatternWorker(self)
+
+        # @Slots.Task
+        # def on_task_finished():
+        #     self.patchInfoDialog(f"Generate Pattern finish!")
+
+        self.currentTask.set_task("Generate Pattern")
+        self.patternWorker.finished.connect(self.on_task_finished)
         self.patternWorker.start()
 
     def generatePattern(self):
@@ -459,18 +529,18 @@ class Slots:
         """
 
         def trackProgress():
+            self.patternProgressThreadExitFlag.clear()
             while not self.patternProgressThreadExitFlag.is_set():
                 limit = self.patternGenerator.patternGenerateLimit
                 progress = self.patternGenerator.patternGenerateProgress
                 proportion = min(int(progress / limit * 100), 100)
-                self.mainWindow.patternProgressBar.setValue((proportion))
+                self.updatePatternProgressBar(proportion)
                 time.sleep(0.5)
             limit = self.patternGenerator.patternGenerateLimit
             progress = self.patternGenerator.patternGenerateProgress
             proportion = min(int(progress / limit * 100), 100)
-            self.mainWindow.patternProgressBar.setValue((proportion))
+            self.updatePatternProgressBar(proportion)
 
-        self.patternProgressThreadExitFlag.clear()
         self.patternProgressThread = threading.Thread(target=trackProgress)
         self.patternProgressThread.start()
 
@@ -614,40 +684,51 @@ class Slots:
         for s in self.trainStatusList:
             s.setFail()
 
+    def updateTrainTabProgressBar(self, value):
+        self.mainWindow.trainTabProgressBar.valueChanged.emit(value)
+
     def initDatabaseBtnSlot(self):
         """Import sql structure
         """
-        if not self.checkPhasePassed(self.connectDatabaseStatus):
-            if self.questionDialog(f"There is at least one phase before not passed, are you sure to proceed?"):
-                pass
-            else:
-                return
-        if self.sqlFile is None or len(self.sqlFile) <= 0:
-            self.patchDialog(f"Please assign a sql structure file (.sql)")
-            return
-        self.sqlFile = self.mainWindow.sqlFileEdit.text()
-        if not os.path.exists(self.sqlFile):
-            self.patchDialog(f"Sql file not exists: {self.sqlFile}")
-            return
-        if self.engine is None:
-            self.patchDialog(f"Please connect to database first!")
-            return
-        with open(self.sqlFile, "r", encoding="utf8", errors="ignore") as f:
-            sql_statements = f.read()
+        if self.exist_current_task():
+            return False
+        self.currentTask.set_task("Init Database")
         try:
-            with self.engine.connect() as conn:
-                conn.execute(text(sql_statements))
-        except Exception as e:
-            self.patchDialog(f"Exception occur when import sql file to {self.databaseUrl}, {e}")
-            self.printTrainLog(f"Exception occur when import sql file to {self.databaseUrl}, {e}")
-            return
-        self.patchDialog(f"Database initialized", title="Success", icon=QMessageBox.Information)
-        self.printTrainLog(f"Database initialized from {self.sqlFile}")
-        self.setPhasePassed(self.initDatabaseStatus)
+            if not self.checkPhasePassed(self.connectDatabaseStatus):
+                if self.questionDialog(f"There is at least one phase before not passed, are you sure to proceed?"):
+                    pass
+                else:
+                    return
+            if self.sqlFile is None or len(self.sqlFile) <= 0:
+                self.patchDialog(f"Please assign a sql structure file (.sql)")
+                return
+            self.sqlFile = self.mainWindow.sqlFileEdit.text()
+            if not os.path.exists(self.sqlFile):
+                self.patchDialog(f"Sql file not exists: {self.sqlFile}")
+                return
+            if self.engine is None:
+                self.patchDialog(f"Please connect to database first!")
+                return
+            with open(self.sqlFile, "r", encoding="utf8", errors="ignore") as f:
+                sql_statements = f.read()
+            try:
+                with self.engine.connect() as conn:
+                    conn.execute(text(sql_statements))
+            except Exception as e:
+                self.patchDialog(f"Exception occur when import sql file to {self.databaseUrl}, {e}")
+                self.printTrainLog(f"Exception occur when import sql file to {self.databaseUrl}, {e}")
+                return
+            self.patchDialog(f"Database initialized", title="Success", icon=QMessageBox.Information)
+            self.printTrainLog(f"Database initialized from {self.sqlFile}")
+            self.setPhasePassed(self.initDatabaseStatus)
+        finally:
+            self.currentTask.set_empty()
 
     def loadPIIDataBtnSlot(self):
         """Load pii txt file into database
         """
+        if self.exist_current_task():
+            return False
         if not self.checkPhasePassed(self.initDatabaseStatus):
             if self.questionDialog(f"There is at least one phase before not passed, are you sure to proceed?"):
                 pass
@@ -667,16 +748,19 @@ class Slots:
                 progress = databaseInit.ProgressTracker.load_pii_data_progress
                 limit = databaseInit.ProgressTracker.load_pii_data_limit
                 proportion = int(progress / limit * 100)
-                self.mainWindow.trainTabProgressBar.setValue(proportion)
+                self.updateTrainTabProgressBar(proportion)
                 time.sleep(0.5)
-            self.mainWindow.trainTabProgressBar.setValue(100)
+            self.updateTrainTabProgressBar(100)
 
         progress_thread = threading.Thread(target=startLoadPIIDataProgressTracking)
         progress_thread.start()
 
+        thread = QThread()
+
         def run():
             try:
-                databaseInit.LoadDataset(self.piiFile, start=0, limit=-1, clear=True, update=False)
+                self.currentTask.set_task("Load PII Data")
+                databaseInit.LoadDataset(self.piiFile, start=0, limit=1000, clear=True, update=False)
                 self.setPhasePassed(self.loadPIIDataStatus)
                 self.printTrainLog(f"Load pii data finished !")
                 # self.patchInfoDialog(f"Load pii data success from {self.piiFile}")
@@ -687,14 +771,25 @@ class Slots:
                 return
             finally:
                 self.loadPIIDataProgressExitFlag.set()
+                thread.finished.emit()
 
-        thread = threading.Thread(target=run)
+        # @Slots.Task
+        # def on_task_finished():
+        #     self.patchInfoDialog(f"Load PII Data finished!")
+
+        thread.finished.connect(self.on_task_finished)
+        thread.run = run
         thread.start()
+
+        # thread = threading.Thread(target=run)
+        # thread.start()
         self.printTrainLog(f"Reading PII Data... Please Wait")
 
     def analyzePIIDataBtnSlot(self):
         """Build all datatables
         """
+        if self.exist_current_task():
+            return False
         if not self.checkPhasePassed(self.loadPIIDataStatus):
             if self.questionDialog("There is at least one phase before not passed, are you sure to proceed?"):
                 pass
@@ -707,15 +802,20 @@ class Slots:
                 progress = main_General_PII_Mode.ProgressTracker.progress
                 limit = main_General_PII_Mode.ProgressTracker.limit
                 proportion = int(progress / limit * 100)
-                self.mainWindow.trainTabProgressBar.setValue(proportion)
+                # self.mainWindow.trainTabProgressBar.setValue(proportion)
+                # self.mainWindow.trainTabProgressBar.valueChanged.emit(proportion)
+                self.updateTrainTabProgressBar(proportion)
                 time.sleep(0.5)
-            self.mainWindow.trainTabProgressBar.setValue(100)
+            self.updateTrainTabProgressBar(100)
 
         progress_thread = threading.Thread(target=startAnalyzePIIDataProgressTrack)
         progress_thread.start()
 
+        thread = QThread()
+
         def run():
             try:
+                self.currentTask.set_task("Analyze PII Data")
                 buildDbObj = BuildDatabase()
                 buildDbObj.test_rebuild()
                 self.setPhasePassed(self.analyzePIIDataStatus)
@@ -723,19 +823,25 @@ class Slots:
                 # self.patchInfoDialog(f"Analyze PII Data and build datatables finished")
             except Exception as e:
                 self.printTrainLog(
-                    f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}\nTraceback:{e.__traceback__}\n")
+                    f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}\nTraceback:{''.join(traceback.format_tb((e.__traceback__)))}\n")
                 # self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
-                return
             finally:
                 self.analyzePIIDataProgressExitFlag.set()
+                thread.finished.emit()
 
-        thread = threading.Thread(target=run)
+        thread.run = run
+        thread.finished.connect(self.on_task_finished)
         thread.start()
+
+        # thread = threading.Thread(target=run)
+        # thread.start()
         self.printTrainLog(f"Analyzing PII Data... Please Wait")
 
     def trainModelBtnSlot(self):
         """Train model
         """
+        if self.exist_current_task():
+            return False
         if not self.checkPhasePassed(self.trainModelStatus):
             if self.questionDialog("There is at least one phase before not passed, are you sure to proceed?"):
                 pass
@@ -751,15 +857,18 @@ class Slots:
                 progress = main_General_PII_Mode.ProgressTracker.progress
                 limit = main_General_PII_Mode.ProgressTracker.limit
                 proportion = int(progress / limit * 100)
-                self.mainWindow.trainTabProgressBar.setValue(proportion)
+                self.updateTrainTabProgressBar(proportion)
                 time.sleep(0.5)
-            self.mainWindow.trainTabProgressBar.setValue(100)
+            self.updateTrainTabProgressBar(100)
 
         progress_thread = threading.Thread(target=startTrainModelProgressTrack)
         progress_thread.start()
 
+        thread = QThread()
+
         def run():
             try:
+                self.currentTask.set_task("Train Model")
                 api = GeneralPIITrainMain()
                 api.train_general(self.clfSavePath)
                 self.setPhasePassed(self.trainModelStatus)
@@ -772,14 +881,25 @@ class Slots:
                 return
             finally:
                 self.trainModelProgressExitFlag.set()
+                thread.finished.emit()
 
-        thread = threading.Thread(target=run)
+        # @Slots.Task
+        # def on_task_finished():
+        #     self.patchInfoDialog(f"Train Model finished!")
+
+        thread.run = run
+        thread.finished.connect(self.on_task_finished)
         thread.start()
+
+        # thread = threading.Thread(target=run)
+        # thread.start()
 
     def assessAccuracyStatusBtnSlot(self):
         """Assess accuracy for assigned pattern file
         Do not need previous status to be completed
         """
+        if self.exist_current_task():
+            return False
         if self.assessPatternFile is None or len(self.assessPatternFile) <= 0:
             self.patchDialog(f"Please assign a pattern file to assess !")
             return
@@ -793,15 +913,18 @@ class Slots:
                 progress = main_General_PII_Mode.ProgressTracker.progress
                 limit = main_General_PII_Mode.ProgressTracker.limit
                 proportion = int(progress / limit * 100)
-                self.mainWindow.trainTabProgressBar.setValue(proportion)
+                self.updateTrainTabProgressBar(proportion)
                 time.sleep(0.5)
-            self.mainWindow.trainTabProgressBar.setValue(100)
+            self.updateTrainTabProgressBar(100)
 
         progress_thread = threading.Thread(target=startAssessProgressTrack)
         progress_thread.start()
 
+        thread = QThread()
+
         def run():
             try:
+                self.currentTask.set_task("Assess Accuracy")
                 api = GeneralPIITrainMain()
                 api.accuracy_assessment(self.assessPatternFile)
                 self.setPhasePassed(self.assessStatus)
@@ -812,50 +935,66 @@ class Slots:
                 return
             finally:
                 self.assessProgressExitFlag.set()
+                thread.finished.emit()
 
-        thread = threading.Thread(target=run)
+        # @Slots.Task
+        # def on_task_finished():
+        #     self.patchInfoDialog(f"Accuracy Assessment finished!")
+
+        thread.run = run
+        thread.finished.connect(self.on_task_finished)
         thread.start()
+
+        # thread = threading.Thread(target=run)
+        # thread.start()
 
     def checkDbStatusBtnSlot(self):
         """Check database structure, datatable capability
         """
-        if not self.connectDatabaseStatus.getStatus() or self.engine is None:
-            self.patchDialog(f"Please check database connection again")
-            return
-        logList = ["\nUpdate Status Result:\n", ]
+        if self.exist_current_task():
+            return False
+        self.currentTask.set_task("Update Status")
+        try:
+            if not self.connectDatabaseStatus.getStatus() or self.engine is None:
+                self.patchDialog(f"Please check database connection again")
+                return
+            logList = ["\nUpdate Status Result:\n", ]
 
-        # check database structure
-        not_exist_tables = self.checkInitDatabaseStatus()
-        if len(not_exist_tables) >= 1:
-            logList.append(f"Init Database: Failed\nMissing datatables: {not_exist_tables}\n")
+            # check database structure
+            not_exist_tables = self.checkInitDatabaseStatus()
+            if len(not_exist_tables) >= 1:
+                logList.append(f"Init Database: Failed\nMissing datatables: {not_exist_tables}\n")
+                self.printTrainLog(''.join(logList))
+                self.initDatabaseStatus.setFail()
+                return
+            logList.append(f"Init Database: Passed\n")
+            self.setPhasePassed(self.initDatabaseStatus)
+
+            # check PII datatable
+            pii_table_size = self.checkLoadPIIDataStatus()
+            if pii_table_size <= 0:
+                logList.append(f"Load PII Data: Failed.\n Empty PII datatable in database {self.databaseUrl}\n")
+                self.printTrainLog(''.join(logList))
+                self.loadPIIDataStatus.setFail()
+                return
+            logList.append(f"Load PII Data: Passed.\nPII table size: {pii_table_size}\n")
+            self.setPhasePassed(self.loadPIIDataStatus)
+
+            # check analyze PII data status
+            rep_unique_table_size = self.checkAnalyzePIIDataStatus()
+            if rep_unique_table_size <= 0:
+                logList.append(
+                    f"Analyze PII Data: Failed.\nEmpty pwrepresentation_general datatable in database {self.databaseUrl}")
+                self.printTrainLog(''.join(logList))
+                self.analyzePIIDataStatus.setFail()
+                return
+            logList.append(f"Analyze PII Data: Passed.\npwrepresentation_general table size: {rep_unique_table_size}\n")
+            self.setPhasePassed(self.analyzePIIDataStatus)
+
             self.printTrainLog(''.join(logList))
-            self.initDatabaseStatus.setFail()
-            return
-        logList.append(f"Init Database: Passed\n")
-        self.setPhasePassed(self.initDatabaseStatus)
-
-        # check PII datatable
-        pii_table_size = self.checkLoadPIIDataStatus()
-        if pii_table_size <= 0:
-            logList.append(f"Load PII Data: Failed.\n Empty PII datatable in database {self.databaseUrl}\n")
-            self.printTrainLog(''.join(logList))
-            self.loadPIIDataStatus.setFail()
-            return
-        logList.append(f"Load PII Data: Passed.\nPII table size: {pii_table_size}\n")
-        self.setPhasePassed(self.loadPIIDataStatus)
-
-        # check analyze PII data status
-        rep_unique_table_size = self.checkAnalyzePIIDataStatus()
-        if rep_unique_table_size <= 0:
-            logList.append(
-                f"Analyze PII Data: Failed.\nEmpty pwrepresentation_general datatable in database {self.databaseUrl}")
-            self.printTrainLog(''.join(logList))
-            self.analyzePIIDataStatus.setFail()
-            return
-        logList.append(f"Analyze PII Data: Passed.\npwrepresentation_general table size: {rep_unique_table_size}\n")
-        self.setPhasePassed(self.analyzePIIDataStatus)
-
-        self.printTrainLog(''.join(logList))
+            self.patchInfoDialog(f"Update status finished!")
+        finally:
+            self.currentTask.set_empty()
 
     def checkInitDatabaseStatus(self) -> list[str]:
         """Check for missing datatables
