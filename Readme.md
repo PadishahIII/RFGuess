@@ -8,6 +8,10 @@
 
 </div>
 
+# Overview
+This repository contains a reproduction for [Password Guessing Using Random Forest](https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing) paper in which author raised a series new algorithm to translate
+
+
 # Table of Contents
 
 - [About the Project](#star2-about-the-project)
@@ -16,9 +20,8 @@
 - [Acknowledgements](#gem-acknowledgements)
 
 
-## Overview
 
-### Features
+# Features
 - **Targeted password guessing based on PII**(crack the password of a given user)
 - A pre-trained model(TODO:clf file link) ready to use which is trained on 11w dataset
 - Generate password patterns based on PII dataset
