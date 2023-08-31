@@ -10,7 +10,7 @@
 This repository contains a reproduction for [Password Guessing Using Random Forest](https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing) paper in which author raised a series of new methods to translate PII data(Personal Identifiable Information) into structures that perform pretty well in classical machine learning models.
 I have implemented the key concept of the paper and programmed a easy-to-use tool for training models, generating patterns, conducting guesses and assessing accuracy. This repo contributes:
 - A GUI program exclusive for PII-based targeted password guessing scenario
-- A pretrained random forest model
+- A pretrained model
 
 
 
