@@ -15,14 +15,6 @@ I have implemented the key concept of the paper and programmed a easy-to-use too
 - A pretrained random forest model
 
 
-## Table of Contents
-
-- [About the Project](#star2-about-the-project)
-- [License](#warning-license)
-- [Contact](#handshake-contact)
-- [Acknowledgements](#gem-acknowledgements)
-
-
 
 ## Features
 - **Targeted password guessing based on PII**(crack the password of a given user)
@@ -91,7 +83,7 @@ The model training procession of Machine Learning is pretty more hassle than tha
 Connect to database URL:
 ![image](https://github.com/PadishahIII/RFGuess/assets/83501709/d412fadc-2b48-4750-b761-42c5a54b3288)
 
-Import sql file(get [here](https://github.com/PadishahIII/RFGuess/blob/executable/database_structure.sql):
+Import sql file(get [here](https://github.com/PadishahIII/RFGuess/blob/executable/database_structure.sql)):
 ![image](https://github.com/PadishahIII/RFGuess/assets/83501709/7cfdbd98-4a3e-4513-80f8-8e76cbf2677e)
 
 2. Load your pii dataset(.txt)
@@ -101,19 +93,21 @@ The pii dataset should in the below format:
       ```
     <email>---<account>---<name>---<idCard>---<password>---<phoneNumber>
       ```
-![image](https://github.com/PadishahIII/RFGuess/assets/83501709/06ef6e08-c95b-46c1-b5f5-b94fd6ebcf74)
+![image](https://github.com/PadishahIII/RFGuess/assets/83501709/3a81945e-a2ec-42ff-b1b7-3a01deb9527d)
 
 
 4. Analyze and process dataset
-5. Train model
-6. Assess accuracy
-7. Restore the status of last run
+This step will analyze the pii dataset to some intermediate datatables.
+![image](https://github.com/PadishahIII/RFGuess/assets/83501709/794b63b1-cd10-474f-9c8a-07e0a0fc81f9)
 
 
+6. Train model
 
-## Build doc
-tutorials, how-to...
-for dev references...
+
+7. Assess accuracy
+
+
+8. Restore the status of last run
 
 
 ## License
@@ -122,16 +116,50 @@ Distributed under the no License. See LICENSE.txt for more information.
 
 ## Contact
 
-- - 350717997@qq.com
+- 350717997@qq.com
   
 
-Project Link: [https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model](https://github.com/PadishahIII/Random-Forest-Password-Guessing-Model)
+Project Link: [https://github.com/PadishahIII/RFGuess](https://github.com/PadishahIII/RFGuess)
 
 ## Acknowledgements
 
 - [Password Guessing using Random Forest](https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing)
-- [TarGuess]
 
 # Appendix
 ## Pattern format
-TODO:table
+| Tag | Description                                      |
+|-----|--------------------------------------------------|
+| N1  | FullName                                         |
+| N2  | Abbreviate of name                               |
+| N3  | Family name                                      |
+| N4  | Given name                                       |
+| N5  | First character of given name append family name |
+| N6  | First character of family name append given name |
+| N7  | Family name capitalized                          |
+| N8  | First character of family name                   |
+| N9  | Abbr of given name                               |
+| B1  | Birthday in YYYYMMDD                             |
+| B2  | MMDDYYYY                                         |
+| B3  | DDMMYYYY                                         |
+| B4  | MMDD                                             |
+| B5  | YYYY                                             |
+| B6  | YYYYMM                                           |
+| B7  | MMYYYY                                           |
+| B8  | YYMMDD                                           |
+| B9  | MMDDYY                                           |
+| B10 | DDMMYY                                           |
+| A1  | Account                                          |
+| A2  | Letter segment of account                        |
+| A3  | Digit segment of account                         |
+| E1  | Email prefix                                     |
+| E2  | Letter segment of email                          |
+| E3  | Digit segment of email                           |
+| E4  | Email site like qq, 163                          |
+| P1  | Phone number                                     |
+| P2  | First three digits of phone number               |
+| P3  | Last four digits of phone number                 |
+| I1  | Id card number                                   |
+| I2  | First three digits of idCard                     |
+| I3  | First six digits of idCard                       |
+
+
