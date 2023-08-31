@@ -47,7 +47,7 @@ I have implemented the key concept of the paper and programmed a easy-to-use too
 
 TODO
 ```bash
-pip install -r requirements.txt
+pip install -r requirements_bak.txt
 ```
 
 

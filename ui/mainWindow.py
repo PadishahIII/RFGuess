@@ -114,7 +114,7 @@ class Ui_MainWindow(object):
         self.birthdayLabel.setIndent(4)
         self.birthdayLabel.setObjectName("birthdayLabel")
         self.horizontalLayout_4.addWidget(self.birthdayLabel)
-        self.dateEdit = QtWidgets.QDateEdit(self.gridWidget)
+        self.dateEdit = QtWidgets.QLineEdit(self.gridWidget)
         self.dateEdit.setObjectName("dateEdit")
         self.horizontalLayout_4.addWidget(self.dateEdit)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
@@ -210,7 +210,7 @@ class Ui_MainWindow(object):
         self.scrollArea_3.setWidgetResizable(True)
         self.scrollArea_3.setObjectName("scrollArea_3")
         self.scrollAreaWidgetContents_3 = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents_3.setGeometry(QtCore.QRect(0, 0, 98, 28))
+        self.scrollAreaWidgetContents_3.setGeometry(QtCore.QRect(0, 0, 1237, 507))
         self.scrollAreaWidgetContents_3.setObjectName("scrollAreaWidgetContents_3")
         self.patternTextBrowser = QtWidgets.QTextBrowser(self.scrollAreaWidgetContents_3)
         self.patternTextBrowser.setGeometry(QtCore.QRect(0, 0, 1241, 431))
@@ -277,7 +277,7 @@ class Ui_MainWindow(object):
         self.scrollArea_4.setWidgetResizable(True)
         self.scrollArea_4.setObjectName("scrollArea_4")
         self.scrollAreaWidgetContents_4 = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents_4.setGeometry(QtCore.QRect(0, 0, 98, 28))
+        self.scrollAreaWidgetContents_4.setGeometry(QtCore.QRect(0, 0, 1237, 367))
         self.scrollAreaWidgetContents_4.setObjectName("scrollAreaWidgetContents_4")
         self.trainTabTextBrowser = QtWidgets.QTextBrowser(self.scrollAreaWidgetContents_4)
         self.trainTabTextBrowser.setGeometry(QtCore.QRect(0, 0, 1241, 311))
@@ -420,6 +420,7 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "Phone Number:"))
         self.phoneEdit.setPlaceholderText(_translate("MainWindow", "phone number"))
         self.birthdayLabel.setText(_translate("MainWindow", "Birthday: "))
+        self.dateEdit.setPlaceholderText(_translate("MainWindow", "YYYY/MM/YY"))
         self.usageTextBrowser.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

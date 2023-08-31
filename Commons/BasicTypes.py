@@ -161,10 +161,10 @@ class PII:
         def getBirthday(idCard: str):
             if len(idCard) < 12:
                 return ""
-            try:
-                date_obj = datetime.datetime.strptime(birthday, "%Y%m%d")
-            except:
-                return ""
+            # try:
+            #     date_obj = datetime.datetime.strptime(birthday, "%Y%m%d")
+            # except:
+            #     return ""
             return idCard[-12:-4]
 
         d = dict()

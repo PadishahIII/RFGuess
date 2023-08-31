@@ -362,7 +362,8 @@ class Slots:
             self.mainWindow.accountEdit.setText(self.pii.account)
             self.mainWindow.fullNameEdit.setText(self.pii.name)
             self.mainWindow.phoneEdit.setText(self.pii.phoneNum)
-            self.mainWindow.dateEdit.setDate(QDate.fromString(self.pii.birthday, "%Y%m%d"))
+            self.mainWindow.dateEdit.setText(self.pii.birthday)
+            # self.mainWindow.dateEdit.setDate(QDate.fromString(self.pii.birthday, "%Y%m%d"))
             self.patchDialog(f"load pii successful", title="Success", icon=QMessageBox.Information)
             return True
 
@@ -723,6 +724,7 @@ class Slots:
             conn.close()
             self.patchDialog(f"Connect to database successfully", title="Success", icon=QMessageBox.Information)
             Config.DatabaseUrl = self.databaseUrl
+            databaseInit.engine = sqlalchemy.create_engine(url=Config.DatabaseUrl)
             self.setPhasePassed(self.connectDatabaseStatus)
             return
         except OperationalError:
