@@ -78,6 +78,7 @@ The model training procession of Machine Learning is pretty more hassle than tha
 
 
 1. Connect to your database and import database structure
+   
 Connect to database URL:
 ![image](https://github.com/PadishahIII/RFGuess/assets/83501709/d412fadc-2b48-4750-b761-42c5a54b3288)
 
@@ -85,6 +86,7 @@ Import sql file(get [here](https://github.com/PadishahIII/RFGuess/blob/executabl
 ![image](https://github.com/PadishahIII/RFGuess/assets/83501709/7cfdbd98-4a3e-4513-80f8-8e76cbf2677e)
 
 2. Load your pii dataset(.txt)
+   
 The pii dataset should in the below format:
   - every line contains one pii data
   - every line should have several fields and in format of
@@ -95,21 +97,24 @@ The pii dataset should in the below format:
 
 
 4. Analyze and process dataset
+   
 This step will analyze the pii dataset to some intermediate datatables.
 ![image](https://github.com/PadishahIII/RFGuess/assets/83501709/c73d864d-55d6-43f0-bceb-204978e3bb07)
 
 
 6. Train model
+   
 You will train a classifier model and dump into a .clf file.
 ![image](https://github.com/PadishahIII/RFGuess/assets/83501709/06925559-485f-4908-802a-746311ac1f55)
 
 
-7. Assess accuracy
+8. Assess accuracy
+   
 To assess accuracy of your already trained model, this step will use 50% of your dataset as train-set and other 50% as test-set, generate a password dictionary for every pii data and check whether the correct password falls in the dictionary.
 ![image](https://github.com/PadishahIII/RFGuess/assets/83501709/7f634c62-bfc9-438f-b2e8-57fd8272062c)
 
 
-8. Restore the status of last run
+9. Restore the status of last run
 With "Update Status" button, you can load the progress of last run and check status of each phase.
 ![image](https://github.com/PadishahIII/RFGuess/assets/83501709/eca7e301-30a6-4866-9b82-ef8d2227f70e)
 
