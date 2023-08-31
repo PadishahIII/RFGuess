@@ -36,7 +36,8 @@ I have implemented the key concept of the paper and programmed a easy-to-use too
 ## Usage
 
 Run the executable file and you will see the panel as below:
-![image](https://github.com/PadishahIII/RFGuess/assets/83501709/f255451d-9247-4c9c-ae44-575b912e6fb1)
+![1](https://github.com/PadishahIII/RFGuess/assets/83501709/5ab925d2-548f-4e91-90c5-aff86008f9e9)
+
 
 
 There are three main modules in the user interface: guess-generator, pattern-generator and model-trainner. 
