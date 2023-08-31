@@ -119,7 +119,8 @@ With "Update Status" button, you can load the progress of last run and check sta
 
 ## License
 
-Distributed under the no License. See LICENSE.txt for more information.
+This code is released under an [MIT License]. You are free to use, modify, distribute, or sell it under those terms.
+
 
 ## Contact
 
