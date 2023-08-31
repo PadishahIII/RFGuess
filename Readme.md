@@ -98,16 +98,23 @@ The pii dataset should in the below format:
 
 4. Analyze and process dataset
 This step will analyze the pii dataset to some intermediate datatables.
-![image](https://github.com/PadishahIII/RFGuess/assets/83501709/794b63b1-cd10-474f-9c8a-07e0a0fc81f9)
+![image](https://github.com/PadishahIII/RFGuess/assets/83501709/c73d864d-55d6-43f0-bceb-204978e3bb07)
 
 
 6. Train model
+You will train a classifier model and dump into a .clf file.
+![image](https://github.com/PadishahIII/RFGuess/assets/83501709/06925559-485f-4908-802a-746311ac1f55)
 
 
 7. Assess accuracy
+To assess accuracy of your already trained model, this step will use 50% of your dataset as train-set and other 50% as test-set, generate a password dictionary for every pii data and check whether the correct password falls in the dictionary.
+![image](https://github.com/PadishahIII/RFGuess/assets/83501709/7f634c62-bfc9-438f-b2e8-57fd8272062c)
 
 
 8. Restore the status of last run
+With "Update Status" button, you can load the progress of last run and check status of each phase.
+![image](https://github.com/PadishahIII/RFGuess/assets/83501709/eca7e301-30a6-4866-9b82-ef8d2227f70e)
+
 
 
 ## License
