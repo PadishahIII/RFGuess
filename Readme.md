@@ -16,7 +16,7 @@ I have implemented the key concept of the paper and programmed a easy-to-use too
 
 ## Features
 - **Targeted password guessing based on PII**(crack the password of a given user)
-- A pre-trained model(TODO:clf file link) ready to use which is trained on a dataset with 11w data
+- A pre-trained model(get [here](https://github.com/PadishahIII/RFGuess/releases/download/executable/model.clf)) ready to use which is trained on a dataset with 11w data
 - Generate password patterns based on PII dataset
 - Conduct password guesses for given personal information
 - Support to train specified model for self-defined datasets
