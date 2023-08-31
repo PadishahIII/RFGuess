@@ -36,7 +36,8 @@ I have implemented the key concept of the paper and programmed a easy-to-use too
 ## Usage
 
 Run the executable file and you will see the panel as below:
-![1](https://github.com/PadishahIII/RFGuess/assets/83501709/5ab925d2-548f-4e91-90c5-aff86008f9e9)
+![1](https://github.com/PadishahIII/RFGuess/assets/83501709/18c4a5e8-8e6c-4593-9c75-3c3f1b634969)
+
 
 
 
