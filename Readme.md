@@ -1,9 +1,7 @@
 <div align='center'>
 
 <h1>RFGuess(Random Forest Password Guessing model)</h1>
-<p>Reproduction of <a href="https://www.usenix.org/conference/usenixsecurity23/presentation/wang-ding-password-guessing">RFGuess</a> </p>
 
-<h4> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/blob/master/README.md"> Documentation </a> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/issues"> Report Bug </a> <span> · </span> <a href="https://github.com/PadishahIII/Random Forest Password Guessing Mode/issues"> Request Feature </a> </h4>
 
 
 </div>
