@@ -198,7 +198,7 @@ class Slots:
         self.mainWindow.patternFileEdit.setText(self.patternFile)
 
         self.buildLimitComboBox()
-        self.buildUsage()
+        # self.buildUsage()
 
         # pattern generator tab
         self.clsFile = ""
@@ -332,7 +332,7 @@ class Slots:
     def buildUsage(self):
         usage = \
             '''
-            Welcome to RFGuess :D
+            Welcome to RFGuess!
             Usage:
             1. Select a pattern file and load
             2. Assign an output file to store password guesses and limitation of guess number
