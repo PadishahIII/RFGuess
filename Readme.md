@@ -119,7 +119,7 @@ With "Update Status" button, you can load the progress of last run and check sta
 
 ## License
 
-This code is released under an [MIT License]. You are free to use, modify, distribute, or sell it under those terms.
+This code is released under an [MIT License](https://github.com/PadishahIII/RFGuess/blob/master/LICENSE). You are free to use, modify, distribute, or sell it under those terms.
 
 
 ## Contact
