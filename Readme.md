@@ -35,9 +35,9 @@ I have implemented the key concept of the paper and programmed a easy-to-use too
 
 ## Usage
 
-[#Generate pattern(pattern-generator)]
-[@Generate password dictionary(guess-generator)]
-[#Train your own model]
+[#Generate-pattern(pattern-generator)]
+[#Generate-password-dictionary(guess-generator)]
+[#Train-your-own-model]
 
 Run the executable file and you will see the panel as below:
 ![1](https://github.com/PadishahIII/RFGuess/assets/83501709/18c4a5e8-8e6c-4593-9c75-3c3f1b634969)
