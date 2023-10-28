@@ -1,0 +1,3 @@
+name, email, password, phone
+张三, 350777@aa.com , zhangsan, 111122222
+John, 3333@bb.com, 3333, 44444

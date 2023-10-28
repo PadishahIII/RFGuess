@@ -1,11 +1,8 @@
 import binascii
-import concurrent.futures
 import hashlib
 import logging
-import os
 import re
 from abc import ABCMeta, abstractmethod
-from concurrent.futures import ThreadPoolExecutor
 
 import sqlalchemy
 from sqlalchemy import Column, Integer, String, text, func
@@ -25,7 +22,7 @@ logging.basicConfig()  # filename="database.log"
 logger = logging.getLogger("databaseInit")
 logger.setLevel(logging.INFO)
 
-engine = sqlalchemy.create_engine(url=Config.DatabaseUrl)
+engine = sqlalchemy.create_engine(Config.DatabaseUrl)
 
 sessionFactory = sessionmaker(bind=engine)
 Session = scoped_session(sessionFactory)
@@ -33,14 +30,15 @@ Session = scoped_session(sessionFactory)
 
 class PIIUnit(Base):
     __tablename__ = TableNames.PII
+    attributes = ['email', 'account', 'name', 'idCard', 'phoneNum', 'password', 'fullName']
 
     id = Column(Integer, primary_key=True)
-    email = Column(String)
-    account = Column(String)
-    name = Column(String)
-    idCard = Column(String)
-    phoneNum = Column(String)
-    password = Column(String)
+    email = Column(String, default='')
+    account = Column(String, default='')
+    name = Column(String, default='')
+    idCard = Column(String, default='')
+    phoneNum = Column(String, default='')
+    password = Column(String, default='')
     fullName = Column(String, default='')
 
     def __init__(self, email, account, name, idCard, phoneNum, password, fullName=None):
@@ -268,45 +266,6 @@ class PIIUnitQueryMethods(BasicManipulateMethods):
 
 
 '''
-Top level apis
-'''
-
-
-def parseLineToPIIUnit(line: str) -> PIIUnit:
-    """
-    Convert a line of the dataset file into PIIUnit object.
-    Line must be in the below format:
-    > email----account----name----idCard----password----phoneNum----email(ignored)
-
-    Args:
-        line: a single line containing pii
-    """
-    newLine = line.strip().lstrip()
-    m = lineRst.search(newLine)
-    if not m:
-        raise ParseLineException(f"line regex match failed: {line}")
-    d = dict()
-    md = m.groupdict()
-    for k in md.keys():
-        if not md[k] or len(md[k]) <= 0:
-            raise ParseLineException(f"Error: Empty '{k}' in line '{line}'")
-        d[k] = md[k]
-    name = d['name']
-    # get full name
-    fullname = pinyinUtils.getFullName(name)
-    d['fullName'] = fullname
-    unit = PIIUnit(**d)
-
-    return unit
-
-
-class ParseLineException(Exception):
-
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-
-
-'''
 Main logics
 '''
 
@@ -314,119 +273,6 @@ Main logics
 class ProgressTracker:
     load_pii_data_progress = 0  # for outer progress tracking
     load_pii_data_limit = 100
-
-
-def LoadDataset(file, start=0, limit=-1, clear=False, update=False):
-    """
-    Load dataset file into database
-
-    Args:
-        file: dataset file path
-        start: line number to start
-        limit: limitation of lines to load, -1 for no limit
-        clear: whether clear the table before insert
-        update: update unit when already existing
-    """
-    count = 0
-    updateCount = 0
-    queryMethods = PIIUnitQueryMethods()
-
-    invalidLines = list()
-    exceptionList = list()
-    from Parser.PIIParsers import PIIStructureParser
-    from Commons import Utils
-    def insertline(line, count, directInsert: bool = False) -> bool:
-        updated = False
-        try:
-            unit = parseLineToPIIUnit(line)
-
-            # check format
-            pii, pwStr = Utils.parsePIIUnitToPIIAndPwStr(unit)
-            piiParser = PIIStructureParser(pii)
-            piiStructure = piiParser.getPwPIIStructure(pwStr=pwStr)
-            if directInsert:
-                queryMethods.Insert(unit)
-                updated = True
-            else:
-                u = queryMethods.SmartInsert(unit, update)
-                updated = u
-        except Exception as e:
-            logger.info(f"Exception occured. Restart at {count} to continue the process.")
-            invalidLines.append(line)
-            exceptionList.append(e)
-            return updated
-        if count % 100 == 0:
-            logger.info(f"Completed: {count}")
-        return updated
-
-    if not os.path.exists(file):
-        raise LoadDatasetException(f"Error: invalid dataset path: {file}")
-
-    # clear table
-    if clear:
-        logger.info(f"Clearing original data, which has size:{queryMethods.QuerySize()}")
-        queryMethods.DeleteAll()
-        logger.info(f"Clear PII data finish, start write new data")
-    directInsert = clear
-
-    threadpool = ThreadPoolExecutor()
-    futureList = list()
-
-    with open(file, encoding='gbk', errors="replace") as f:
-        firstLine = f.readline()
-        file_size = os.stat(file).st_size
-        line_length = len(firstLine) if len(firstLine) > 0 else 50
-        line_count = file_size // line_length
-
-        for i in range(start - 1):
-            f.readline()
-        if limit > 0:
-            for i in range(limit):
-                line = f.readline()
-                if len(line) > 5:
-                    count += 1
-                    ProgressTracker.load_pii_data_progress = count
-                    ProgressTracker.load_pii_data_limit = limit
-                    futureList.append(threadpool.submit(insertline, line, count, directInsert))
-                    # u = insertline(line, count, directInsert)
-                    # if u:
-                    #     updateCount += 1
-        else:
-            # no limit
-            line = f.readline()
-            while line:
-                if len(line) > 5:
-                    count += 1
-                    ProgressTracker.load_pii_data_progress = count
-                    ProgressTracker.load_pii_data_limit = line_count
-                    futureList.append(threadpool.submit(insertline, line, count, directInsert))
-                    # u = insertline(line, count, directInsert)
-                    # if u:
-                    #     updateCount += 1
-                line = f.readline()
-        task_number = len(futureList)
-        i = 0
-        for future in concurrent.futures.as_completed(futureList):
-            future.result()
-            i += 1
-            ProgressTracker.load_pii_data_progress = i
-            ProgressTracker.load_pii_data_limit = task_number
-
-    threadpool.shutdown()
-    logger.info(f"number of data unit: {count}")
-    logger.info(f"Have insert {count} PII data, updated: {updateCount}")
-    logger.info(f"Invalid Lines ({len(invalidLines)}):")
-
-
-    for i in range(len(invalidLines)):
-        line = invalidLines[i]
-        exception = exceptionList[i]
-        print(f"{exception}:{line}")
-
-
-class LoadDatasetException(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
 
 
 def BuildFullName():

@@ -1,2 +1,4 @@
 *.pkg
 *.exe
+_*.txt
+_*.md

@@ -3,6 +3,28 @@ from Commons.Utils import Serializer
 from Parser.PIIDataTypes import PIIRepresentation
 
 
+class CsvHelper:
+    @classmethod
+    def parseline(cls, line: str) -> list:
+        """
+        Split a line by comma and return a list of values in order
+        Args:
+            line: string of line
+
+        Returns:
+            list: values in order
+
+        """
+        if line is None:
+            return None
+        line = line.strip()
+        if len(line) <= 0:
+            return None
+        l = line.split(",")
+        ll = [x.strip() for x in l if x is not None and len(x.strip()) > 0]
+        return ll
+
+
 def getRepStructurePriorityList(offset: int = 0, limit: int = 1e6) -> list[RepUnit]:
     """
     Get the priority list of representation structure in descending order(list[0] has the max frequency)
@@ -15,6 +37,7 @@ def getRepStructurePriorityList(offset: int = 0, limit: int = 1e6) -> list[RepUn
     transformer: RepFrequencyTransformer = RepFrequencyTransformer.getInstance()
     units: list[RepUnit] = transformer.readWithRepUnit(offset=offset, limit=limit)
     return units
+
 
 def getGeneralRepStructurePriorityList(offset: int = 0, limit: int = 1e6) -> list[RepUnit]:
     """
@@ -108,13 +131,11 @@ def getAllPw(offset: int = 0, limit: int = 1e6) -> list[str]:
     return transformer.getAllPw(offset, limit)
 
 
-
 def getGeneralAllPw(offset: int = 0, limit: int = 1e6) -> list[str]:
     from Commons.DatabaseLayer import GeneralPwRepresentationTransformer
 
     transformer: GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
     return transformer.getAllPw(offset, limit)
-
 
 
 def getRepLen(repUnit: RepUnit) -> int:
@@ -148,12 +169,12 @@ def getGeneralIntermediateFromRepUnit(pwStr: str, repUnit: RepUnit) -> PwRepUniq
     Transform `RepUnit` => `PwRepUniqueUnit`
 
     """
-    from Commons.DatabaseLayer import GeneralPwRepresentationTransformer, PwRepresentation
+    from Commons.DatabaseLayer import GeneralPwRepresentationTransformer
     from Scripts.databaseInit import GeneralPwRepresentation
 
     pwrepTransformer: GeneralPwRepresentationTransformer = GeneralPwRepresentationTransformer.getInstance()
     unit: GeneralPwRepresentation = pwrepTransformer.getDatabaseUnitWithRepStructureHash(pwStr=pwStr,
-                                                                                  repStructureHash=repUnit.repHash)
+                                                                                         repStructureHash=repUnit.repHash)
     if unit is None:
         raise Exception(
             f"Database Utils Error: cannot find databaseunit with pwStr:{pwStr}, repStructureHash:{repUnit.repHash}")

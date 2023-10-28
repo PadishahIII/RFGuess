@@ -66,8 +66,49 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 3. `representationHash`: hash of `representation`
 4. `hash`: hash of `pwStr` + `representation`
 
+## PII type 
+| Tag | Description                                      |
+|-----|--------------------------------------------------|
+| N1  | FullName                                         |
+| N2  | Abbreviate of name                               |
+| N3  | Family name                                      |
+| N4  | Given name                                       |
+| N5  | First character of given name append family name |
+| N6  | First character of family name append given name |
+| N7  | Family name capitalized                          |
+| N8  | First character of family name                   |
+| N9  | Abbr of given name                               |
+| B1  | Birthday in YYYYMMDD                             |
+| B2  | MMDDYYYY                                         |
+| B3  | DDMMYYYY                                         |
+| B4  | MMDD                                             |
+| B5  | YYYY                                             |
+| B6  | YYYYMM                                           |
+| B7  | MMYYYY                                           |
+| B8  | YYMMDD                                           |
+| B9  | MMDDYY                                           |
+| B10 | DDMMYY                                           |
+| A1  | Account                                          |
+| A2  | Letter segment of account                        |
+| A3  | Digit segment of account                         |
+| E1  | Email prefix                                     |
+| E2  | Letter segment of email                          |
+| E3  | Digit segment of email                           |
+| E4  | Email site like qq, 163                          |
+| P1  | Phone number                                     |
+| P2  | First three digits of phone number               |
+| P3  | Last four digits of phone number                 |
+| I1  | Id card number                                   |
+| I2  | First three digits of idCard                     |
+| I3  | First six digits of idCard                       |
+
+
 
 ## Journal
+## 10.27
+1. *(TODO)* To support flexible-formatted datasets, treat the first line as field name, format in csv
+2. *(TODO)* Complete develop documentation and requirements, add support for running from source code
+
 ### GUI optimize(8.29)
 1. Progress bar, only-one running task
 2. If a field is missing in PII data given, then all the patterns that need this field would be excluded
@@ -96,10 +137,10 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 5. 
 
 ### GUI and automating(8.24)
-1. *(TODO)* Automate the datatable built, support to train by other datasets easily
-2. *(TODO)* Regulate the result-testing procedure
-3. *(TODO)* Build LDS datatable in (length, segmentStr)
-4. *(TODO)* Generate guesses for PII-only(with LDS) patterns
+1. *(Solved)* Automate the datatable built, support to train by other datasets easily
+2. *(Solved)* Regulate the result-testing procedure
+3. *(Deprecated)* Build LDS datatable in (length, segmentStr)
+4. *(Deprecated)* Generate guesses for PII-only(with LDS) patterns
 5. Re-generate intermediate datatables in script
 
 ### (8.23)
@@ -108,7 +149,7 @@ That's led by the ambiguous conversion when counting serial number of characters
 be corrected to address this problem. The label integer of character section is calculated by `LabelParser.encodeCh` which is not ambiguous
 2. *(Solved)* In generated patterns, the proportion of patterns starting with 'q' is abnormally large(570/1330) 
 3. Solved problem[2] by adding an empty datagram with 6 begin sections for every pwStr and re-train the model
-4. *(TODO)* Write GUI to generate guessing targeted on one PII data
+4. *(Solved)* Write GUI to generate guesses targeted on one PII data
 5. *(TODO)* Test the accuracy of the model on other datasets
 6. *(TODO)* Collect data breach of "Rootkit" or "ClixSense"
 
@@ -120,13 +161,13 @@ be corrected to address this problem. The label integer of character section is 
 - [x] Database build: create two new datatable `pwrepresentation_general` and `pwrepresentation_unique_general`
 - [x] Overwrite representation select algorithm
 - [x] Build training data: implement `GeneralPIIParser` to build feature list
-- [ ] Generate pattern: implement `GeneralPIIGenerator` to generate patterns
+- [x] Generate pattern: implement `GeneralPIIGenerator` to generate patterns
 
 ### Generator(8.19)
 1. `PIIPatternGenerator`
 2. *(Solved)* Get multiple classification results
 3. *(Solved)* Generate a list of most common used password patterns
-4. *(TODO)* Implement the hybrid mode, taking idle characters as `CharacterSection` rather than LDS segments
+4. *(Solved)* Implement the hybrid mode, taking idle characters as `CharacterSection` rather than LDS segments
 5. test_PIIGenerators.py: generate patterns
 6. main_PII_Mode.py: train model
 
@@ -141,7 +182,7 @@ it stores a enum value of `PIIType` like `NameType.FullName`
 5. `PIIParser` class has passed the initial test cases
 6. *(Solved)* test `PIIParser` with various data items
 7. Build train data and **training model** finished
-8. *(TODO)* Implement classifier and generator
+8. *(Solved)* Implement classifier and generator
 
 
 ### Representation Resolver(8.16)
@@ -168,7 +209,7 @@ it stores a enum value of `PIIType` like `NameType.FullName`
 3. Commons/Utils.py: `parsePIIUnitToPIIAndPwStr` add PII fields check and default value
 4. Scripts/call_databaseInit.py: Build *pii* datatable using `test_load_dataset` method: there are duplicates in *pii* table, but it would not lead to any impact. **131653 items**
 5. Scripts/buildDatabase.py: Build *pwrepresentation* datatable using `buildPwRepresentationTable` method: (**no duplicate**) **222937 items**
-6. *(TODO)* Commons/DatabaseLayer.py.`getPwRepresentation`: Representation hash should exclude vector str(part of pwStr). 
+6. *(Solved)* Commons/DatabaseLayer.py.`getPwRepresentation`: Representation hash should exclude vector str(part of pwStr). 
 Refactor the hash calculation process of database unit, and rebuild table `pwrepresentation` in *buildDatabase.py*
 7. Access to test in *Tests/test_DatabaseLayer* in method `test_get_pw_representation`
 8. *(TODO)* Illustrate the role and relationship of all data-structures, especially that of PII. 
@@ -176,11 +217,11 @@ Refactor the hash calculation process of database unit, and rebuild table `pwrep
 hash
 
 ### PII algorithms(8.13)
-1. *(TODO)* Representation => DatagramList
-2. *(TODO)* Build a table to store the final representation of password
+1. *(Solved)* Representation => DatagramList
+2. *(Solved)* Build a table to store the final representation of password
 3. Create `pwrepresentation` table to store passwords and corresponding representations
 4. Create `representation_frequency` view to store frequency of representations
-5. *(TODO)* Build `pwrepresentation` and `representation_frequency` tables with data
+5. *(Solved)* Build `pwrepresentation` and `representation_frequency` tables with data
 6. Scripts/databaseInit.py: refactor the query code with an ancestor class `BasicManipulateMethods`, have added Entity
 type and QueryMethods for each table/view.
 
