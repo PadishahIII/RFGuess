@@ -127,7 +127,8 @@ Jason Harris, aaaa@aa.com, 5555, 5555
 ```
 
 You can specify the character set of the target dataset by *Charset* edit box.
-![image](https://github.com/PadishahIII/RFGuess/assets/83501709/4cdf1c79-6b55-4ec0-9132-af9473c2d7ab)
+![image](https://github.com/PadishahIII/RFGuess/assets/83501709/bb8a1741-fa3c-45ef-b305-260c58cab286)
+
 
 Push *Load PII Data* button and wait. Your dataset will be consumed and stored in database after some procession.
 ![10](https://github.com/PadishahIII/RFGuess/assets/83501709/4fb33e8c-999c-4bc9-9bba-d1b9e3c31d61)
