@@ -13,7 +13,6 @@ I have implemented the main concept of the paper and programmed an easy-to-use t
 - A pre-trained model
 
 # Table of contents
-=================
 
 - [Overview](#overview)
   * [Features](#features)
