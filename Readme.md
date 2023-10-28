@@ -146,6 +146,47 @@ With "Update Status" button, you can load the progress of last run and check sta
 ### Advanced Configuration
 You can see more detailed configuration at [Config.py](https://github.com/PadishahIII/RFGuess/blob/master/Parser/Config.py).
 
+**Algorithm configuration**
+*Markov n-gram* model is used in the main algorithm, you can set *n* by *pii_order* parameter:
+```python
+pii_order = 6 
+```
+
+You can control the limitation of guesses by the two following thresholds, which are calculated according to the possibility of the growing pattern. 
+A pattern is adopted only if its possibility is greater than the threshold. So the larger is the threshold, the lesser is the number of guesses, vice verse. It is notable that you should not set the threshold excessively small(lesser than *1e-11*) to avoid overwhelming by useless patterns. 
+
+```python
+general_generator_threshold = 1.2e-8
+```
+
+**Database configuration**
+You can config the table names of database as you like:
+```python
+class TableNames:
+    PII = "PII"
+    pwrepresentation = "pwrepresentation"
+    representation_frequency = "representation_frequency"
+    pwrepresentation_frequency = "pwrepresentation_frequency"
+    pwrepresentation_unique = "pwrepresentation_unique"
+    pwrepresentation_general = f"{pwrepresentation}_general"
+    representation_frequency_base_general = f"representation_frequency_base_general"
+    representation_frequency_general = f"{representation_frequency}_general"
+    pwrepresentation_frequency_general = f"{pwrepresentation_frequency}_general"
+    pwrepresentation_unique_general = f"{pwrepresentation_unique}_general"
+```
+
+**Classifier configuration**
+
+Tune the parameters of random forest by the following config:
+```python
+class RFParams:
+    n_estimators = 30
+    criterion = 'gini'
+    min_samples_leaf = 10
+    max_features = 0.8
+```
+
+
 
 
 
