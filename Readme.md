@@ -189,8 +189,8 @@ The *pii_order* parameter denotes the order of the Markov model.
 pii_order = 6 
 ```
 
-You can control the limit of guesses by the two following thresholds, which are calculated according to the possibility of the growing pattern. 
-A pattern is adopted only if its possibility is greater than the threshold. So the larger is the threshold, the lesser is the number of guesses, vice verse. It is notable that you should not set the threshold excessively small(lesser than *1e-11*) to avoid overwhelming by useless patterns. 
+You can control the limit of guesses by the two following thresholds, which are calculated according to the probability of the growing pattern. 
+A pattern is adopted only if its probability is greater than the threshold. So the larger is the threshold, the lesser is the number of guesses, vice verse. It is notable that you should not set the threshold excessively small(lesser than *1e-11*) to avoid overwhelming by useless patterns. 
 
 ```python
 general_generator_threshold = 1.2e-8
