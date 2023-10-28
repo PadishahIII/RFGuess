@@ -184,7 +184,7 @@ See more detailed configuration at [Config.py](https://github.com/PadishahIII/RF
 **Algorithm configuration**
 
 
-*Markov n-gram* model is used in the main algorithm, you can set *n* by *pii_order* parameter:
+The *pii_order* parameter denotes the order of the Markov model.
 ```python
 pii_order = 6 
 ```
