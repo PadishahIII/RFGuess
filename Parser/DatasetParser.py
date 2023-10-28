@@ -164,7 +164,8 @@ class CsvDatasetLineParser(AbstractDatasetLineParser):
 
 class CsvDatasetLoader(AbstractDatasetLoader):
     """
-    Load dataset from csv file
+    Load dataset from csv file 
+
     """
 
     def __init__(self) -> None:
