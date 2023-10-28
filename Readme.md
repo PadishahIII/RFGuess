@@ -13,22 +13,22 @@ I have implemented the main concept of the paper and programmed an easy-to-use t
 - A pre-trained model
 
 # Table of contents
-
 - [Overview](#overview)
-  * [Features](#features)
-  * [Prerequisites](#prerequisites)
-  * [Usage](#usage)
-    + [Main window](#main-window)
-    + [Generate pattern(Pattern-Generator)](#generate-pattern-pattern-generator-)
-    + [Generate password dictionary(Guess-Generator)](#generate-password-dictionary-guess-generator-)
-    + [Train your own model](#train-your-own-model)
-  * [Advanced Configuration](#advanced-configuration)
-  * [Build from source](#build-from-source)
-  * [License](#license)
-  * [Contact](#contact)
-  * [Acknowledgements](#acknowledgements)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Usage](#usage)
+  * [Main window](#main-window)
+  * [Generate pattern(Pattern-Generator)](#generate-pattern-pattern-generator)
+  * [Generate password dictionary(Guess-Generator)](#generate-password-dictionary-guess-generator)
+  * [Train your own model](#train-your-own-model)
+- [Advanced Configuration](#advanced-configuration)
+- [Build from source](#build-from-source)
+- [License](#license)
+- [Contact](#contact)
+- [Acknowledgements](#acknowledgements)
 - [Appendix](#appendix)
   * [Pattern format](#pattern-format)
+
 
 
 
