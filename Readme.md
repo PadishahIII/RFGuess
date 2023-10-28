@@ -226,7 +226,6 @@ class RFParams:
     max_features = 0.8
 ```
 
----
 
 # Build from source
 This project is written by **Python3.11**. You can install dependencies by using pip:
