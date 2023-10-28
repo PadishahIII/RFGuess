@@ -4,4 +4,4 @@ _*.txt
 _*.md
 *.clf
 dist
-dist/*
+dist/
