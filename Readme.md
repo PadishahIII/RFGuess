@@ -61,7 +61,6 @@ I have implemented the main concept of the paper and programmed an easy-to-use t
 
 - [Train your own model](#train-your-own-model)
 
----
 
 ## Main window
 
