@@ -129,7 +129,7 @@ class TestPwRepFrequencyTransformer(TestCase):
 class TestGeneralPwRepUniqueTransformer(TestCase):
     def test_read_as_parse_unit(self):
         transformer: GeneralPwRepUniqueTransformer = GeneralPwRepUniqueTransformer.getInstance()
-        l: list[GeneralPwRepAndStructureUnit] = transformer.readAsParseUnit(offset=1000, limit=10)
+        l: list[GeneralPwRepAndStructureUnit] = transformer.readAsParseUnit(offset=0, limit=10)
         tagParser: GeneralPIIRepresentationStrParser = GeneralPIIRepresentationStrParser.getInstance()
         for unit in l:
             rep: GeneralPIIRepresentation = unit.rep

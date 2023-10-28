@@ -108,6 +108,7 @@ by `DatabaseTransformer` and high-level scripts locate in *Scripts/buildDatabase
 ## 10.27
 1. *(TODO)* To support flexible-formatted datasets, treat the first line as field name, format in csv
 2. *(TODO)* Complete develop documentation and requirements, add support for running from source code
+3. Latest accuracy: 0.3278
 
 ### GUI optimize(8.29)
 1. Progress bar, only-one running task

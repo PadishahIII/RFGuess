@@ -14,3 +14,7 @@ class TestBasicManipulateMethods(TestCase):
         queryMethods = databaseInit.PIIUnitQueryMethods()
         print(queryMethods.QuerySize())
 
+    def test_general_pw_rep_unique(self):
+        queryMethod = databaseInit.GeneralPwRepUniqueMethods()
+        print(queryMethod.QueryWithLimit(0,10))
+

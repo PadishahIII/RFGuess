@@ -8,7 +8,7 @@ import traceback
 from logging import LogRecord
 from queue import Queue
 
-from PyQt5.QtCore import pyqtSignal, QDate, Qt, QThread, QObject, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, Qt, QThread, QObject, pyqtSlot
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QLabel
 from sqlalchemy import create_engine
@@ -18,6 +18,7 @@ from sqlalchemy.exc import OperationalError
 from Generators.GeneralPIIGenerators import *
 from Generators.PasswordGuessGenerator import *
 from Parser import Config
+from Parser.DatasetParser import CsvDatasetLoader
 from Scripts import databaseInit, main_General_PII_Mode
 from Scripts.main_General_PII_Mode import BuildDatabase, GeneralPIITrainMain
 from ui.mainWindow import *
@@ -417,7 +418,6 @@ class Slots:
 
     def updateGuessGenerateProgressBar(self, value):
         self.guessGenerateProgressBarWorker.updateValue(value)
-
 
     def generateBtnSlot(self):
         if not self.getPII():
@@ -822,6 +822,10 @@ class Slots:
                 pass
             else:
                 return
+        self.charset = self.mainWindow.charsetEdit.text()
+        if self.charset is None or len(self.charset) <= 0:
+            self.printTrainLog(f"Invalid charset:'{self.charset}', using UTF-8 by default")
+            self.charset = "utf-8"
         self.piiFile = self.mainWindow.piiFileEdit.text()
         if self.piiFile is None or len(self.piiFile) <= 0:
             self.patchDialog(f"Please assign pii file(.txt) first")
@@ -848,7 +852,9 @@ class Slots:
         def run():
             try:
                 self.currentTask.set_task("Load PII Data")
-                databaseInit.LoadDataset(self.piiFile, start=0, limit=-1, clear=True, update=False)
+                # databaseInit.LoadDataset(self.piiFile, start=0, limit=-1, clear=True, update=False)
+                loader = CsvDatasetLoader()
+                loader.clear_and_load_dataset(self.piiFile, charset=self.charset)
                 self.setPhasePassed(self.loadPIIDataStatus)
                 self.printTrainLog(f"Load pii data finished !")
                 # self.patchInfoDialog(f"Load pii data success from {self.piiFile}")
@@ -919,7 +925,7 @@ class Slots:
                 # self.patchInfoDialog(f"Analyze PII Data and build datatables finished")
             except Exception as e:
                 self.printTrainLog(
-                    f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}\nTraceback:{''.join(traceback.format_tb((e.__traceback__)))}\n")
+                    f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}\nTraceback:{''.join(traceback.format_exception(type(e), e, e.__traceback__))}\n")
                 # self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
             finally:
                 self.analyzePIIDataProgressExitFlag.set()
@@ -972,7 +978,7 @@ class Slots:
                 # self.patchInfoDialog(f"Train Model finished")
             except Exception as e:
                 self.printTrainLog(
-                    f"Exception occur when Training Model, Original Exception is {e}\nTraceback:{e.__traceback__}\n")
+                    f"Exception occur when Training Model, Original Exception is {e}\nTraceback:{''.join(traceback.format_exception(type(e), e, e.__traceback__))}\n")
                 # self.patchDialog(f"Train Model failed, check exception log for more details")
                 return
             finally:
@@ -1032,7 +1038,7 @@ class Slots:
                 self.printTrainLog(f"Accuracy Assessment finished !")
             except Exception as e:
                 self.printTrainLog(
-                    f"Exception occur when Assessing accuracy, Original Exception is {e}\nTraceback:{e.__traceback__}\n")
+                    f"Exception occur when Assessing accuracy, Original Exception is {e}\nTraceback:{''.join(traceback.format_exception(type(e), e, e.__traceback__))}\n")
                 return
             finally:
                 self.assessProgressExitFlag.set()

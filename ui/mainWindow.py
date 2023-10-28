@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\ui\rfguess.ui'
+# Form implementation generated from reading ui file 'rfguess.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -304,6 +304,12 @@ class Ui_MainWindow(object):
         self.piiFileBrowser = QtWidgets.QToolButton(self.horizontalLayoutWidget_2)
         self.piiFileBrowser.setObjectName("piiFileBrowser")
         self.horizontalLayout_20.addWidget(self.piiFileBrowser)
+        self.label_17 = QtWidgets.QLabel(self.horizontalLayoutWidget_2)
+        self.label_17.setObjectName("label_17")
+        self.horizontalLayout_20.addWidget(self.label_17)
+        self.charsetEdit = QtWidgets.QLineEdit(self.horizontalLayoutWidget_2)
+        self.charsetEdit.setObjectName("charsetEdit")
+        self.horizontalLayout_20.addWidget(self.charsetEdit)
         self.label_14 = QtWidgets.QLabel(self.horizontalLayoutWidget_2)
         self.label_14.setObjectName("label_14")
         self.horizontalLayout_20.addWidget(self.label_14)
@@ -403,7 +409,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -456,6 +462,8 @@ class Ui_MainWindow(object):
         self.label_12.setText(_translate("MainWindow", "Dataset File(.txt):"))
         self.piiFileEdit.setPlaceholderText(_translate("MainWindow", "personal infomation data used to train the model"))
         self.piiFileBrowser.setText(_translate("MainWindow", "..."))
+        self.label_17.setText(_translate("MainWindow", "Charset:"))
+        self.charsetEdit.setText(_translate("MainWindow", "gbk"))
         self.label_14.setText(_translate("MainWindow", "   Save model to:"))
         self.clfSaveBtn.setText(_translate("MainWindow", "..."))
         self.label_13.setText(_translate("MainWindow", "Database Structure(.sql):"))

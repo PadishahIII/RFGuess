@@ -82,45 +82,45 @@ class PIIUnit(Base):
         a.password = b.password
         a.fullName = b.fullName
 
-    @validates('email')
-    def validateEmail(self, key, email):
-        if not email:
-            raise ValueError(f"Email is required")
-        if not emailRst.match(email):
-            raise ValueError(f"Invail email: {email}")
-        return email
-
-    @validates('account')
-    def validateAccount(self, key, account):
-        if not account:
-            raise ValueError(f"Account is required")
-        return account
-
-    @validates('name')
-    def validateName(self, key, name):
-        if not name:
-            raise ValueError(f"Name is required")
-        return name
-
-    @validates('idCard')
-    def validateIdCard(self, key, idCard):
-        if not idCard:
-            raise ValueError(f"IdCard is required")
-        return idCard
-
-    @validates('phoneNum')
-    def validatePhoneNum(self, key, phoneNum):
-        if not phoneNum:
-            raise ValueError(f"PhoneNum is required")
-        if not str(phoneNum).isdigit():
-            raise ValueError(f"Invaild phoneNum: {phoneNum}")
-        return phoneNum
-
-    @validates('password')
-    def validatePassword(self, key, password):
-        if not password:
-            raise ValueError(f"Password is required")
-        return password
+    # @validates('email')
+    # def validateEmail(self, key, email):
+    #     if not email:
+    #         raise ValueError(f"Email is required")
+    #     if not emailRst.match(email):
+    #         raise ValueError(f"Invail email: {email}")
+    #     return email
+    #
+    # @validates('account')
+    # def validateAccount(self, key, account):
+    #     if not account:
+    #         raise ValueError(f"Account is required")
+    #     return account
+    #
+    # @validates('name')
+    # def validateName(self, key, name):
+    #     if not name:
+    #         raise ValueError(f"Name is required")
+    #     return name
+    #
+    # @validates('idCard')
+    # def validateIdCard(self, key, idCard):
+    #     if not idCard:
+    #         raise ValueError(f"IdCard is required")
+    #     return idCard
+    #
+    # @validates('phoneNum')
+    # def validatePhoneNum(self, key, phoneNum):
+    #     if not phoneNum:
+    #         raise ValueError(f"PhoneNum is required")
+    #     if not str(phoneNum).isdigit():
+    #         raise ValueError(f"Invaild phoneNum: {phoneNum}")
+    #     return phoneNum
+    #
+    # @validates('password')
+    # def validatePassword(self, key, password):
+    #     if not password:
+    #         raise ValueError(f"Password is required")
+    #     return password
 
 
 '''
