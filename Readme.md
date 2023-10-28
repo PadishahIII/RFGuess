@@ -41,6 +41,10 @@ I have implemented the key concept of the paper and programmed a easy-to-use too
 
 - [Train your own model](#train-your-own-model)
 
+---
+
+
+
 Run the executable file and you will see the panel as below:
 ![1](https://github.com/PadishahIII/RFGuess/assets/83501709/18c4a5e8-8e6c-4593-9c75-3c3f1b634969)
 
@@ -137,6 +141,10 @@ To assess accuracy of your already trained model, this step will use 50% of your
 9. Restore the status of last run
 With "Update Status" button, you can load the progress of last run and check status of each phase.
 ![14](https://github.com/PadishahIII/RFGuess/assets/83501709/e85b101c-75b0-40e2-8bd5-8a9ec0fa5768)
+
+
+### Advanced Configuration
+You can see more detailed configuration at [Config.py](https://github.com/PadishahIII/RFGuess/blob/master/Parser/Config.py).
 
 
 
