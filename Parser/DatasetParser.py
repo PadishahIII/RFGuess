@@ -183,6 +183,7 @@ class CsvDatasetLoader(AbstractDatasetLoader):
 
 
         """
+        keys = [x.lower() for x in keys if x is not None]
         for key in keys:
             if key not in self.valid_fields:
                 raise DatasetLoaderException(

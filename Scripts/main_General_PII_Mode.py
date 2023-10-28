@@ -1,6 +1,8 @@
 import concurrent.futures
+import os
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from unittest import TestCase
 
 import joblib
@@ -149,7 +151,7 @@ class GeneralPIITrainMain(TestCase):
         minId = transformer.getMinId()
         logger.info(f"max:{maxId},min:{minId}")
         end = maxId + 1
-        start = end - int((1 - TRAINSET_PROPORTION) * (maxId - minId))
+        start = end - int((1 - TRAINSET_PROPORTION) * (maxId - minId + 1))
         # start = end - int(0.0001 * (maxId - minId))
         l: list[PIIIntermediateUnit] = transformer.getPIIIntermediateWithIdrange(start, end)
         logger.info(f"number of test pii:{len(l)}")

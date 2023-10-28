@@ -24,6 +24,21 @@ class CsvHelper:
         ll = [x.strip() for x in l if x is not None and len(x.strip()) > 0]
         return ll
 
+    @classmethod
+    def listToCsvLine(cls, l: list) -> str:
+        """
+        Join a list of string to a single line with fields separated by comma
+        Args:
+            l: target string list
+
+
+        """
+        if l is None:
+            return ""
+        if len(l) <= 0:
+            return ""
+        return ",".join(l)
+
 
 def getRepStructurePriorityList(offset: int = 0, limit: int = 1e6) -> list[RepUnit]:
     """

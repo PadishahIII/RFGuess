@@ -90,7 +90,7 @@ class GeneralPIIFactory(BasicFactory):
         maxId = self.transformer.getMaxId()
 
         start = minId
-        end = minId + int(proportion * (maxId - minId))
+        end = minId + int(proportion * (maxId - minId + 1))
 
         self.offset = 0
         self.limit = end - start

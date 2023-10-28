@@ -10,7 +10,7 @@ class TableNames:
     pwrepresentation = "pwrepresentation"
     representation_frequency = "representation_frequency"
     pwrepresentation_frequency = "pwrepresentation_frequency"
-    pwrepresentation_unique = "PwRepresentation_unique"
+    pwrepresentation_unique = "pwrepresentation_unique"
     pwrepresentation_general = f"{pwrepresentation}_general"
     representation_frequency_base_general = f"representation_frequency_base_general"
     representation_frequency_general = f"{representation_frequency}_general"
