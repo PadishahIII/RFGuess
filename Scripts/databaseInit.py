@@ -28,6 +28,14 @@ sessionFactory = sessionmaker(bind=engine)
 Session = scoped_session(sessionFactory)
 
 
+def update_engine(url: str):
+    """Re-define the engine and session with the new url"""
+    global engine, sessionFactory, Session
+    engine = sqlalchemy.create_engine(url)
+    sessionFactory = sessionmaker(bind=engine)
+    Session = scoped_session(sessionFactory)
+
+
 class PIIUnit(Base):
     __tablename__ = TableNames.PII
     attributes = ['email', 'account', 'name', 'idCard', 'phoneNum', 'password', 'fullName']
@@ -494,7 +502,7 @@ class RepresentationMethods(BasicManipulateMethods):
 
 
 '''
-Representation Frequency Unit and QueryMethod 
+Representation Frequency Unit and QueryMethod
 '''
 
 

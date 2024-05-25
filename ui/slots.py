@@ -295,6 +295,19 @@ class Slots:
         self.initAllStatus()
         self.redirect_logger()
 
+        self.registerErrorHandler()
+
+    def registerErrorHandler(self):
+        import sys
+        sys._excepthook = sys.excepthook
+
+        def exception_hook(exc_type, exc_value, exc_traceback):
+            self.patchDialog(f"Unhandled Exception occurred:\n{exc_type}: {exc_value}\n{exc_traceback}")
+            if exc_type is KeyboardInterrupt:
+                sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+        sys.excepthook = exception_hook
+
     def exist_current_task(self) -> bool:
         """Check if there is current task running, patch dialog
         """
@@ -724,11 +737,12 @@ class Slots:
             conn.close()
             self.patchDialog(f"Connect to database successfully", title="Success", icon=QMessageBox.Information)
             Config.DatabaseUrl = self.databaseUrl
-            databaseInit.engine = sqlalchemy.create_engine(url=Config.DatabaseUrl)
+            databaseInit.update_engine(Config.DatabaseUrl)
+            # databaseInit.engine = sqlalchemy.create_engine(url=Config.DatabaseUrl)
             self.setPhasePassed(self.connectDatabaseStatus)
             return
-        except OperationalError:
-            self.patchDialog(f"Fail to connect to database")
+        except OperationalError as e:
+            self.patchDialog(f"Fail to connect to database: {str(e)}")
             return
 
     def sqlFileBrowserBtnSlot(self):

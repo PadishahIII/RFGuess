@@ -5,3 +5,9 @@ _*.md
 *.clf
 dist
 dist/
+ScreenShots
+Journal.md
+_requirements_bak.txt
+.vscode
+.idea
+build

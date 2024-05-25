@@ -1,0 +1,15 @@
+version: "3"
+services:
+  mysql:
+    image: mysql:8.0
+    ports:
+      - 3307:3306
+    environment:
+      - MYSQL_DATABASE=rfguess
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./user.sql:/docker-entrypoint-initdb.d/user.sql
+volumes:
+  mysql-data:
+    driver: local
