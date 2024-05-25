@@ -11,3 +11,4 @@ _requirements_bak.txt
 .vscode
 .idea
 build
+*.jar

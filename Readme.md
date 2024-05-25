@@ -12,6 +12,8 @@ I have implemented the main concept of the paper and programmed an easy-to-use t
 - A GUI program exclusively for the PII-based targeted password guessing scenario
 - A pre-trained model
 
+If you are looking for more knowledge about the underlying logic and training process of this project, [this article](https://www.wolai.com/secnote/aL4Xth452sX4XuSydnpqtj) provides more details about the algorithm and the corresponding transcript is available [here](https://www.wolai.com/secnote/row4spm7VvaYAkUmxsFQBT).
+
 # Table of contents
 - [Overview](#overview)
 - [Features](#features)
@@ -51,9 +53,9 @@ I have implemented the main concept of the paper and programmed an easy-to-use t
 - PyQt5<a href="https://pypi.org/project/PyQt5/"> Here</a>
 
 # Install & Launch
-Install dependencies:
+Clone this repo to your local, install dependencies:
 ```bash
-
+pip install -r requirements.txt
 ```
 This project use Mysql to store analysis data, you can launch a prepared database in docker which is recommended:
 ```bash
@@ -62,6 +64,11 @@ docker-compose up -d
 And connect to `mysql://root:root@127.0.0.1:3307/rfguess`.
 
 Or if you expect to use a custom database, you should import `user.sql` into your database manually, which will create all the data tables.
+
+Launch the user interface:
+```bash
+python main.py
+```
 
 # Usage
 
@@ -132,7 +139,8 @@ Connect to database URL:
 ![8](https://github.com/PadishahIII/RFGuess/assets/83501709/c0f3055e-c5d0-4613-8be8-ddee2b1df729)
 
 
-Import sql file(get [here](https://github.com/PadishahIII/RFGuess/blob/v1.1/database_structure.sql)):
+Import sql file(get [here](https://github.com/PadishahIII/RFGuess/blob/v1.1/database_structure.sql)). **Note that, this script would drop and recreate data tables that are in business(you can checkout and modify the table names in `Parse/Config.py`).**
+If you start mysql server by docker-compose(which is the recommended way), the `user.sql` has already imported at the start time, so you can just skip this step.
 ![9](https://github.com/PadishahIII/RFGuess/assets/83501709/4f4e7a6e-9a6c-49e3-9806-d73c2ac34e8d)
 
 
@@ -186,6 +194,7 @@ To evaluate the accuracy of a model, this step uses 50% of your dataset as train
 
 
 9. Restore the status of last run
+10.
 Use "Update Status" button to load the progress of the last run and check the status of each phase.
 ![14](https://github.com/PadishahIII/RFGuess/assets/83501709/e85b101c-75b0-40e2-8bd5-8a9ec0fa5768)
 
@@ -247,7 +256,7 @@ pip install -r requirements.txt
 
 And run the following command to launch the main window:
 ```
-py main.py
+python main.py
 ```
 
 
