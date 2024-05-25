@@ -6,7 +6,7 @@ DatabaseUrl = "mysql://root:914075@localhost/rfguess"
 
 
 class TableNames:
-    PII = "PII"
+    PII = "pii"
     pwrepresentation = "pwrepresentation"
     representation_frequency = "representation_frequency"
     pwrepresentation_frequency = "pwrepresentation_frequency"

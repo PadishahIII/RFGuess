@@ -50,6 +50,18 @@ I have implemented the main concept of the paper and programmed an easy-to-use t
 - Sklearn<a href="https://scikit-learn.org/stable/install.html"> Here</a>
 - PyQt5<a href="https://pypi.org/project/PyQt5/"> Here</a>
 
+# Install & Launch
+Install dependencies:
+```bash
+
+```
+This project use Mysql to store analysis data, you can launch a prepared database in docker which is recommended:
+```bash
+docker-compose up -d
+```
+And connect to `mysql://root:root@127.0.0.1:3307/rfguess`.
+
+Or if you expect to use a custom database, you should import `user.sql` into your database manually, which will create all the data tables.
 
 # Usage
 
@@ -70,7 +82,7 @@ Run the executable file and you will see the panel as below:
 
 
 
-There are three main modules in the user interface: Guess-Generator, Pattern-Generator and Model-Trainner. 
+There are three main modules in the user interface: Guess-Generator, Pattern-Generator and Model-Trainner.
 
 ## Generate pattern(Pattern-Generator)
 First you should get a trained model(whether you train by yourself in [model-trainner](#train-your-own-model) or use the pre-trained model from [rfguess.clf](https://github.com/PadishahIII/RFGuess/releases/download/v1.1/model.clf)).
@@ -115,7 +127,7 @@ The model training process of Machine-Learning is pretty more laborious than tha
 
 
 1. Connect to your database and import database structure
-   
+
 Connect to database URL:
 ![8](https://github.com/PadishahIII/RFGuess/assets/83501709/c0f3055e-c5d0-4613-8be8-ddee2b1df729)
 
@@ -125,7 +137,7 @@ Import sql file(get [here](https://github.com/PadishahIII/RFGuess/blob/v1.1/data
 
 
 2. Load your PII dataset(.txt)
-   
+
 The PII dataset should in csv format and comply with the principles below:
   - the first line presents field names
      - field name should fall into ['account', 'name', 'phone', 'idcard', 'email', 'password'], **case-insensitive**
@@ -153,21 +165,21 @@ Push *Load PII Data* button and wait. Your dataset will be consumed and stored i
 
 
 4. Analyze and process dataset
-   
+
 This step will analyze the PII dataset to some intermediate data.
 ![11](https://github.com/PadishahIII/RFGuess/assets/83501709/03f1141e-b59d-41fd-b2f7-23d7a772f9a7)
 
 
 
 6. Train model
-   
+
 You will train a classifier model and dump into a .clf file.
 ![12](https://github.com/PadishahIII/RFGuess/assets/83501709/a9aff7ca-274a-4c32-9900-e8cb9bb25110)
 
 
 
 8. Evaluate accuracy
-   
+
 To evaluate the accuracy of a model, this step uses 50% of your dataset as train-set and other 50% as test-set, generates a password dictionary for each PII data and checks whether the correct password falls into the dictionary.
 ![13](https://github.com/PadishahIII/RFGuess/assets/83501709/6fda460b-1ab6-4284-b7cf-4d4a07a94c75)
 
@@ -186,11 +198,11 @@ See more detailed configuration at [Config.py](https://github.com/PadishahIII/RF
 
 *Markov n-gram* model is used in the main algorithm, you can set *n* by *pii_order* parameter:
 ```python
-pii_order = 6 
+pii_order = 6
 ```
 
-You can control the limit of guesses by the two following thresholds, which are calculated according to the possibility of the growing pattern. 
-A pattern is adopted only if its possibility is greater than the threshold. So the larger is the threshold, the lesser is the number of guesses, vice verse. It is notable that you should not set the threshold excessively small(lesser than *1e-11*) to avoid overwhelming by useless patterns. 
+You can control the limit of guesses by the two following thresholds, which are calculated according to the possibility of the growing pattern.
+A pattern is adopted only if its possibility is greater than the threshold. So the larger is the threshold, the lesser is the number of guesses, vice verse. It is notable that you should not set the threshold excessively small(lesser than *1e-11*) to avoid overwhelming by useless patterns.
 
 ```python
 general_generator_threshold = 1.2e-8
@@ -248,7 +260,7 @@ This code is released under an [MIT License](https://github.com/PadishahIII/RFGu
 # Contact
 
 - 350717997@qq.com
-  
+
 
 Project Link: [https://github.com/PadishahIII/RFGuess](https://github.com/PadishahIII/RFGuess)
 
@@ -292,5 +304,3 @@ Project Link: [https://github.com/PadishahIII/RFGuess](https://github.com/Padish
 | I1  | Id card number                                   |
 | I2  | First three digits of idCard                     |
 | I3  | First six digits of idCard                       |
-
-

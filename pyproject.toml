@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "rfguess"
+version = "0.1.0"
+description = ""
+authors = ["PadishahIII <350717997@qq.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+mysql-connector-python = "8.1.0"
+mysqlclient = "^2.2.4"
+pinyin = "^0.4.0"
+pyqt5 = "^5.15.10"
+pyqt5-stubs = "^5.15.6.0"
+pyqt5-qt5 = "^5.15.13"
+pyqt5-sip = "^12.13.0"
+scikit-learn = "^1.5.0"
+sqlalchemy = "^2.0.30"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
