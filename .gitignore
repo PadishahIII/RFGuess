@@ -12,3 +12,4 @@ _requirements_bak.txt
 .idea
 build
 *.jar
+**/__pycache__
