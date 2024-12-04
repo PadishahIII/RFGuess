@@ -268,7 +268,7 @@ This code is released under an [MIT License](https://github.com/PadishahIII/RFGu
 
 # Contact
 
-- 350717997@qq.com
+- straystrayer@gmail.com
 
 
 Project Link: [https://github.com/PadishahIII/RFGuess](https://github.com/PadishahIII/RFGuess)
