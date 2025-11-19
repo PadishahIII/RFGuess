@@ -12,7 +12,9 @@ I have implemented the main concept of the paper and programmed an easy-to-use t
 - A GUI program exclusively for the PII-based targeted password guessing scenario
 - A pre-trained model
 
-If you are looking for more knowledge about the underlying logic and training process of this project, [this article](https://www.wolai.com/secnote/aL4Xth452sX4XuSydnpqtj) provides more details about the algorithm and the corresponding transcript is available [here](https://www.wolai.com/secnote/row4spm7VvaYAkUmxsFQBT).
+If you are looking for more knowledge about the underlying logic and training process of this project, [this article](https://www.wolai.com/secnote/aL4Xth452sX4XuSydnpqtj) provides more details about the algorithm and the corresponding transcript is available [here](https://www.wolai.com/secnote/row4spm7VvaYAkUmxsFQBT). 
+
+For system design and implementation detail, check DeepWiki link [here](https://deepwiki.com/PadishahIII/RFGuess/1-overview).
 
 # Table of contents
 - [Overview](#overview)
