@@ -55,10 +55,20 @@ For system design and implementation detail, check DeepWiki link [here](https://
 - PyQt5<a href="https://pypi.org/project/PyQt5/"> Here</a>
 
 # Install & Launch
-Clone this repo to your local, install dependencies:
+Clone this repo to your local.
+
+Recommended with `uv`:
+```bash
+uv sync
+uv run python main.py
+```
+
+Or install dependencies with `pip`:
 ```bash
 pip install -r requirements.txt
+python main.py
 ```
+
 This project use Mysql to store analysis data, you can launch a prepared database in docker which is recommended:
 ```bash
 docker-compose up -d
@@ -66,11 +76,6 @@ docker-compose up -d
 And connect to `mysql://root:root@127.0.0.1:3307/rfguess`.
 
 Or if you expect to use a custom database, you should import `user.sql` into your database manually, which will create all the data tables.
-
-Launch the user interface:
-```bash
-python main.py
-```
 
 # Usage
 
@@ -251,7 +256,13 @@ class RFParams:
 
 
 # Build from source
-This project is written by **Python3.11**. You can install dependencies by using pip:
+This project is written by **Python3.11**. The recommended setup uses `uv`:
+```bash
+uv sync
+uv run python main.py
+```
+
+If you prefer `pip`, you can still install dependencies with:
 ```
 pip install -r requirements.txt
 ```

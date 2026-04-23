@@ -13,3 +13,12 @@ _requirements_bak.txt
 build
 *.jar
 **/__pycache__
+__pycache__
+Classifiers/__pycache__
+Commons/__pycache__
+Context/__pycache__
+Core/__pycache__
+Generators/__pycache__
+Parser/__pycache__
+Scripts/__pycache__
+ui/__pycache__
