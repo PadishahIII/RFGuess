@@ -3,11 +3,11 @@ import hashlib
 import logging
 import re
 from abc import ABCMeta, abstractmethod
+from threading import RLock
 
 import sqlalchemy
 from sqlalchemy import Column, Integer, String, text, func
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, validates, scoped_session
+from sqlalchemy.orm import declarative_base, sessionmaker, validates, scoped_session
 
 import Parser.Config as Config
 from Commons import pinyinUtils
@@ -22,18 +22,66 @@ logging.basicConfig()  # filename="database.log"
 logger = logging.getLogger("databaseInit")
 logger.setLevel(logging.INFO)
 
-engine = sqlalchemy.create_engine(Config.DatabaseUrl)
+engine = None
+sessionFactory = None
+_session_scope = None
+_engine_lock = RLock()
 
-sessionFactory = sessionmaker(bind=engine)
-Session = scoped_session(sessionFactory)
+
+def _get_database_url() -> str:
+    getter = getattr(Config, "get_database_url", None)
+    if callable(getter):
+        return getter()
+    return Config.DatabaseUrl
 
 
-def update_engine(url: str):
-    """Re-define the engine and session with the new url"""
-    global engine, sessionFactory, Session
-    engine = sqlalchemy.create_engine(url)
-    sessionFactory = sessionmaker(bind=engine)
-    Session = scoped_session(sessionFactory)
+def _set_database_url(url: str) -> None:
+    setter = getattr(Config, "set_database_url", None)
+    if callable(setter):
+        setter(url)
+        return
+    Config.DatabaseUrl = url
+
+
+def reset_engine_cache() -> None:
+    global engine, sessionFactory, _session_scope
+    with _engine_lock:
+        old_engine = engine
+        old_session_scope = _session_scope
+        if old_session_scope is not None:
+            old_session_scope.remove()
+        engine = None
+        sessionFactory = None
+        _session_scope = None
+        if old_engine is not None:
+            old_engine.dispose()
+
+
+def get_engine():
+    global engine, sessionFactory, _session_scope
+    with _engine_lock:
+        if engine is None:
+            engine = sqlalchemy.create_engine(_get_database_url())
+            sessionFactory = sessionmaker(bind=engine)
+            _session_scope = scoped_session(sessionFactory)
+        return engine
+
+
+def get_session():
+    get_engine()
+    return _session_scope()
+
+
+def Session():
+    return get_session()
+
+
+def update_engine(url: str | None = None):
+    """Reset and lazily re-bind the engine/session to the active config."""
+    if url is not None:
+        _set_database_url(url)
+    reset_engine_cache()
+    return get_engine()
 
 
 class PIIUnit(Base):

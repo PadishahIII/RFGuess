@@ -1,8 +1,25 @@
+import os
+
+
 pii_order = 6
 generator_threshold = 1.2e-8 # deprecated
 general_generator_threshold = 1.2e-8
 
-DatabaseUrl = "mysql://root:914075@localhost/rfguess"
+_DEFAULT_DATABASE_URL = os.environ.get(
+    "RFGUESS_DATABASE_URL",
+    "mysql://root:root@127.0.0.1:3307/rfguess",
+)
+
+DatabaseUrl = _DEFAULT_DATABASE_URL
+
+
+def get_database_url() -> str:
+    return DatabaseUrl
+
+
+def set_database_url(url: str) -> None:
+    global DatabaseUrl
+    DatabaseUrl = url
 
 
 class TableNames:

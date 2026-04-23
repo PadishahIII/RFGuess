@@ -6,11 +6,11 @@ from Core.Decorators import Autowired, Component
 @Component
 class DictionaryGenerator(BasicComponent):
 
-    def __init__(self, seedList: list = list(), saveFile: str = "passwordDic.txt") -> None:
+    def __init__(self, seedList: list | None = None, saveFile: str = "passwordDic.txt") -> None:
         super().__init__()
         self._model: RFTrainner = None
         self._plist = list()
-        self._seeds = seedList
+        self._seeds = list(seedList) if seedList is not None else []
         self._saveFile = saveFile
         self._file = None
         self._limit = 100

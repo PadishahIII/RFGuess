@@ -1,3 +1,5 @@
+import os
+import unittest
 from unittest import TestCase
 
 from Scripts import databaseInit
@@ -9,6 +11,8 @@ class TestGeneralPwRepresentation(TestCase):
     pass
 
 
+@unittest.skipUnless(os.environ.get("RFGUESS_RUN_DB_TESTS") == "1",
+                     "database integration tests require RFGUESS_RUN_DB_TESTS=1")
 class TestBasicManipulateMethods(TestCase):
     def test_query_size(self):
         queryMethods = databaseInit.PIIUnitQueryMethods()
@@ -17,4 +21,3 @@ class TestBasicManipulateMethods(TestCase):
     def test_general_pw_rep_unique(self):
         queryMethod = databaseInit.GeneralPwRepUniqueMethods()
         print(queryMethod.QueryWithLimit(0,10))
-

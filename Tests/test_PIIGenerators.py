@@ -1,9 +1,13 @@
 import json
+import os
+import unittest
 from unittest import TestCase
 
 from Generators.PIIGenerators import *
 
 
+@unittest.skipUnless(os.environ.get("RFGUESS_RUN_EXTERNAL_TESTS") == "1",
+                     "classifier artifact tests require RFGUESS_RUN_EXTERNAL_TESTS=1")
 class TestPIIPatternGenerator(TestCase):
     def test_create_section_from_int(self):
         generator = PIIPatternGenerator()
@@ -20,6 +24,8 @@ class TestPIIPatternGenerator(TestCase):
         self.assertRaises(PIILabelException, generator.createSectionFromInt, 100)
 
 
+@unittest.skipUnless(os.environ.get("RFGUESS_RUN_EXTERNAL_TESTS") == "1",
+                     "classifier artifact tests require RFGUESS_RUN_EXTERNAL_TESTS=1")
 class TestPIIPatternGenerator(TestCase):
     def test_get_classify_result_from_str_list(self):
         generator: PIIPatternGenerator = PIIPatternGenerator.getInstance("../save.clf")
@@ -34,6 +40,8 @@ class TestPIIPatternGenerator(TestCase):
         print(f"seed list len:{len(seedList)}\nres list len:{len(resList)}\n{list(set(resList))}")
 
 
+@unittest.skipUnless(os.environ.get("RFGUESS_RUN_EXTERNAL_TESTS") == "1",
+                     "classifier artifact tests require RFGUESS_RUN_EXTERNAL_TESTS=1")
 class TestPIIPatternGenerator(TestCase):
     def test_classify_multi_from_piidatagram_to_proba_dict(self):
         generator: PIIPatternGenerator = PIIPatternGenerator.getInstance("../save.clf")
@@ -57,4 +65,3 @@ class TestPIIPatternGenerator(TestCase):
         pd[s1] = 1
         pd[s2] = 2
         print(pd)
-

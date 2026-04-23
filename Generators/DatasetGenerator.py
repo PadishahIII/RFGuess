@@ -56,7 +56,7 @@ class DatasetGenerator(BasicComponent):
             raise GeneratorException(f"{self.file} not exists")
         pl = self.readFromFile(self.file)
         for p in pl:
-            if self._i > self.limit:
+            if self._i >= self.limit:
                 break
             self.resolvePassword(p)
             self._i += 1

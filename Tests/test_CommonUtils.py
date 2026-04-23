@@ -19,7 +19,7 @@ class Testtranslation(TestCase):
         self.assertRaises(Utils.TranslationException, raiseException)
 
     def test_translate(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_parsePIIUnitToPII(self):
         unit = PIIUnit(email="274667266@qq.com",

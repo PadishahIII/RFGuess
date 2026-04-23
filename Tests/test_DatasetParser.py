@@ -1,9 +1,13 @@
+import os
+import unittest
 from unittest import TestCase
 
 from Parser.DatasetParser import CsvDatasetLoader, ShortBarDatasetLineParser
 from Scripts.Utils import CsvHelper
 
 
+@unittest.skipUnless(os.environ.get("RFGUESS_RUN_EXTERNAL_TESTS") == "1",
+                     "external dataset tests require RFGUESS_RUN_EXTERNAL_TESTS=1")
 class TestCsvDatasetLoader(TestCase):
 
     def __init__(self, methodName: str = ...) -> None:

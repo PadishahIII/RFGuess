@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 import traceback
+import typing
 from logging import LogRecord
 from queue import Queue
 
@@ -24,17 +25,126 @@ from Scripts.main_General_PII_Mode import BuildDatabase, GeneralPIITrainMain
 from ui.mainWindow import *
 
 
-class Consumer(threading.Thread):
-    def __init__(self, queue: Queue, handler: typing.Callable):
-        super().__init__()
+class UiTaskState:
+    IDLE = "idle"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    STOPPING = "stopping"
+    CLOSED = "closed"
+
+    def __init__(self):
+        self.status = self.IDLE
+        self.task_name = ""
+        self.lock = threading.Lock()
+
+    def snapshot(self) -> tuple[str, str]:
+        with self.lock:
+            return self.status, self.task_name
+
+    def start(self, task_name: str) -> bool:
+        with self.lock:
+            if self.status in {self.RUNNING, self.STOPPING, self.CLOSED}:
+                return False
+            self.status = self.RUNNING
+            self.task_name = task_name
+            return True
+
+    def complete(self) -> bool:
+        with self.lock:
+            if self.status != self.RUNNING:
+                return False
+            self.status = self.COMPLETED
+            return True
+
+    def fail(self) -> bool:
+        with self.lock:
+            if self.status != self.RUNNING:
+                return False
+            self.status = self.FAILED
+            return True
+
+    def reset_idle(self) -> None:
+        with self.lock:
+            if self.status in {self.STOPPING, self.CLOSED}:
+                return
+            self.status = self.IDLE
+            self.task_name = ""
+
+    def begin_shutdown(self) -> bool:
+        with self.lock:
+            if self.status == self.CLOSED:
+                return False
+            self.status = self.STOPPING
+            return True
+
+    def close(self) -> None:
+        with self.lock:
+            self.status = self.CLOSED
+            self.task_name = ""
+
+
+class StoppableConsumer(threading.Thread):
+    _STOP_SENTINEL = object()
+
+    def __init__(self, queue: Queue, handler: typing.Callable[[typing.Any], None]):
+        super().__init__(daemon=True)
         self.queue = queue
-        self.handler = handler  # function
+        self.handler = handler
+        self.stop_event = threading.Event()
+
+    def stop(self):
+        if self.stop_event.is_set():
+            return
+        self.stop_event.set()
+        self.queue.put(self._STOP_SENTINEL)
 
     def run(self) -> None:
         while True:
-            s: str = self.queue.get()
-            self.handler(s)
-            time.sleep(0.5)
+            item = self.queue.get()
+            if item is self._STOP_SENTINEL:
+                if self.stop_event.is_set():
+                    break
+                continue
+            self.handler(item)
+
+
+class WorkerRegistry:
+    def __init__(self):
+        self._workers = []
+        self._lock = threading.Lock()
+
+    def register_thread(self, worker, stop: typing.Callable[[], None] | None = None):
+        if stop is not None:
+            setattr(worker, "stop", stop)
+        with self._lock:
+            self._workers.append(worker)
+        return worker
+
+    def stop_all(self):
+        with self._lock:
+            workers = list(self._workers)
+        for worker in workers:
+            stop = getattr(worker, "stop", None)
+            if callable(stop):
+                stop()
+                continue
+            quit_worker = getattr(worker, "quit", None)
+            if callable(quit_worker):
+                quit_worker()
+
+    def join_all(self, timeout: float = 1.0):
+        with self._lock:
+            workers = list(self._workers)
+        timeout_ms = max(int(timeout * 1000), 0)
+        for worker in workers:
+            join = getattr(worker, "join", None)
+            if callable(join):
+                join(timeout)
+                continue
+            wait = getattr(worker, "wait", None)
+            if callable(wait):
+                wait(timeout_ms)
 
 
 class TrainModelStatus:
@@ -54,42 +164,6 @@ class TrainModelStatus:
 
     def getStatus(self) -> bool:
         return self.passed
-
-
-class TaskRecorder:
-    def __init__(self):
-        self.task = None
-        self.lock = threading.Lock()
-
-    def get_task(self):
-        return self.task
-
-    def set_task(self, task: str):
-        with self.lock:
-            self.task = task
-
-    def set_empty(self):
-        with self.lock:
-            self.task = ""
-
-    def is_empty(self) -> bool:
-        if self.task is None or len(self.get_task()) <= 0:
-            return True
-        else:
-            return False
-
-
-def release_current_task_record_func(f):
-    def wrapper(*args, **kwargs):
-        result = None
-        try:
-            result = f(*args, **kwargs)
-        finally:
-            if result is not False:  # return False to avoid set empty
-                Slots.currentTask.set_empty()
-        return result
-
-    return wrapper
 
 
 class ProgressBarWorker(QObject):
@@ -172,9 +246,6 @@ class TextBrowserHandler(logging.Handler):
 
 
 class Slots:
-    currentTask = TaskRecorder()  # record current running task name
-    Task = release_current_task_record_func  # release current task
-
     def __init__(self, mainWindow: Ui_MainWindow) -> None:
         self.patterns: list[str] = list()
         self.guessLimitOptions = ['500', '1000', '2000', '3000', '5000']
@@ -184,7 +255,10 @@ class Slots:
         self.patternFile = "patterns_general.txt"
         self.pii: PII = None
         self.guessGenerator: GeneralPasswordGenerator = None
-        self.progressSignal = pyqtSignal(int)
+        self.task_state = UiTaskState()
+        self.worker_registry = WorkerRegistry()
+        self._shutdown_lock = threading.Lock()
+        self._shutdown_started = False
 
         # guess generator tab
         self.mainWindow: Ui_MainWindow = mainWindow
@@ -212,9 +286,15 @@ class Slots:
         self.print_log_queue: Queue = Queue(100)
         self.error_dialog_queue: Queue = Queue(100)
         self.info_dialog_queue: Queue = Queue(100)
-        self.print_log_consumer = Consumer(self.print_log_queue, self.handle_print_log_signal)
-        self.error_dialog_consumer = Consumer(self.error_dialog_queue, self.handle_error_signal)
-        self.info_dialog_consumer = Consumer(self.info_dialog_queue, self.handle_info_signal)
+        self.print_log_consumer = self.worker_registry.register_thread(
+            StoppableConsumer(self.print_log_queue, self.handle_print_log_signal)
+        )
+        self.error_dialog_consumer = self.worker_registry.register_thread(
+            StoppableConsumer(self.error_dialog_queue, self.handle_error_signal)
+        )
+        self.info_dialog_consumer = self.worker_registry.register_thread(
+            StoppableConsumer(self.info_dialog_queue, self.handle_info_signal)
+        )
         self.print_log_consumer.start()
         self.error_dialog_consumer.start()
         self.info_dialog_consumer.start()
@@ -248,15 +328,6 @@ class Slots:
         self.analyzePIIDataProgressExitFlag = threading.Event()
         self.trainModelProgressExitFlag = threading.Event()
         self.assessProgressExitFlag = threading.Event()
-
-        @Slots.Task
-        def on_task_finished():
-            if not self.currentTask.is_empty():
-                task_name = self.currentTask.get_task()
-                self.currentTask.set_empty()
-                self.patchInfoDialog(f"[{task_name}] finished!")
-
-        self.on_task_finished = on_task_finished
 
         self.mainWindow.checkDbConnBtn.clicked.connect(self.checkDbConnBtnSlot)
         self.mainWindow.sqlFileBrowser.clicked.connect(self.sqlFileBrowserBtnSlot)
@@ -308,14 +379,89 @@ class Slots:
 
         sys.excepthook = exception_hook
 
+    def _start_foreground_task(self, task_name: str) -> bool:
+        if self.task_state.start(task_name):
+            return True
+
+        status, current_task = self.task_state.snapshot()
+        if status == UiTaskState.RUNNING:
+            self.patchInfoDialog(f"Task [{current_task}] is running, please wait")
+        elif status == UiTaskState.STOPPING:
+            self.patchInfoDialog("Application is shutting down, please wait")
+        elif status == UiTaskState.CLOSED:
+            self.patchInfoDialog("Application has already shut down")
+        return False
+
+    def _finish_foreground_task(self, success: bool, notify: bool = False):
+        status, task_name = self.task_state.snapshot()
+        if success:
+            self.task_state.complete()
+            if notify and task_name:
+                self.patchInfoDialog(f"[{task_name}] finished!")
+        elif status == UiTaskState.RUNNING:
+            self.task_state.fail()
+
+        status, _ = self.task_state.snapshot()
+        if status not in {UiTaskState.STOPPING, UiTaskState.CLOSED}:
+            self.task_state.reset_idle()
+
+    def _start_managed_thread(
+        self,
+        target: typing.Callable[[], None],
+        *,
+        exit_flag: threading.Event | None = None,
+        name: str | None = None,
+    ) -> threading.Thread:
+        if exit_flag is not None:
+            exit_flag.clear()
+        thread = threading.Thread(target=target, name=name, daemon=True)
+        self.worker_registry.register_thread(thread, stop=exit_flag.set if exit_flag is not None else None)
+        thread.start()
+        return thread
+
+    def _register_qthread(self, thread: QThread) -> QThread:
+        return self.worker_registry.register_thread(thread)
+
+    def on_task_finished(self):
+        status, _ = self.task_state.snapshot()
+        self._finish_foreground_task(success=status == UiTaskState.COMPLETED, notify=True)
+
+    def shutdown(self, timeout: float = 1.0):
+        shutdown_lock = getattr(self, "_shutdown_lock", None)
+        if shutdown_lock is None:
+            shutdown_lock = threading.Lock()
+            self._shutdown_lock = shutdown_lock
+
+        with shutdown_lock:
+            if getattr(self, "_shutdown_started", False):
+                return
+            self._shutdown_started = True
+
+            task_state = getattr(self, "task_state", None)
+            worker_registry = getattr(self, "worker_registry", None)
+
+            if task_state is not None:
+                task_state.begin_shutdown()
+
+            try:
+                if worker_registry is not None:
+                    worker_registry.stop_all()
+                    worker_registry.join_all(timeout=timeout)
+            finally:
+                if task_state is not None:
+                    task_state.close()
+
     def exist_current_task(self) -> bool:
         """Check if there is current task running, patch dialog
         """
-        if self.currentTask.is_empty():
-            return False
-        else:
-            self.patchInfoDialog(f"Task [{self.currentTask.get_task()}] is running, please wait")
+        status, task_name = self.task_state.snapshot()
+        if status == UiTaskState.RUNNING:
+            self.patchInfoDialog(f"Task [{task_name}] is running, please wait")
             return True
+        if status in {UiTaskState.STOPPING, UiTaskState.CLOSED}:
+            self.patchInfoDialog("Application is shutting down, please wait")
+            return True
+        return False
 
     def auto_scroll_textbrowser(self, textbrowser: QTextBrowser):
         textbrowser.verticalScrollBar().setValue(textbrowser.verticalScrollBar().maximum())
@@ -585,7 +731,9 @@ class Slots:
         def run(self) -> None:
             try:
                 self.obj.generatePattern()
+                self.obj.task_state.complete()
             except Exception as e:
+                self.obj.task_state.fail()
                 return
                 # self.obj.error_dialog_queue.put(f"Exception occur: {e}")
             finally:
@@ -593,24 +741,19 @@ class Slots:
                 # self.finished.emit()
 
     def generatePatternBtnSlot(self):
-        if self.exist_current_task():
-            return False
         if self.patternGenerator is None:
             self.patchDialog(f"Classifier not loaded")
             return
         if self.patternSavePath is None or len(self.patternSavePath) <= 0:
             self.patchDialog(f"Please assign a pattern save file")
             return
+        if not self._start_foreground_task("Generate Pattern"):
+            return False
         self.patternGenerateLimit = int(self.mainWindow.patternLimitComboBox.currentText())
         self.startPatternProgressTracking()
-        self.patternWorker = self.generatePatternWorker(self)
-
-        # @Slots.Task
-        # def on_task_finished():
-        #     self.patchInfoDialog(f"Generate Pattern finish!")
+        self.patternWorker = self._register_qthread(self.generatePatternWorker(self))
 
         self.printPatternLog(f"Start generating patterns to {self.patternSavePath}... Please wait")
-        self.currentTask.set_task("Generate Pattern")
         self.patternWorker.finished.connect(self.on_task_finished)
         self.patternWorker.start()
 
@@ -628,7 +771,6 @@ class Slots:
         """
 
         def trackProgress():
-            self.patternProgressThreadExitFlag.clear()
             while not self.patternProgressThreadExitFlag.is_set():
                 limit = self.patternGenerator.patternGenerateLimit
                 progress = self.patternGenerator.patternGenerateProgress
@@ -640,8 +782,11 @@ class Slots:
             proportion = min(int(progress / limit * 100), 100)
             self.updatePatternProgressBar(proportion)
 
-        self.patternProgressThread = threading.Thread(target=trackProgress)
-        self.patternProgressThread.start()
+        self.patternProgressThread = self._start_managed_thread(
+            trackProgress,
+            exit_flag=self.patternProgressThreadExitFlag,
+            name="pattern-progress",
+        )
 
     def endPatternProgressTracking(self):
         self.patternProgressThreadExitFlag.set()
@@ -792,9 +937,8 @@ class Slots:
     def initDatabaseBtnSlot(self):
         """Import sql structure
         """
-        if self.exist_current_task():
-            return False
-        self.currentTask.set_task("Init Database")
+        task_started = False
+        task_succeeded = False
         try:
             if not self.checkPhasePassed(self.connectDatabaseStatus):
                 if self.questionDialog(f"There is at least one phase before not passed, are you sure to proceed?"):
@@ -811,6 +955,9 @@ class Slots:
             if self.engine is None:
                 self.patchDialog(f"Please connect to database first!")
                 return
+            if not self._start_foreground_task("Init Database"):
+                return False
+            task_started = True
             with open(self.sqlFile, "r", encoding="utf8", errors="ignore") as f:
                 sql_statements = f.read()
             try:
@@ -823,14 +970,14 @@ class Slots:
             self.patchDialog(f"Database initialized", title="Success", icon=QMessageBox.Information)
             self.printTrainLog(f"Database initialized from {self.sqlFile}")
             self.setPhasePassed(self.initDatabaseStatus)
+            task_succeeded = True
         finally:
-            self.currentTask.set_empty()
+            if task_started:
+                self._finish_foreground_task(success=task_succeeded)
 
     def loadPIIDataBtnSlot(self):
         """Load pii txt file into database
         """
-        if self.exist_current_task():
-            return False
         if not self.checkPhasePassed(self.initDatabaseStatus):
             if self.questionDialog(f"There is at least one phase before not passed, are you sure to proceed?"):
                 pass
@@ -847,9 +994,10 @@ class Slots:
         if not os.path.exists(self.piiFile):
             self.patchDialog(f"Pii file not exists: {self.piiFile}")
             return
+        if not self._start_foreground_task("Load PII Data"):
+            return False
 
         def startLoadPIIDataProgressTracking():
-            self.loadPIIDataProgressExitFlag.clear()
             while not self.loadPIIDataProgressExitFlag.is_set():
                 progress = databaseInit.ProgressTracker.load_pii_data_progress
                 limit = databaseInit.ProgressTracker.load_pii_data_limit
@@ -858,32 +1006,31 @@ class Slots:
                 time.sleep(0.5)
             self.updateTrainTabProgressBar(100)
 
-        progress_thread = threading.Thread(target=startLoadPIIDataProgressTracking)
-        progress_thread.start()
+        self._start_managed_thread(
+            startLoadPIIDataProgressTracking,
+            exit_flag=self.loadPIIDataProgressExitFlag,
+            name="load-pii-progress",
+        )
 
-        thread = QThread()
+        thread = self._register_qthread(QThread())
 
         def run():
             try:
-                self.currentTask.set_task("Load PII Data")
                 # databaseInit.LoadDataset(self.piiFile, start=0, limit=-1, clear=True, update=False)
                 loader = CsvDatasetLoader()
                 loader.clear_and_load_dataset(self.piiFile, charset=self.charset)
                 self.setPhasePassed(self.loadPIIDataStatus)
                 self.printTrainLog(f"Load pii data finished !")
                 # self.patchInfoDialog(f"Load pii data success from {self.piiFile}")
+                self.task_state.complete()
             except Exception as e:
                 self.printTrainLog(
                     f"Exception occurs when load pii data into database({self.databaseUrl}), Original Exception: {e}")
                 # self.patchDialog(f"Load pii data failed, check exception log for more details")
+                self.task_state.fail()
                 return
             finally:
                 self.loadPIIDataProgressExitFlag.set()
-                thread.finished.emit()  # must set
-
-        # @Slots.Task
-        # def on_task_finished():
-        #     self.patchInfoDialog(f"Load PII Data finished!")
 
         thread.finished.connect(self.on_task_finished)
         thread.run = run
@@ -896,16 +1043,15 @@ class Slots:
     def analyzePIIDataBtnSlot(self):
         """Build all datatables
         """
-        if self.exist_current_task():
-            return False
         if not self.checkPhasePassed(self.loadPIIDataStatus):
             if self.questionDialog("There is at least one phase before not passed, are you sure to proceed?"):
                 pass
             else:
                 return
+        if not self._start_foreground_task("Analyze PII Data"):
+            return False
 
         def startAnalyzePIIDataProgressTrack():
-            self.analyzePIIDataProgressExitFlag.clear()
             while not self.analyzePIIDataProgressExitFlag.is_set():
                 progress = main_General_PII_Mode.ProgressTracker.progress
                 limit = main_General_PII_Mode.ProgressTracker.limit
@@ -916,10 +1062,13 @@ class Slots:
                 time.sleep(0.5)
             self.updateTrainTabProgressBar(100)
 
-        progress_thread = threading.Thread(target=startAnalyzePIIDataProgressTrack)
-        progress_thread.start()
+        self._start_managed_thread(
+            startAnalyzePIIDataProgressTrack,
+            exit_flag=self.analyzePIIDataProgressExitFlag,
+            name="analyze-pii-progress",
+        )
 
-        thread = QThread()
+        thread = self._register_qthread(QThread())
 
         def run():
             try:
@@ -931,19 +1080,19 @@ class Slots:
                 #     time.sleep(0.05)
                 #
                 # return
-                self.currentTask.set_task("Analyze PII Data")
                 buildDbObj = BuildDatabase()
                 buildDbObj.test_rebuild()
                 self.setPhasePassed(self.analyzePIIDataStatus)
                 self.printTrainLog(f"Analyze PII Data and build datatables finished !")
                 # self.patchInfoDialog(f"Analyze PII Data and build datatables finished")
+                self.task_state.complete()
             except Exception as e:
                 self.printTrainLog(
                     f"Exception occur when Analyzing PII Data and Building datatables, Original Exception is {e}\nTraceback:{''.join(traceback.format_exception(type(e), e, e.__traceback__))}\n")
                 # self.patchDialog(f"Analyze pii data and build datatable failed, check exception log for more details")
+                self.task_state.fail()
             finally:
                 self.analyzePIIDataProgressExitFlag.set()
-                thread.finished.emit()
 
         thread.run = run
         thread.finished.connect(self.on_task_finished)
@@ -956,8 +1105,6 @@ class Slots:
     def trainModelBtnSlot(self):
         """Train model
         """
-        if self.exist_current_task():
-            return False
         if not self.checkPhasePassed(self.trainModelStatus):
             if self.questionDialog("There is at least one phase before not passed, are you sure to proceed?"):
                 pass
@@ -966,9 +1113,10 @@ class Slots:
         if self.clfSavePath is None or len(self.clfSavePath) <= 0:
             self.patchDialog(f"Please assign model save path(.clf) first")
             return
+        if not self._start_foreground_task("Train Model"):
+            return False
 
         def startTrainModelProgressTrack():
-            self.trainModelProgressExitFlag.clear()
             while not self.trainModelProgressExitFlag.is_set():
                 progress = main_General_PII_Mode.ProgressTracker.progress
                 limit = main_General_PII_Mode.ProgressTracker.limit
@@ -977,31 +1125,30 @@ class Slots:
                 time.sleep(0.5)
             self.updateTrainTabProgressBar(100)
 
-        progress_thread = threading.Thread(target=startTrainModelProgressTrack)
-        progress_thread.start()
+        self._start_managed_thread(
+            startTrainModelProgressTrack,
+            exit_flag=self.trainModelProgressExitFlag,
+            name="train-model-progress",
+        )
 
-        thread = QThread()
+        thread = self._register_qthread(QThread())
 
         def run():
             try:
-                self.currentTask.set_task("Train Model")
                 api = GeneralPIITrainMain()
                 api.train_general(self.clfSavePath)
                 self.setPhasePassed(self.trainModelStatus)
                 self.printTrainLog(f"Train Model finished !")
                 # self.patchInfoDialog(f"Train Model finished")
+                self.task_state.complete()
             except Exception as e:
                 self.printTrainLog(
                     f"Exception occur when Training Model, Original Exception is {e}\nTraceback:{''.join(traceback.format_exception(type(e), e, e.__traceback__))}\n")
                 # self.patchDialog(f"Train Model failed, check exception log for more details")
+                self.task_state.fail()
                 return
             finally:
                 self.trainModelProgressExitFlag.set()
-                thread.finished.emit()
-
-        # @Slots.Task
-        # def on_task_finished():
-        #     self.patchInfoDialog(f"Train Model finished!")
 
         thread.run = run
         thread.finished.connect(self.on_task_finished)
@@ -1014,8 +1161,6 @@ class Slots:
         """Assess accuracy for assigned pattern file
         Do not need previous status to be completed
         """
-        if self.exist_current_task():
-            return False
         if not self.checkPhasePassed(self.assessStatus):
             if self.questionDialog("There is at least one phase before not passed, are you sure to proceed?"):
                 pass
@@ -1027,10 +1172,11 @@ class Slots:
         if not os.path.exists(self.assessPatternFile):
             self.patchDialog(f"Error: {self.assessPatternFile} not exists")
             return
+        if not self._start_foreground_task("Assess Accuracy"):
+            return False
 
         def startAssessProgressTrack():
-            self.assessProgressExitFlag.clear()
-            while not self.trainModelProgressExitFlag.is_set():
+            while not self.assessProgressExitFlag.is_set():
                 progress = main_General_PII_Mode.ProgressTracker.progress
                 limit = main_General_PII_Mode.ProgressTracker.limit
                 proportion = int(progress / limit * 100)
@@ -1038,29 +1184,28 @@ class Slots:
                 time.sleep(0.5)
             self.updateTrainTabProgressBar(100)
 
-        progress_thread = threading.Thread(target=startAssessProgressTrack)
-        progress_thread.start()
+        self._start_managed_thread(
+            startAssessProgressTrack,
+            exit_flag=self.assessProgressExitFlag,
+            name="assess-progress",
+        )
 
-        thread = QThread()
+        thread = self._register_qthread(QThread())
 
         def run():
             try:
-                self.currentTask.set_task("Assess Accuracy")
                 api = GeneralPIITrainMain()
                 api.accuracy_assessment(self.assessPatternFile)
                 self.setPhasePassed(self.assessStatus)
                 self.printTrainLog(f"Accuracy Assessment finished !")
+                self.task_state.complete()
             except Exception as e:
                 self.printTrainLog(
                     f"Exception occur when Assessing accuracy, Original Exception is {e}\nTraceback:{''.join(traceback.format_exception(type(e), e, e.__traceback__))}\n")
+                self.task_state.fail()
                 return
             finally:
                 self.assessProgressExitFlag.set()
-                thread.finished.emit()
-
-        # @Slots.Task
-        # def on_task_finished():
-        #     self.patchInfoDialog(f"Accuracy Assessment finished!")
 
         thread.run = run
         thread.finished.connect(self.on_task_finished)
@@ -1072,13 +1217,15 @@ class Slots:
     def checkDbStatusBtnSlot(self):
         """Check database structure, datatable capability
         """
-        if self.exist_current_task():
-            return False
-        self.currentTask.set_task("Update Status")
+        task_started = False
+        task_succeeded = False
         try:
             if not self.connectDatabaseStatus.getStatus() or self.engine is None:
                 self.patchDialog(f"Please check database connection again")
                 return
+            if not self._start_foreground_task("Update Status"):
+                return False
+            task_started = True
             logList = ["\nUpdate Status Result:\n", ]
 
             # check database structure
@@ -1114,8 +1261,10 @@ class Slots:
 
             self.printTrainLog(''.join(logList))
             self.patchInfoDialog(f"Update status finished!")
+            task_succeeded = True
         finally:
-            self.currentTask.set_empty()
+            if task_started:
+                self._finish_foreground_task(success=task_succeeded)
 
     def checkInitDatabaseStatus(self) -> list[str]:
         """Check for missing datatables

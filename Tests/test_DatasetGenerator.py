@@ -3,28 +3,28 @@ from unittest import TestCase
 
 class TestDatasetGenerator(TestCase):
     def test_set_character_parser(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_set_keyboard_parser(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_get_dataset(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_init(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_run(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_save(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test__build(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_resolve_password(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_read_from_file(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")

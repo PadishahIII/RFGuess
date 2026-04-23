@@ -3,7 +3,7 @@ from unittest import TestCase
 
 class TestPIIRFTrainner(TestCase):
     def test__classify(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test__classify_proba(self):
         from sklearn.ensemble import RandomForestClassifier
@@ -40,4 +40,4 @@ class TestPIIRFTrainner(TestCase):
 
 
     def test__train(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")

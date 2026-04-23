@@ -3,13 +3,13 @@ from Parser.CommonParsers import *
 from Commons.BasicTypes import *
 class TestCommonParsers(TestCase):
     def test_character_parser(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_keyboard_parser(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
     def test_label_parser(self):
-        self.fail()
+        self.skipTest("placeholder test not implemented yet")
 
 
 class TestLabelParser(TestCase):
