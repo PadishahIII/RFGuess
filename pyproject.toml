@@ -6,7 +6,7 @@ readme = "Readme.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "joblib==1.4.2",
-    "mysql-connector-python==8.1.0",
+    "mysql-connector-python==9.1.0",
     "mysqlclient>=2.2.4,<3",
     "numpy>=1.26,<3",
     "pinyin>=0.4.0,<0.5",
