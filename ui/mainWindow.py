@@ -398,6 +398,7 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab_3, "")
         self.textBrowser_2 = QtWidgets.QTextBrowser(self.centralwidget)
         self.textBrowser_2.setGeometry(QtCore.QRect(1270, 20, 151, 611))
+        self.textBrowser_2.setOpenExternalLinks(True)
         self.textBrowser_2.setObjectName("textBrowser_2")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -490,5 +491,4 @@ class Ui_MainWindow(object):
 "</style></head><body style=\" font-family:\'SimSun\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">For help:</p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><a href=\"https://github.com/PadishahIII/RFGuess/tree/master\"><span style=\" text-decoration: underline; color:#0000ff;\">Github</span></a></p></body></html>"))
-
 
