@@ -289,8 +289,6 @@ class BuildDatabase(TestCase):
                     except Exception as e:
                         logger.info(f"Exception occur: {str(e)}, pr: {str(pr)}")
                         exceptionCount += 1
-                    finally:
-                        return repCount, exceptionCount
             except Exception as e:
                 logger.info(f"Exception occur: {str(e)}")
                 exceptionCount += 1
