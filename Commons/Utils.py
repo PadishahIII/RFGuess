@@ -206,11 +206,12 @@ def parsePIIUnitToPIIAndPwStr(unit: PIIUnit) -> (PII, str):
     def getBirthday(idCard: str):
         if len(idCard) < 12:
             return ""
+        birthday = idCard[-12:-4]
         try:
             date_obj = datetime.datetime.strptime(birthday, "%Y%m%d")
         except:
             return ""
-        return idCard[-12:-4]
+        return birthday
 
     d = dict()
 

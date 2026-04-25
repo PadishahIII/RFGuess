@@ -32,3 +32,17 @@ class Testtranslation(TestCase):
         pii, pwStr = Utils.parsePIIUnitToPIIAndPwStr(unit)
         print(pii.__dict__)
         print(f"pw:{pwStr}")
+
+    def test_parsePIIUnitToPII_extracts_birthday_from_id_card(self):
+        unit = PIIUnit(email="274667266@qq.com",
+                       account="6837605",
+                       idCard="332522198705040011",
+                       phoneNum="15068860664",
+                       name="郑一峰",
+                       password="z6837605",
+                       fullName="zheng yi feng")
+
+        pii, pwStr = Utils.parsePIIUnitToPIIAndPwStr(unit)
+
+        self.assertEqual("19870504", pii.birthday)
+        self.assertEqual("z6837605", pwStr)
