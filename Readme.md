@@ -224,6 +224,14 @@ A pattern is adopted only if its possibility is greater than the threshold. So t
 general_generator_threshold = 1.2e-8
 ```
 
+The training and evaluation split is controlled by `TRAINSET_PROPORTION` in `Scripts/main_General_PII_Mode.py`:
+
+```python
+TRAINSET_PROPORTION = 0.5
+```
+
+The default value `0.5` means the first 50% of the processed unique representation records are used to train the model, and the remaining 50% are used during accuracy assessment. Increase this value to train with more data and evaluate with less data; decrease it to reserve more data for evaluation. For example, set it to `0.8` to train with 80% and evaluate with 20%.
+
 **Database configuration**
 
 
@@ -272,6 +280,20 @@ And run the following command to launch the main window:
 python main.py
 ```
 
+
+# Troubleshooting
+
+## macOS: `mysqlclient` fails to build
+
+If `uv run python main.py` fails with `Can not find valid pkg-config name`, expose Homebrew's MySQL client metadata:
+
+```bash
+brew install mysql-client pkg-config
+export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+uv run python main.py
+```
+
+If it still fails, set `MYSQLCLIENT_CFLAGS` and `MYSQLCLIENT_LDFLAGS` manually to the same `mysql-client` include/lib paths.
 
 
 # License
